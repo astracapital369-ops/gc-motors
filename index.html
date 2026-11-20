@@ -362,7 +362,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="3.6";
+const APP_VERSION="3.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
@@ -762,6 +762,67 @@ function vFiche(r){
   h+='</div>';
   return h;
 }
+/* ---------- fiche PDF client ---------- */
+let jsPdfP=null;
+function loadJsPdf(){if(window.jspdf)return Promise.resolve();if(jsPdfP)return jsPdfP;jsPdfP=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";sc.onload=()=>res();sc.onerror=()=>{jsPdfP=null;rej(new Error("jspdf"))};document.head.appendChild(sc)});return jsPdfP}
+function imgDims(src){return new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>res(null);i.src=src})}
+function urlToData(u){return fetch(u).then(r=>r.blob()).then(b=>new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b)})).catch(()=>null)}
+async function fichePdf(v){
+  toast("Création du PDF…");
+  try{await loadJsPdf()}catch(e){toast("Connexion nécessaire pour créer le PDF.");return}
+  let photos=[];try{photos=photoCache[v.id]&&photoCache[v.id].length?photoCache[v.id]:await photosFor(v.id)}catch(e){}
+  const T=x=>String(x??"").replace(/[  ]/g," ").replace(/[’]/g,"'").replace(/[«»]/g,'"');
+  const E=n=>T(eur(n));
+  const st=S.settings,ent=st.entNom||"GC Motors";
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
+  const W=210,M=14;let y=0;
+  const navy=[15,29,61],blue=[42,95,240],ink=[20,26,40],muted=[95,104,122],line=[217,220,227];
+  // en-tête
+  doc.setFillColor(...navy);doc.rect(0,0,W,30,"F");
+  const logo=await urlToData("icon-192.png");if(logo)doc.addImage(logo,"PNG",M,6,18,18);
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(18);doc.text(T(ent),M+23,15);
+  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(200,210,235);doc.text("Achat - Vente de véhicules d'occasion",M+23,21);
+  const contact=[st.entTel,st.entEmail,st.entAdresse].filter(Boolean).map(T);
+  doc.setTextColor(255,255,255);doc.setFontSize(9);contact.forEach((c,i)=>doc.text(c,W-M,11+i*5,{align:"right"}));
+  y=40;
+  // titre + prix
+  doc.setTextColor(...ink);doc.setFont("helvetica","bold");doc.setFontSize(20);
+  const titre=T((v.marque||"")+" "+(v.modele||"")).trim()||"Véhicule";doc.text(doc.splitTextToSize(titre,120),M,y);
+  doc.setFont("helvetica","normal");doc.setFontSize(11);doc.setTextColor(...muted);
+  doc.text(T([v.moteur,v.annee,v.km?new Intl.NumberFormat("fr-BE").format(v.km)+" km":"",v.carburant,v.boite].filter(Boolean).join("  ·  ")),M,y+7);
+  const prix=num(v.prixAffiche)||(v.statut==="vendu"?num(v.prixVente):0);
+  if(prix){doc.setFillColor(...blue);doc.roundedRect(W-M-58,y-9,58,20,3,3,"F");doc.setTextColor(255,255,255);doc.setFontSize(9);doc.text("PRIX",W-M-29,y-3,{align:"center"});doc.setFont("helvetica","bold");doc.setFontSize(17);doc.text(E(prix),W-M-29,y+6,{align:"center"})}
+  y+=16;
+  // photo principale
+  const pw=W-2*M;
+  if(photos.length){const d=await imgDims(photos[0].full);let ph=d?pw*d.h/d.w:pw*0.62;ph=Math.min(ph,105);doc.addImage(photos[0].full,"JPEG",M,y,pw,ph,undefined,"FAST");y+=ph+3;
+    const th=photos.slice(1,5);if(th.length){const tw=(pw-(th.length-1)*3)/th.length;let hmax=0;for(let i=0;i<th.length;i++){const dd=await imgDims(th[i].thumb);const h=Math.min(dd?tw*dd.h/dd.w:tw*0.66,32);hmax=Math.max(hmax,h);doc.addImage(th[i].thumb,"JPEG",M+i*(tw+3),y,tw,h,undefined,"FAST")}y+=hmax+4}}
+  else y+=2;
+  // garantie
+  doc.setFillColor(228,235,253);doc.roundedRect(M,y,pw,11,2,2,"F");doc.setTextColor(...blue);doc.setFont("helvetica","bold");doc.setFontSize(10);
+  const atouts=["Garantie "+(st.dureeGarantie||12)+" mois"];if(v.check&&v.check.ct)atouts.push("Contrôle technique OK");if(v.check&&(v.check.carpassVente||v.check.carpassAchat))atouts.push("Car-Pass fourni");if(v.entretien!==false)atouts.push("Carnet d'entretien");
+  doc.text(T(atouts.join("   ·   ")),W/2,y+7,{align:"center"});y+=17;
+  // caractéristiques
+  const sec=t=>{if(y>262){doc.addPage();y=18}doc.setTextColor(...ink);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(T(t),M,y);doc.setDrawColor(...line);doc.line(M,y+2,W-M,y+2);y+=8};
+  sec("Caractéristiques");
+  const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
+  const specs=[["Marque",v.marque],["Modèle",v.modele],["Motorisation",v.moteur],["Carburant",v.carburant],["Boîte de vitesses",v.boite],["Année",v.annee],["Kilométrage",v.km?new Intl.NumberFormat("fr-BE").format(v.km)+" km":""],["Couleur",v.couleur],["État général",etat],["Carnet d'entretien",v.entretien===false?"Incomplet":"Complet"],["Propriétaires",v.proprios?(v.proprios>=3?"3 et plus":String(v.proprios)):""]].filter(x=>x[1]!==undefined&&x[1]!==null&&String(x[1])!=="");
+  doc.setFontSize(10);const colW=pw/2;
+  specs.forEach((sp,i)=>{const cx=M+(i%2)*colW,cy=y+Math.floor(i/2)*7;doc.setFont("helvetica","normal");doc.setTextColor(...muted);doc.text(T(sp[0]),cx,cy);doc.setFont("helvetica","bold");doc.setTextColor(...ink);doc.text(T(sp[1]),cx+38,cy)});
+  y+=Math.ceil(specs.length/2)*7+4;
+  // équipements
+  if((v.options||[]).length){sec("Équipements");doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(...ink);
+    const cols=3,cw=pw/cols;v.options.forEach((o,i)=>{const cy=y+Math.floor(i/cols)*5.5;if(cy>282)return;doc.setFillColor(...blue);doc.circle(M+(i%cols)*cw+1.2,cy-1.2,0.8,"F");doc.text(doc.splitTextToSize(T(o),cw-5)[0],M+(i%cols)*cw+4,cy)});
+    y+=Math.ceil(v.options.length/cols)*5.5+4}
+  // pied
+  const foot=["Prix TTC, régime particulier de la marge (TVA non récupérable). Sous réserve de vente.",T(ent)+(st.entTva?" · TVA "+T(st.entTva):"")+" · Fiche du "+T(new Date().toLocaleDateString("fr-BE"))];
+  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(...muted);doc.text(foot[0],W/2,288,{align:"center"});doc.text(foot[1],W/2,292,{align:"center"});
+  const name=("Fiche "+(v.marque||"")+" "+(v.modele||"")+" "+(v.annee||"")).trim().replace(/[^\w\-. àâäéèêëîïôöùûüç]/gi,"").replace(/\s+/g,"-")+".pdf";
+  const blob=doc.output("blob");const file=new File([blob],name,{type:"application/pdf"});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:titre});return}}catch(e){if(e&&e.name==="AbortError")return}
+  doc.save(name);toast("PDF téléchargé.");
+}
+
 /* ---------- fiche détails (lecture) ---------- */
 function vDetails(r){
   const v=curVeh(r.id);
@@ -774,7 +835,7 @@ function vDetails(r){
   const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
   let h='<div class="top"><div><a href="#garage" class="note">← Garage</a><h1>'+esc(v.marque||"Voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+[v.annee,v.km?kmFmt(v.km):"",v.moteur||v.carburant].filter(Boolean).map(esc).join(" · ")+'</p></div>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':'<select class="stsel st-'+v.statut+'" data-cstat="'+v.id+'" aria-label="Statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select>')+
-    (v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button>':'<a class="btn primary small" href="#v-'+v.id+'">Modifier</a>')+'</div></div>';
+    (v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button>':'<a class="btn primary small" href="#v-'+v.id+'">Modifier</a>')+'<button class="btn small" data-act="pdf">Fiche PDF client</button></div></div>';
   h+='<div class="ficheone">';
   // photos
   h+='<div class="card dphotos" id="dphotos">'+detPhotos(v)+'</div>';
@@ -802,6 +863,7 @@ function vDetails(r){
   // dossier
   h+='<div class="card"><h2>Dossier · '+p+' %</h2><div class="bar" style="margin-bottom:10px"><i style="width:'+p+'%"></i></div><div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<div class="ckro'+(v.check&&v.check[k]?" ok":"")+'">'+(v.check&&v.check[k]?"✓":"○")+' '+l+'</div>').join("")).join("")+'</div></div>';
   if(v.notes)h+='<div class="card"><h2>Notes</h2><p style="white-space:pre-wrap;margin:0">'+esc(v.notes)+'</p></div>';
+  h+='<button class="btn big" data-act="pdf">Télécharger la fiche PDF pour un client</button>';
   if(!v.demo)h+='<a class="btn primary big" href="#v-'+v.id+'">Modifier la fiche</a>';
   h+='</div>';
   return h;
@@ -1709,6 +1771,8 @@ function vReglages(){
     '<b>PC</b><ol><li>Dans Chrome ou Edge, clique sur l\'icône d\'installation à droite de la barre d\'adresse.</li></ol></div></div></div>';
   if(S.mode!=="local"&&auth&&auth.currentUser)h+='<div class="card"><h2>Compte</h2><p class="note">Connecté avec '+esc(S.email||"")+'.</p><button class="btn small" data-act="logout">Se déconnecter</button></div>';
   else if(fbReady())h+='<div class="card"><h2>Compte</h2><p class="note">Tu utilises l\'app sans compte : tes données restent sur cet appareil.</p><button class="btn small" data-act="gologin">Se connecter / créer un compte</button></div>';
+  const tx=(k,l,ph,t)=>'<label class="f">'+l+'<input data-sett="'+k+'" type="'+(t||"text")+'" value="'+esc(s[k]||"")+'" placeholder="'+esc(ph||"")+'"></label>';
+  h+='<div class="card"><h2>Mon entreprise (fiches PDF)</h2><div class="form">'+tx("entNom","Nom commercial","GC Motors")+tx("entTel","Téléphone","+32 …","tel")+tx("entEmail","E-mail","contact@…","email")+tx("entTva","N° de TVA","BE0…")+tx("entAdresse","Adresse","Rue, numéro, code postal, ville")+'</div><p class="note" style="margin-top:8px">Ces coordonnées apparaissent en haut des fiches PDF envoyées aux clients.</p></div>';
   h+='<div class="card"><h2>Calculs</h2><div class="form">'+i("tva","Taux de TVA (%)","21 % en Belgique, appliqué au régime de la marge")+i("margeVisee","Marge nette visée par voiture (€)","Utilisée pour le prix d'achat maximum")+i("provGarantie","Provision garantie par voiture (€)","Mise de côté pendant la garantie")+i("dureeGarantie","Durée de garantie (mois)","12 mois minimum pour un pro en occasion")+i("seuilJours","Alerte stock après (jours)")+'</div></div>';
   h+='<div class="card"><h2>Sauvegarde</h2><p class="note">Copie tes données pour les garder ailleurs, ou colle une sauvegarde pour la restaurer.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn small" data-act="export">Copier mes données</button><button class="btn small" data-act="import">Restaurer depuis une sauvegarde</button></div><label class="f full"><span>Zone de sauvegarde</span><textarea id="backup" placeholder="La sauvegarde apparaît ici, ou colle-la ici pour restaurer."></textarea></label></div>';
   h+='<p class="note" style="text-align:center">GC Motors · version '+APP_VERSION+'</p>';
@@ -1770,6 +1834,7 @@ document.addEventListener("click",async e=>{
   else if(act==="del")modal("Supprimer cette voiture ?","Elle sera retirée de ton garage et de tes statistiques. Cette action est définitive.","Supprimer",()=>{removeVehicle(b.dataset.id);location.hash="garage"});
   else if(act==="addfrais"&&v&&!v.demo){v.frais.push({id:newId(),cat:"Réparation",libelle:"",montant:""});persistVehicle(v,true);render();const ins=document.querySelectorAll('[data-k="montant"]');ins.length&&ins[ins.length-1].focus()}
   else if(act==="viewph"&&v){openLb(v,+b.dataset.i)}
+  else if(act==="pdf"&&v){fichePdf(v)}
   else if(act==="jadd"&&v&&!v.demo){const texte=$("#j-texte").value.trim(),type=$("#j-type").value,date=$("#j-date").value||today(),m=numOrNull($("#j-montant").value);
     if(!texte&&m==null){toast("Écris ce qui s'est passé ou un montant.");return}
     v.journal=v.journal||[];const e={id:newId(),t:Date.now(),date,type,texte,montant:m??""};v.journal.push(e);
@@ -1817,6 +1882,7 @@ document.addEventListener("input",e=>{
   if(t.dataset.simrange&&S.sim){const k=t.dataset.simrange;S.sim[k]=+t.value;if(k==="km")$("#kmval").textContent=new Intl.NumberFormat("fr-BE").format(+t.value)+" km";if(k==="marge")$("#margeval").textContent=eur(+t.value);if(S.sim.result&&simReady(S.sim))S.sim.result=estimerSim(S.sim);updateSim();return}
   if(t.dataset.simtxt&&S.sim){S.sim[t.dataset.simtxt]=t.value;simRefresh();if(t.dataset.simtxt==="prixNeuf"){const b=$('[data-act="simuler"]');if(b){b.disabled=!simReady(S.sim);b.textContent=simReady(S.sim)?"Simuler":"Choisis la marque et le modèle"}}return}
   if(t.dataset.set){S.settings[t.dataset.set]=num(t.value);persistSettings();return}
+  if(t.dataset.sett){S.settings[t.dataset.sett]=t.value;persistSettings();return}
   if(r.view!=="fiche")return;const v=curVeh(r.id);if(!v||v.demo)return;
   if(t.dataset.vfra){const f=v.frais.find(x=>x.pb===t.dataset.vfra);if(f){f.montant=numOrNull(t.value)??"";persistVehicle(v);const sm=$("#dd-vfrais");if(sm)sm.textContent=vfSummary(v);const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v));updateCalc()}return}
   if(t.hasAttribute("data-vkm")){v.km=+t.value;const n=document.querySelector('[data-field="km"]');if(n)n.value=v.km;persistVehicle(v);updateCalc();return}
