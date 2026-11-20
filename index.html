@@ -308,6 +308,13 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .alert.bad{border-color:var(--bad);background:var(--bad-soft)}
 .alert.ok{border-color:var(--good);background:var(--good-soft)}
 .alert small{color:var(--muted);display:block}
+.alert.rpa{align-items:center}.alert.rpa a{flex:1;min-width:0;color:inherit;text-decoration:none}
+.rpck{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);flex:none;cursor:pointer}
+.rplist{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.rp{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;background:var(--surface-2);border-left:3px solid var(--good)}
+.rp.soon{border-color:var(--warn)}.rp.late{border-color:var(--bad)}.rp.done{opacity:.55;border-color:var(--line,#ccc)}.rp.done b{text-decoration:line-through}
+.rp label{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}.rp small{display:block;color:var(--muted)}
+.rp .x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px}
 .pipeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .pipe{background:var(--surface-2);border-radius:10px;padding:12px 8px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;min-height:76px}
 .pipe b{font-family:var(--display);font-size:26px;display:block;line-height:1}
@@ -423,7 +430,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="6.8";
+const APP_VERSION="6.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -736,7 +743,7 @@ function vTableau(){
     kpi("Véhicules en stock",String(stock.length),"Capital immobilisé : "+eur(capital))+
     kpi("Bénéfice moyen / voiture",moyB==null?"—":'<span class="'+(moyB<0?"neg":"pos")+'">'+eur(moyB)+'</span>',"sur les ventes · "+per)+'</div>';
   h+='<div class="grid two"><div class="card chart"><h2>Bénéfice net par mois · '+y+'</h2>'+chartMois(vendus,y,pm)+'<p class="note">Touche un mois pour le sélectionner. Prix de vente moins achat et frais, par mois de vente. Avant TVA sur la marge, impôt et cotisations.</p></div>';
-  h+='<div class="card"><h2>À surveiller</h2><div class="alerts">'+alertes(L).join("")+'</div></div></div>';
+  h+='<div class="card"><h2>À surveiller / Rappels</h2><div class="alerts">'+alertes(L).join("")+'</div></div></div>';
   h+='<div class="grid two"><div class="card"><h2>Pipeline</h2><div class="pipeline">'+STATUTS.map(s=>'<a class="pipe" href="#garage" data-filter="'+s.k+'"><b class="num">'+L.filter(v=>v.statut===s.k).length+'</b><span>'+s.l+'</span></a>').join("")+'</div>'+
     '<p class="note" style="margin-top:12px">Marge nette potentielle du stock actuel : <b class="num">'+eur(potentiel)+'</b> (sur prix affiché ou estimation).</p></div>';
   h+='<div class="card"><h2>À mettre de côté</h2><div class="calc">'+
@@ -750,6 +757,10 @@ function kpi(l,v,s){return'<div class="card kpi"><div class="lbl">'+l+'</div><di
 function row(a,b,cls){return'<div class="row"><span>'+a+'</span><span class="num '+(cls||"")+'">'+b+'</span></div>'}
 function alertes(L){
   const out=[];const seuil=S.settings.seuilJours;
+  const rps=[];L.forEach(v=>(v.rappels||[]).forEach(r=>{if(!r.fait&&r.date)rps.push({v,r})}));
+  rps.sort((a,b)=>a.r.date.localeCompare(b.r.date)).forEach(({v,r})=>{const d=daysBetween(today(),r.date),n=esc(v.marque+" "+v.modele);
+    const quand=d<0?"En retard de "+(-d)+" jour"+(-d>1?"s":""):d===0?"Aujourd'hui":d===1?"Demain":"Dans "+d+" jours";
+    out.push('<div class="alert rpa '+(d<0?"bad":d<=7?"":"ok")+'"><a href="#v-'+v.id+'"><b>'+esc(r.texte)+'</b> · '+n+'<small>'+quand+' · '+fdate(r.date)+'</small></a>'+(v.demo?'':'<label class="rpck" title="Marquer comme fait"><input type="checkbox" data-rfait="'+r.id+'" data-v="'+v.id+'"><span>Fait</span></label>')+'</div>')});
   L.forEach(v=>{
     const n=esc(v.marque+" "+v.modele),j=joursStock(v),link='href="#v-'+v.id+'"';
     if(EN_STOCK.includes(v.statut)&&j!=null&&j>seuil)out.push('<a class="alert bad" '+link+'><div><b>'+n+'</b> en stock depuis '+j+' jours<small>Revois le prix ou la présentation de l\'annonce.</small></div></a>');
@@ -874,8 +885,14 @@ function vFiche(r){
      '<label class="f">Montant (€, facultatif)<input id="j-montant" type="number" inputmode="decimal"></label><label class="ckline full"><input id="j-frais" type="checkbox" checked><span>Ajouter le montant aux frais</span></label></div>'+
      '<button class="btn primary" style="margin-top:10px" data-act="jadd">+ Ajouter au suivi</button></div>')+
      (J.length?'<div class="timeline">'+J.map(e=>'<div class="tl"><div class="tldot"></div><div class="tlbody"><div class="tlhd"><b>'+esc(e.type)+'</b><span class="note">'+fdate(e.date)+(e.montant?' · <span class="num">'+eur(num(e.montant))+'</span>':'')+'</span>'+(v.demo?"":'<button class="x" data-act="jdel" data-id="'+e.id+'" aria-label="Supprimer cette entrée">×</button>')+'</div>'+(e.texte?'<div>'+esc(e.texte)+'</div>':'')+'</div></div>').join("")+'</div>':'<p class="note" style="margin-top:12px">Aucune entrée pour l\'instant. Chaque changement de statut s\'y ajoute aussi tout seul.</p>')+'</div>';
-  h+='<div class="card">'+step(9,"Dossier")+'<div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
-  h+='<div class="card">'+step(10,"Notes")+'<label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
+  const RP=(v.rappels||[]).slice().sort((a,b)=>(a.fait-b.fait)||(a.date||"").localeCompare(b.date||""));
+  h+='<div class="card">'+step(9,"Rappels")+
+     (v.demo?"":'<div class="form"><label class="f">Date<input id="r-date" type="date" value="'+addDays(7)+'"></label><label class="f">Rappel<input id="r-texte" placeholder="ex. Rendez-vous carrosserie, CT, pneus…"></label></div>'+
+     '<button class="btn primary" style="margin-top:10px" data-act="radd">+ Ajouter un rappel</button>')+
+     (RP.length?'<div class="rplist">'+RP.map(r=>{const d=daysBetween(today(),r.date);const tag=r.fait?"fait":d<0?"en retard de "+(-d)+" j":d===0?"aujourd'hui":"dans "+d+" j";
+       return'<div class="rp'+(r.fait?" done":d<0?" late":d<=7?" soon":"")+'"><label><input type="checkbox" data-rfait="'+r.id+'" data-v="'+v.id+'"'+(r.fait?" checked":"")+dis+'><span><b>'+esc(r.texte||"Rappel")+'</b><small>'+fdate(r.date)+' · '+tag+'</small></span></label>'+(v.demo?"":'<button class="x" data-act="rdel" data-id="'+r.id+'" aria-label="Supprimer ce rappel">×</button>')+'</div>'}).join("")+'</div>':'<p class="note" style="margin-top:12px">Aucun rappel. Ajoute ici une réparation prévue, un rendez-vous ou une date à ne pas oublier : il apparaîtra sur l\'accueil.</p>')+'</div>';
+  h+='<div class="card">'+step(10,"Dossier")+'<div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
+  h+='<div class="card">'+step(11,"Notes")+'<label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
   h+='</div>';
   return h;
 }
@@ -2185,6 +2202,10 @@ document.addEventListener("click",async e=>{
   else if(act==="pdf"&&v){apercuPdf(v)}
   else if(act==="bdcv"){const vv=curVeh(b.dataset.id);if(vv&&!vv.demo)demanderBdc(vv)}
   else if(act==="bdc"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage (bouton Modifier).");return}demanderBdc(v)}
+  else if(act==="radd"&&v&&!v.demo){const texte=$("#r-texte").value.trim(),date=$("#r-date").value;
+    if(!texte||!date){toast("Indique une date et le rappel.");return}
+    v.rappels=v.rappels||[];v.rappels.push({id:newId(),date,texte,fait:false});persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast("Rappel ajouté.")}
+  else if(act==="rdel"&&v&&!v.demo){v.rappels=(v.rappels||[]).filter(r=>r.id!==b.dataset.id);persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0)}
   else if(act==="jadd"&&v&&!v.demo){const texte=$("#j-texte").value.trim(),type=$("#j-type").value,date=$("#j-date").value||today(),m=numOrNull($("#j-montant").value);
     if(!texte&&m==null){toast("Écris ce qui s'est passé ou un montant.");return}
     v.journal=v.journal||[];const e={id:newId(),t:Date.now(),date,type,texte,montant:m??""};v.journal.push(e);
@@ -2289,6 +2310,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.
 document.addEventListener("click",e=>{const t=e.target.closest("[data-dthumb]");if(!t)return;const tr=$("#dtrack");if(tr)tr.scrollTo({left:+t.dataset.dthumb*tr.clientWidth,behavior:"smooth"})});
 document.addEventListener("scroll",e=>{const t=e.target;if(t&&t.classList&&t.classList.contains("ctrack")){clearTimeout(t._t);t._t=setTimeout(()=>{const n=Math.round(t.scrollLeft/Math.max(1,t.clientWidth)),c=t.parentNode.querySelector(".dcount");if(c)c.textContent=(n+1)+" / "+t.children.length},60)}},true);
 document.addEventListener("scroll",e=>{const tr=e.target;if(!tr||tr.id!=="dtrack")return;clearTimeout(tr._t);tr._t=setTimeout(()=>{const n=Math.round(tr.scrollLeft/Math.max(1,tr.clientWidth)),c=$("#dcount");if(c)c.textContent=(n+1)+" / "+tr.children.length;document.querySelectorAll("[data-dthumb]").forEach(b=>b.classList.toggle("on",+b.dataset.dthumb===n))},60)},true);
+document.addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset.rfait===undefined)return;const v=S.vehicles.find(x=>x.id===t.dataset.v);if(!v||v.demo)return;const r=(v.rappels||[]).find(x=>x.id===t.dataset.rfait);if(!r)return;r.fait=t.checked;persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);if(t.checked)toast("Rappel marqué comme fait.")});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd==="vfrais"){S.vfOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
