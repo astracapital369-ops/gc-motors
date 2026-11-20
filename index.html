@@ -101,6 +101,18 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .kmrow input[type=range]{flex:1;margin:0}
 .kmrow input[type=number]{width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
 .ficheone{max-width:760px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.jform{background:var(--surface-2);border-radius:10px;padding:12px}
+.jform input,.jform select{background:var(--surface)!important}
+.ckline{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px;padding-top:8px}
+.ckline input{width:18px!important;height:18px;padding:0!important;flex:none;accent-color:var(--accent)}
+.ckline{cursor:pointer;padding-top:0!important}
+.timeline{margin-top:14px;display:flex;flex-direction:column}
+.tl{display:flex;gap:12px;position:relative;padding-bottom:14px}
+.tl:not(:last-child)::before{content:"";position:absolute;left:5px;top:14px;bottom:0;width:2px;background:var(--line)}
+.tldot{width:12px;height:12px;border-radius:50%;background:var(--accent);margin-top:4px;flex:none}
+.tlbody{flex:1;min-width:0;font-size:14.5px}
+.tlhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tlhd .x{margin-left:auto}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -325,8 +337,9 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="3.0";
+const APP_VERSION="3.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
   tableau:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
@@ -710,8 +723,15 @@ function vFiche(r){
      '<p class="note" style="margin-top:10px">'+(v.estim&&v.estim.commentaire?esc(v.estim.commentaire)+" ":"")+'Compare le même modèle, la même année et un kilométrage proche, puis note le prix médian.</p><div class="buybox" style="margin-top:14px"><small>Prix d\'achat maximum</small><div id="maxbox"></div></div></div>';
   h+='<div class="card">'+step(6,"Achat")+'<div class="form">'+sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Vendeur</div>'+inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div></div>';
   h+='<div class="card">'+step(7,"Vente")+'<div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+'<div class="f full"><div id="calcbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Client</div>'+inp("clientPrenom","Prénom")+inp("clientNom","Nom")+inp("clientTel","Téléphone","tel",{ph:"+32 …"})+inp("clientEmail","E-mail","email")+inp("clientAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+(v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+'</div>';
-  h+='<div class="card">'+step(8,"Dossier")+'<div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
-  h+='<div class="card">'+step(9,"Notes")+'<label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
+  const J=(v.journal||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.t||0)-(a.t||0));
+  h+='<div class="card">'+step(8,"Suivi du véhicule")+
+     (v.demo?"":'<div class="jform"><div class="form"><label class="f">Date<input id="j-date" type="date" value="'+today()+'"></label><label class="f">Type<select id="j-type">'+JTYPES.map(x=>'<option>'+x+'</option>').join("")+'</select></label>'+
+     '<label class="f full">Ce qui s\'est passé<input id="j-texte" placeholder="ex. Disques et plaquettes changés au garage partenaire"></label>'+
+     '<label class="f">Montant (€, facultatif)<input id="j-montant" type="number" inputmode="decimal"></label><label class="ckline full"><input id="j-frais" type="checkbox" checked><span>Ajouter le montant aux frais</span></label></div>'+
+     '<button class="btn primary" style="margin-top:10px" data-act="jadd">+ Ajouter au suivi</button></div>')+
+     (J.length?'<div class="timeline">'+J.map(e=>'<div class="tl"><div class="tldot"></div><div class="tlbody"><div class="tlhd"><b>'+esc(e.type)+'</b><span class="note">'+fdate(e.date)+(e.montant?' · <span class="num">'+eur(num(e.montant))+'</span>':'')+'</span>'+(v.demo?"":'<button class="x" data-act="jdel" data-id="'+e.id+'" aria-label="Supprimer cette entrée">×</button>')+'</div>'+(e.texte?'<div>'+esc(e.texte)+'</div>':'')+'</div></div>').join("")+'</div>':'<p class="note" style="margin-top:12px">Aucune entrée pour l\'instant. Chaque changement de statut s\'y ajoute aussi tout seul.</p>')+'</div>';
+  h+='<div class="card">'+step(9,"Dossier")+'<div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
+  h+='<div class="card">'+step(10,"Notes")+'<label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
   h+='</div>';
   return h;
 }
@@ -1671,6 +1691,12 @@ document.addEventListener("click",async e=>{
   else if(act==="del")modal("Supprimer cette voiture ?","Elle sera retirée de ton garage et de tes statistiques. Cette action est définitive.","Supprimer",()=>{removeVehicle(b.dataset.id);location.hash="garage"});
   else if(act==="addfrais"&&v&&!v.demo){v.frais.push({id:newId(),cat:"Réparation",libelle:"",montant:""});persistVehicle(v,true);render();const ins=document.querySelectorAll('[data-k="montant"]');ins.length&&ins[ins.length-1].focus()}
   else if(act==="viewph"&&v){openLb(v,+b.dataset.i)}
+  else if(act==="jadd"&&v&&!v.demo){const texte=$("#j-texte").value.trim(),type=$("#j-type").value,date=$("#j-date").value||today(),m=numOrNull($("#j-montant").value);
+    if(!texte&&m==null){toast("Écris ce qui s'est passé ou un montant.");return}
+    v.journal=v.journal||[];const e={id:newId(),t:Date.now(),date,type,texte,montant:m??""};v.journal.push(e);
+    if(m!=null&&$("#j-frais").checked){const cat={"Réparation":"Réparation","Entretien":"Entretien","Contrôle technique":"Contrôle technique","Nettoyage / préparation":"Nettoyage","Annonce publiée":"Annonce","Pièces commandées":"Réparation","Passage au garage":"Réparation"}[type]||"Autre";v.frais.push({id:newId(),cat,libelle:texte||type,montant:m,j:e.id})}
+    persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast("Ajouté au suivi.")}
+  else if(act==="jdel"&&v&&!v.demo){const id=b.dataset.id;v.journal=(v.journal||[]).filter(e=>e.id!==id);v.frais=v.frais.filter(f=>f.j!==id);persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0)}
   else if(act==="delfrais"&&v&&!v.demo){v.frais=v.frais.filter(f=>f.id!==b.dataset.id);persistVehicle(v,true);render()}
   else if(act==="estimer"&&v&&sample){
     if(!v.marque||!v.modele){toast("Indique au moins la marque et le modèle.");return}
@@ -1752,7 +1778,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.period){S.period[t.dataset.period]=t.dataset.period==="y"?+t.value:t.value;render();return}
   if(t.id==="phinput"){const v=curVeh(r.id);if(v&&!v.demo)addPhotos(v,[...t.files]);t.value="";return}
   if(t.dataset.sim&&t.tagName==="SELECT"){S.sim[t.dataset.sim]=t.value;return}
-  if(r.view==="fiche"&&t.dataset.field==="statut"){const v=curVeh(r.id);if(v&&!v.demo){if(t.value==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(t.value)&&!v.dateAchat)v.dateAchat=today();persistVehicle(v,true);render()}}
+  if(r.view==="fiche"&&t.dataset.field==="statut"){const v=curVeh(r.id);if(v&&!v.demo){v.journal=v.journal||[];v.journal.push({id:newId(),t:Date.now(),date:today(),type:"Statut",texte:"Passage en « "+stLabel(t.value)+" »"});if(t.value==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(t.value)&&!v.dateAchat)v.dateAchat=today();persistVehicle(v,true);render()}}
   if(r.view==="fiche"&&(t.dataset.field||t.dataset.frais)){const v=curVeh(r.id);if(v&&!v.demo)persistVehicle(v,true)}
 });
 document.addEventListener("focusout",()=>{setTimeout(()=>{if(!editing()&&route().view!=="fiche"&&route().view!=="simulateur"&&route().view!=="reglages")render()},50)});
