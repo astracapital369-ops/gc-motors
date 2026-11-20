@@ -82,6 +82,14 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .dual input[type=range]::-moz-range-thumb{pointer-events:auto;width:22px;height:22px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);cursor:pointer}
 .fraisadd{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:12px}
 .fraisadd .f{flex:1;min-width:200px}
+.msearch{position:relative}
+.msearch input{width:100%;padding:10px 12px;border:1.5px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--ink)}
+.mres{display:flex;flex-direction:column;margin-top:4px;border-radius:10px;overflow:hidden}
+.mres:not(:empty){border:1px solid var(--line);background:var(--surface);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.mres button{text-align:left;padding:10px 12px;border:none;border-bottom:1px solid var(--line);background:none;cursor:pointer;font-size:15px;color:var(--ink)}
+.mres button:last-child{border-bottom:none}
+.mres button:hover,.mres button:focus{background:var(--accent-soft)}
+.mres .mnone{padding:10px 12px;color:var(--muted);font-size:14px}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.hide-m{display:none}}
@@ -306,7 +314,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="2.4";
+const APP_VERSION="2.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -658,11 +666,11 @@ function vFiche(r){
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
   const vMot=vb&&vb!=="__autre"&&vModels.includes(v.modele)?moteursDe(vb,v.modele):null;
   const vsel=(k,l,opts,ph,cur)=>'<label class="f">'+l+'<select data-vsel="'+k+'"'+dis+'>'+(ph!=null?'<option value="">'+esc(ph)+'</option>':"")+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(cur)===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
-  h+='<div class="card"><h2>Véhicule</h2><div class="form">'+
+  h+='<div class="card"><h2>Véhicule</h2><div class="form">'+(v.demo?"":modelSearchHtml("veh"))+
      vsel("marque","Marque",[...Object.keys(CATALOGUE),["__autre","Autre marque"]],"Choisir la marque",vb)+
      (vb==="__autre"?inp("marque","Marque (texte)")+inp("modele","Modèle","text",{ph:"ex. Ypsilon"}):
        vsel("modele","Modèle",(v.modele&&!vModels.includes(v.modele)?[[v.modele,v.modele]]:[]).concat(vModels),vb?"Choisir le modèle":"Choisis d'abord la marque",v.modele)+
-       vsel("moteur","Motorisation",vMot?vMot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],vMot?"Non précisée":"Choisis d'abord le modèle",v.moteur||""))+
+       vsel("moteur","Motorisation",vMot?vMot.e.map(([l,f])=>[l,vMot.gen?l:l+" · "+FUEL[f]]):[],vMot?"Non précisée":"Choisis d'abord le modèle",v.moteur||""))+
      sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"])+sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      inp("annee","Année","number")+inp("km","Kilométrage","number")+
      sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
@@ -716,29 +724,75 @@ function updateCalc(){
 // Prix neuf de référence (€, version courante) et classe de décote : 1 = garde bien sa valeur, 2 = moyenne, 3 = décote forte.
 // seg : demande sur le marché belge de l'occasion (3 = très recherchée, 1 = plus lente à vendre).
 const CATALOGUE={
-  "Toyota":{r:1,m:{"Aygo":[13000,3],"Aygo X":[17000,3],"Yaris":[18000,3],"Yaris Cross":[25000,3],"Auris":[22000,2],"Corolla":[28000,3],"C-HR":[30000,3],"RAV4":[38000,2],"Prius":[30000,2]}},
-  "Volkswagen":{r:2,m:{"up!":[13000,3],"Polo":[18000,3],"Golf":[26000,3],"T-Cross":[23000,3],"T-Roc":[28000,3],"Tiguan":[36000,2],"Touran":[30000,2],"Passat":[36000,1],"ID.3":[38000,1]}},
-  "Peugeot":{r:3,m:{"108":[12500,2],"208":[18000,3],"2008":[24000,3],"308":[25000,2],"3008":[32000,2],"5008":[36000,1],"Partner / Rifter":[24000,2]}},
-  "Renault":{r:3,m:{"Twingo":[13000,2],"Clio":[18000,3],"Captur":[23000,3],"Mégane":[24000,2],"Kadjar":[28000,2],"Scénic":[28000,1],"Zoe":[30000,1],"Kangoo":[23000,2]}},
-  "Citroën":{r:3,m:{"C1":[12000,2],"C3":[17000,2],"C3 Aircross":[21000,2],"C4":[24000,1],"C4 Picasso / SpaceTourer":[27000,1],"Berlingo":[23000,2]}},
-  "Opel":{r:3,m:{"Karl":[11500,2],"Corsa":[17000,3],"Astra":[24000,2],"Crossland":[21000,2],"Mokka":[24000,2],"Grandland":[30000,1],"Zafira":[28000,1]}},
-  "Ford":{r:3,m:{"Ka / Ka+":[12000,2],"Fiesta":[17000,3],"Focus":[24000,2],"Puma":[25000,3],"EcoSport":[21000,1],"Kuga":[32000,2],"C-Max":[25000,1]}},
-  "Skoda":{r:2,m:{"Citigo":[12000,3],"Fabia":[16500,3],"Scala":[21000,2],"Octavia":[26000,3],"Kamiq":[23000,3],"Karoq":[29000,2],"Kodiaq":[37000,2],"Superb":[36000,1]}},
-  "Seat":{r:2,m:{"Mii":[12000,3],"Ibiza":[17000,3],"Arona":[21000,3],"Leon":[23000,2],"Ateca":[28000,2]}},
-  "Hyundai":{r:2,m:{"i10":[13500,3],"i20":[17500,3],"i30":[22000,2],"Bayon":[20000,2],"Kona":[25000,3],"Tucson":[32000,2],"Ioniq":[30000,1]}},
-  "Kia":{r:2,m:{"Picanto":[13000,3],"Rio":[16500,3],"Stonic":[20000,3],"Ceed":[22000,2],"Niro":[30000,2],"Sportage":[32000,2]}},
-  "Dacia":{r:1,m:{"Sandero":[12000,3],"Logan":[11000,2],"Duster":[17000,3],"Jogger":[18000,2],"Spring":[17000,1]}},
-  "Fiat":{r:3,m:{"500":[15000,3],"Panda":[13000,2],"Tipo":[18000,1],"500X":[22000,1]}},
-  "Mini":{r:2,m:{"Mini 3/5 portes":[24000,3],"Countryman":[32000,2],"Clubman":[29000,1]}},
-  "Honda":{r:1,m:{"Jazz":[19000,3],"Civic":[26000,2],"HR-V":[27000,3],"CR-V":[36000,2]}},
-  "Mazda":{r:2,m:{"Mazda2":[17500,3],"Mazda3":[24000,2],"CX-3":[22000,2],"CX-30":[28000,2],"CX-5":[34000,2]}},
-  "Suzuki":{r:1,m:{"Celerio":[11500,2],"Swift":[16000,3],"Ignis":[15000,3],"Vitara":[23000,3],"S-Cross":[25000,2]}},
-  "Nissan":{r:3,m:{"Micra":[16000,2],"Note":[17000,2],"Juke":[22000,2],"Qashqai":[29000,3],"Leaf":[34000,1]}},
-  "BMW":{r:2,m:{"Série 1":[31000,2],"Série 2":[35000,1],"Série 3":[42000,2],"X1":[40000,2],"X3":[52000,1]}},
-  "Mercedes":{r:2,m:{"Classe A":[33000,2],"Classe B":[34000,1],"Classe C":[45000,2],"GLA":[40000,2]}},
-  "Audi":{r:2,m:{"A1":[22000,3],"A3":[30000,2],"A4":[40000,1],"Q2":[29000,2],"Q3":[38000,2]}},
-  "Volvo":{r:2,m:{"V40":[29000,2],"XC40":[38000,2],"XC60":[50000,1],"V60":[42000,1]}},
-  "Tesla":{r:2,m:{"Model 3":[45000,2],"Model Y":[50000,2]}}
+  "Abarth":{r:3,m:{"500 / 595 / 695":[22000,2,2008],"124 Spider":[32000,1,2016,2019],"500e":[37000,1,2023],"600e":[40000,1,2024]}},
+  "Aiways":{r:3,m:{"U5":[38000,1,2020],"U6":[45000,1,2023]}},
+  "Aixam (sans permis)":{r:2,m:{"City / Crossline / Coupé":[13000,2,2005],"e-City / e-Aixam":[16000,1,2016]}},
+  "Alfa Romeo":{r:3,m:{"147":[20000,1,2000,2010],"159":[30000,1,2005,2011],"Brera / Spider":[35000,1,2005,2010],"MiTo":[17000,1,2008,2018],"Giulietta":[24000,1,2010,2020],"4C":[60000,1,2013,2020],"Giulia":[42000,1,2016],"Stelvio":[48000,1,2017],"Tonale":[38000,2,2022],"Junior":[30000,2,2024]}},
+  "Alpine":{r:2,m:{"A110":[60000,2,2017],"A290":[38000,2,2024]}},
+  "Aston Martin":{r:3,m:{"Vantage":[140000,1,2005],"DB9":[180000,1,2004,2016],"Rapide":[180000,1,2010,2020],"DB11":[190000,1,2016,2023],"DBX":[210000,1,2020],"DB12":[230000,1,2023]}},
+  "Audi":{r:2,m:{"A1":[22000,3],"A3":[30000,2],"A4":[40000,1],"Q2":[29000,2],"Q3":[38000,2],"A2":[20000,1,2000,2005],"A5":[48000,2,2007],"A6":[58000,2,2004],"A7":[75000,1,2010],"A8":[100000,1,2002],"TT":[45000,1,1998,2023],"Q4 e-tron":[50000,2,2021],"Q5":[55000,2,2008],"Q7":[75000,2,2006],"Q8":[85000,1,2018],"e-tron / Q8 e-tron":[85000,1,2019],"e-tron GT":[110000,1,2021],"Q6 e-tron":[70000,1,2024],"R8":[170000,1,2007,2024],"S / RS (A3 à A7)":[80000,1,2000]}},
+  "Bentley":{r:3,m:{"Continental GT / GTC":[220000,1,2003],"Flying Spur":[220000,1,2005],"Bentayga":[210000,1,2016]}},
+  "BMW":{r:2,m:{"Série 1":[31000,2],"Série 2":[35000,1],"Série 3":[42000,2],"X1":[40000,2],"X3":[52000,1],"Série 4":[48000,2,2013],"Série 5":[55000,2,2003],"Série 6":[80000,1,2004,2018],"Série 7":[100000,1,2001],"Série 8":[110000,1,2018],"X2":[40000,2,2018],"X4":[58000,1,2014],"X5":[75000,2,2000],"X6":[85000,1,2008],"X7":[100000,1,2019],"Z4":[50000,1,2002],"i3":[40000,2,2013,2022],"i4":[58000,2,2021],"i5":[70000,1,2023],"i7":[120000,1,2022],"iX":[85000,1,2021],"M2":[75000,1,2016],"M3 / M4":[95000,1,2000],"M5":[130000,1,2005]}},
+  "BYD":{r:3,m:{"Dolphin Surf":[22000,1,2025],"Dolphin":[32000,1,2023],"Atto 2":[30000,1,2025],"Atto 3":[40000,1,2022],"Seal":[45000,1,2023],"Seal U":[42000,1,2024],"Seal 6":[45000,1,2025],"Han":[65000,1,2022],"Tang":[70000,1,2022]}},
+  "Chevrolet":{r:3,m:{"Matiz":[8000,1,2005,2010],"Spark":[10000,2,2010,2015],"Aveo":[13000,1,2006,2015],"Cruze":[18000,1,2009,2015],"Orlando":[22000,1,2011,2015],"Captiva":[28000,1,2006,2015],"Camaro":[45000,1,2010,2019],"Corvette":[80000,1,2005]}},
+  "Chrysler":{r:3,m:{"Voyager / Grand Voyager":[35000,1,2001,2016],"300C":[40000,1,2004,2015]}},
+  "Citroën":{r:3,m:{"C1":[12000,2],"C3":[17000,2],"C3 Aircross":[21000,2],"C4":[24000,1],"C4 Picasso / SpaceTourer":[27000,1],"Berlingo":[23000,2],"Xsara Picasso":[18000,1,2000,2012],"C5":[30000,1,2008,2017],"C-Crosser":[28000,1,2007,2012],"C3 Picasso":[17000,1,2009,2017],"C-Elysée":[14000,1,2012,2020],"C4 Cactus":[19000,2,2014,2020],"C5 Aircross":[32000,2,2018],"C5 X":[35000,1,2022],"Jumpy / SpaceTourer":[32000,2,2007],"Jumper":[35000,2,2006],"Ami":[8000,2,2020]}},
+  "Cupra":{r:2,m:{"Leon":[32000,2,2020],"Formentor":[36000,3,2020],"Ateca":[42000,1,2018],"Born":[40000,2,2021],"Tavascan":[50000,1,2024],"Terramar":[40000,2,2024]}},
+  "Dacia":{r:1,m:{"Sandero":[12000,3],"Logan":[11000,2],"Duster":[17000,3],"Jogger":[18000,2],"Spring":[17000,1],"Lodgy":[13000,2,2012,2022],"Dokker":[12000,2,2012,2021],"Bigster":[25000,2,2025]}},
+  "Daihatsu":{r:2,m:{"Cuore":[9000,2,2003,2012],"Sirion":[12000,2,2005,2013],"Materia":[13000,1,2006,2012],"Terios":[17000,2,2006,2013]}},
+  "Dodge":{r:3,m:{"Caliber":[18000,1,2006,2011],"Journey":[28000,1,2008,2011],"Challenger":[45000,1,2008,2023]}},
+  "DS":{r:3,m:{"DS 3 / DS 3 Crossback":[28000,2,2010],"DS 4":[32000,1,2011],"DS 5":[35000,1,2011,2018],"DS 7":[42000,1,2017],"DS 9":[55000,1,2021]}},
+  "Ferrari":{r:2,m:{"F430 / 458":[200000,1,2004,2015],"California / Portofino / Roma":[200000,1,2008],"488 / F8":[250000,1,2015],"812":[330000,1,2017],"SF90":[450000,1,2019],"296":[280000,1,2021],"Purosangue":[400000,1,2023]}},
+  "Fiat":{r:3,m:{"500":[15000,3],"Panda":[13000,2],"Tipo":[18000,1],"500X":[22000,1],"Multipla":[18000,1,1999,2010],"Doblo":[20000,2,2001],"Croma":[25000,1,2005,2010],"Punto / Grande Punto":[13000,2,2005,2018],"Sedici":[18000,1,2006,2014],"Ducato":[35000,2,2006],"Bravo":[18000,1,2007,2014],"Qubo":[14000,1,2008,2019],"Fiorino":[14000,1,2008],"Freemont":[28000,1,2011,2016],"500L":[19000,1,2012,2022],"Fullback":[30000,1,2016,2019],"Talento":[30000,1,2016,2020],"600":[25000,2,2023],"Grande Panda":[20000,2,2025]}},
+  "Fisker":{r:3,m:{"Ocean":[45000,1,2023,2024]}},
+  "Ford":{r:3,m:{"Ka / Ka+":[12000,2],"Fiesta":[17000,3],"Focus":[24000,2],"Puma":[25000,3],"EcoSport":[21000,1],"Kuga":[32000,2],"C-Max":[25000,1],"Mondeo":[32000,1,2000,2022],"Transit":[38000,2,2000],"Fusion":[14000,1,2002,2012],"Transit Connect / Tourneo Connect":[25000,2,2002],"S-Max":[35000,2,2006,2023],"Galaxy":[36000,1,2006,2023],"Ranger":[40000,2,2006],"B-Max":[16000,1,2012,2017],"Transit Custom / Tourneo Custom":[38000,2,2012],"Tourneo Courier / Transit Courier":[20000,2,2014],"Mustang":[55000,2,2015],"Edge":[45000,1,2016,2020],"Explorer":[55000,1,2019],"Mustang Mach-E":[55000,1,2020],"Capri":[45000,1,2024]}},
+  "Genesis":{r:3,m:{"G70":[45000,1,2021],"G80":[60000,1,2021],"GV60":[60000,1,2022],"GV70":[55000,1,2021],"GV80":[75000,1,2021]}},
+  "GWM / Ora":{r:3,m:{"Ora 03 (Funky Cat)":[32000,1,2022],"Wey 05":[45000,1,2023]}},
+  "Honda":{r:1,m:{"Jazz":[19000,3],"Civic":[26000,2],"HR-V":[27000,3],"CR-V":[36000,2],"Accord":[32000,1,2003,2015],"FR-V":[22000,1,2005,2009],"Insight":[22000,1,2009,2014],"CR-Z":[25000,1,2010,2013],"e":[35000,1,2020,2023],"ZR-V":[38000,2,2023],"e:Ny1":[45000,1,2023]}},
+  "Hyundai":{r:2,m:{"i10":[13500,3],"i20":[17500,3],"i30":[22000,2],"Bayon":[20000,2],"Kona":[25000,3],"Tucson":[32000,2],"Ioniq":[30000,1],"Atos":[9000,1,2000,2008],"Matrix":[14000,1,2001,2010],"Getz":[11000,2,2002,2011],"Santa Fe":[45000,2,2006],"H-1":[30000,1,2008,2020],"ix20":[16000,2,2010,2019],"ix35":[25000,2,2010,2015],"i40":[28000,1,2011,2019],"Ioniq 5":[48000,2,2021],"Staria":[45000,1,2021],"Ioniq 6":[52000,1,2022],"Inster":[25000,2,2024]}},
+  "Infiniti":{r:3,m:{"FX / QX70":[55000,1,2003,2017],"Q50":[42000,1,2013,2019],"Q30 / QX30":[32000,1,2015,2019]}},
+  "Isuzu":{r:2,m:{"D-Max":[35000,2,2012]}},
+  "Iveco":{r:2,m:{"Daily":[40000,2,2006]}},
+  "Jaguar":{r:3,m:{"S-Type":[45000,1,1999,2007],"X-Type":[32000,1,2001,2009],"XJ":[85000,1,2003,2019],"XF":[52000,1,2007],"F-Type":[75000,1,2013,2024],"XE":[42000,1,2015],"F-Pace":[60000,1,2016],"E-Pace":[45000,1,2017],"I-Pace":[80000,1,2018]}},
+  "Jeep":{r:2,m:{"Patriot":[25000,1,2007,2016],"Cherokee":[40000,1,2008,2021],"Compass":[36000,2,2007],"Grand Cherokee":[65000,1,2005],"Wrangler":[55000,2,2007],"Renegade":[28000,2,2014],"Avenger":[28000,2,2023]}},
+  "KGM / SsangYong":{r:3,m:{"Rexton":[45000,1,2001],"Korando":[30000,1,2010],"Tivoli":[22000,1,2015],"Musso":[35000,1,2018],"Torres":[38000,1,2023]}},
+  "Kia":{r:2,m:{"Picanto":[13000,3],"Rio":[16500,3],"Stonic":[20000,3],"Ceed":[22000,2],"Niro":[30000,2],"Sportage":[32000,2],"Carens":[24000,1,2006,2019],"Sorento":[45000,2,2006],"Soul":[22000,1,2009],"Venga":[16000,2,2010,2019],"Optima":[30000,1,2012,2020],"Stinger":[50000,1,2017,2023],"ProCeed":[32000,1,2019],"XCeed":[28000,2,2019],"EV6":[50000,2,2021],"EV9":[75000,1,2023],"EV3":[37000,2,2024]}},
+  "Lada":{r:3,m:{"Niva":[13000,1,1977],"Vesta":[14000,1,2015,2022]}},
+  "Lamborghini":{r:1,m:{"Gallardo":[180000,1,2003,2013],"Aventador":[400000,1,2011,2022],"Huracán":[230000,1,2014,2024],"Urus":[240000,1,2018],"Revuelto":[500000,1,2023]}},
+  "Lancia":{r:3,m:{"Ypsilon":[16000,2,2003],"Musa":[18000,1,2004,2012],"Delta":[24000,1,2008,2014]}},
+  "Land Rover":{r:2,m:{"Freelander":[32000,1,2006,2014],"Discovery":[65000,1,2004],"Discovery Sport":[45000,2,2014],"Defender":[65000,2,2020],"Range Rover":[120000,1,2002],"Range Rover Sport":[90000,2,2005],"Range Rover Evoque":[45000,2,2011],"Range Rover Velar":[65000,1,2017]}},
+  "Leapmotor":{r:3,m:{"T03":[18000,1,2024],"B10":[30000,1,2025],"C10":[37000,1,2024]}},
+  "Lexus":{r:1,m:{"IS":[42000,1,2005],"GS":[55000,1,2005,2019],"RX":[70000,2,2003],"LS":[100000,1,2006],"CT":[30000,1,2011,2022],"NX":[52000,2,2014],"RC":[55000,1,2014],"LC":[110000,1,2017],"UX":[38000,2,2018],"ES":[50000,1,2018],"RZ":[65000,1,2023],"LBX":[32000,2,2024]}},
+  "Ligier (sans permis)":{r:2,m:{"JS50 / Myli":[14000,2,2010]}},
+  "Lotus":{r:2,m:{"Elise":[45000,1,1996,2021],"Exige":[60000,1,2000,2021],"Evora":[90000,1,2009,2021],"Emira":[95000,1,2022],"Eletre":[110000,1,2023]}},
+  "Lynk & Co":{r:2,m:{"01":[45000,2,2021],"02":[40000,1,2025]}},
+  "Maserati":{r:3,m:{"Quattroporte":[110000,1,2003,2024],"GranTurismo / GranCabrio":[130000,1,2007],"Ghibli":[75000,1,2013,2024],"Levante":[85000,1,2016,2024],"MC20":[230000,1,2020],"Grecale":[75000,1,2022]}},
+  "Mazda":{r:2,m:{"Mazda2":[17500,3],"Mazda3":[24000,2],"CX-3":[22000,2],"CX-30":[28000,2],"CX-5":[34000,2],"Mazda6":[30000,2,2002],"RX-8":[32000,1,2003,2012],"Mazda5":[22000,1,2005,2015],"CX-7":[32000,1,2007,2012],"MX-5":[30000,3,1989],"MX-30":[36000,1,2020],"CX-60":[50000,1,2022],"CX-80":[55000,1,2024]}},
+  "McLaren":{r:2,m:{"570S / 600LT":[190000,1,2015,2021],"720S / 750S":[280000,1,2017],"GT":[200000,1,2019],"Artura":[230000,1,2021]}},
+  "Mercedes":{r:2,m:{"Classe A":[33000,2],"Classe B":[34000,1],"Classe C":[45000,2],"GLA":[40000,2],"Classe G":[130000,2,1990],"Classe E":[60000,2,2002],"SL":[110000,1,2002],"Classe V / Vito":[55000,2,2003],"SLK / SLC":[50000,1,2004,2020],"CLS":[70000,1,2004],"Classe S":[110000,1,2005],"GLE / Classe M":[75000,2,2005],"Classe R":[55000,1,2006,2013],"GLS / GL":[100000,1,2006],"Sprinter":[45000,2,2006],"Citan":[25000,1,2012],"CLA":[40000,2,2013],"AMG GT":[130000,1,2014],"GLC":[58000,2,2015],"Classe X":[45000,1,2017,2020],"EQC":[75000,1,2019,2023],"GLB":[45000,2,2019],"EQA":[50000,1,2021],"EQB":[55000,1,2021],"EQS":[120000,1,2021],"EQE":[80000,1,2022]}},
+  "MG":{r:3,m:{"ZS":[25000,2,2017],"HS":[32000,2,2019],"MG5":[35000,1,2020],"Marvel R":[45000,1,2021,2023],"MG4":[35000,2,2022],"MG3":[18000,2,2024],"Cyberster":[60000,1,2024],"S5":[35000,1,2025]}},
+  "Microcar (sans permis)":{r:1,m:{"M.Go / Dué":[12000,1,2008]}},
+  "Mini":{r:2,m:{"Mini 3/5 portes":[24000,3],"Countryman":[32000,2],"Clubman":[29000,1],"Cabrio":[29000,2,2004],"Coupé / Roadster":[27000,1,2011,2015],"Paceman":[28000,1,2012,2016],"Aceman":[35000,2,2024]}},
+  "Mitsubishi":{r:3,m:{"Colt":[14000,2,2004,2013],"Pajero":[45000,1,2000,2021],"Lancer":[20000,1,2007,2017],"Outlander":[38000,2,2006],"L200":[35000,2,2006],"i-MiEV":[30000,1,2010,2017],"ASX":[24000,2,2010],"Space Star":[14000,2,2013],"Eclipse Cross":[32000,1,2018]}},
+  "Nissan":{r:3,m:{"Micra":[16000,2],"Note":[17000,2],"Juke":[22000,2],"Qashqai":[29000,3],"Leaf":[34000,1],"Almera":[14000,1,2000,2006],"Primastar":[35000,1,2002],"Primera":[20000,1,2002,2008],"350Z / 370Z":[40000,1,2003,2020],"Murano":[45000,1,2005,2015],"Navara":[38000,2,2005],"X-Trail":[38000,2,2007],"GT-R":[110000,1,2007],"Pixo":[8000,1,2009,2013],"NV200 / e-NV200":[22000,1,2009],"Pulsar":[20000,1,2014,2018],"Ariya":[50000,1,2022],"Townstar":[24000,1,2022]}},
+  "Opel":{r:3,m:{"Karl":[11500,2],"Corsa":[17000,3],"Astra":[24000,2],"Crossland":[21000,2],"Mokka":[24000,2],"Grandland":[30000,1],"Zafira":[28000,1],"Agila":[10000,1,2000,2014],"Combo":[22000,2,2001],"Vivaro":[35000,2,2001],"Vectra":[24000,1,2002,2008],"Meriva":[18000,1,2003,2017],"Movano":[38000,1,2003],"Tigra":[17000,1,2004,2009],"Antara":[28000,1,2006,2015],"Insignia":[32000,1,2008,2022],"Ampera / Ampera-e":[40000,1,2012,2019],"Adam":[15000,2,2013,2019],"Cascada":[32000,1,2013,2019],"Rocks-e":[8000,1,2021],"Frontera":[25000,2,2024]}},
+  "Peugeot":{r:3,m:{"108":[12500,2],"208":[18000,3],"2008":[24000,3],"308":[25000,2],"3008":[32000,2],"5008":[36000,1],"Partner / Rifter":[24000,2],"206":[12000,2,1998,2012],"307":[18000,1,2001,2008],"807":[30000,1,2002,2014],"407":[25000,1,2004,2011],"107":[10000,2,2005,2014],"1007":[13000,1,2005,2009],"207":[14000,2,2006,2014],"Boxer":[35000,1,2006],"4007":[30000,1,2007,2012],"Expert / Traveller":[35000,2,2007],"Bipper":[13000,1,2008,2017],"RCZ":[30000,1,2010,2015],"iOn":[30000,1,2010,2020],"508":[35000,1,2011],"301":[14000,1,2012,2017],"4008":[28000,1,2012,2017],"408":[35000,1,2022]}},
+  "Polestar":{r:2,m:{"Polestar 2":[50000,2,2020],"Polestar 3":[80000,1,2024],"Polestar 4":[60000,1,2024]}},
+  "Porsche":{r:1,m:{"911":[120000,3,1997],"Boxster / 718 Boxster":[65000,2,1996],"Cayman / 718 Cayman":[68000,2,2005],"Cayenne":[90000,2,2002],"Panamera":[110000,1,2009],"Macan":[70000,3,2014],"Taycan":[100000,1,2019]}},
+  "Renault":{r:3,m:{"Twingo":[13000,2],"Clio":[18000,3],"Captur":[23000,3],"Mégane":[24000,2],"Kadjar":[28000,2],"Scénic":[28000,1],"Zoe":[30000,1],"Kangoo":[23000,2],"Laguna":[25000,1,2001,2015],"Espace":[40000,1,2002],"Trafic":[35000,2,2001],"Modus":[14000,1,2004,2012],"Koleos":[35000,1,2008],"Fluence":[20000,1,2010,2016],"Master":[38000,2,2010],"Wind":[18000,1,2010,2013],"Twizy":[8000,1,2012,2023],"Talisman":[32000,1,2015,2022],"Arkana":[30000,2,2021],"Express":[18000,1,2021],"Austral":[36000,2,2022],"Renault 5 E-Tech":[30000,3,2024],"Symbioz":[30000,2,2024],"Rafale":[45000,1,2024],"Renault 4 E-Tech":[32000,2,2025]}},
+  "Rolls-Royce":{r:2,m:{"Phantom":[450000,1,2003],"Ghost":[300000,1,2010],"Wraith / Dawn":[330000,1,2013,2023],"Cullinan":[380000,1,2018],"Spectre":[430000,1,2023]}},
+  "Saab":{r:3,m:{"9-3":[25000,1,2002,2014],"9-5":[35000,1,1997,2011]}},
+  "Seat":{r:2,m:{"Mii":[12000,3],"Ibiza":[17000,3],"Arona":[21000,3],"Leon":[23000,2],"Ateca":[28000,2],"Altea":[19000,1,2004,2015],"Toledo":[17000,1,2005,2019],"Exeo":[25000,1,2009,2013],"Alhambra":[32000,1,2010,2020],"Tarraco":[38000,1,2018]}},
+  "Skoda":{r:2,m:{"Citigo":[12000,3],"Fabia":[16500,3],"Scala":[21000,2],"Octavia":[26000,3],"Kamiq":[23000,3],"Karoq":[29000,2],"Kodiaq":[37000,2],"Superb":[36000,1],"Roomster":[16000,1,2006,2015],"Yeti":[24000,2,2009,2017],"Rapid":[18000,1,2012,2019],"Enyaq":[45000,2,2021],"Elroq":[35000,2,2025]}},
+  "Smart":{r:2,m:{"Fortwo":[14000,2,1998],"Forfour":[15000,2,2004],"#1":[40000,1,2023],"#3":[42000,1,2024]}},
+  "Subaru":{r:2,m:{"Forester":[35000,2,2002],"Outback":[40000,2,2003],"Legacy":[32000,1,2003,2014],"Impreza":[24000,1,2007],"XV / Crosstrek":[30000,2,2012],"BRZ":[35000,1,2012],"Levorg":[35000,1,2015],"Solterra":[55000,1,2022]}},
+  "Suzuki":{r:1,m:{"Celerio":[11500,2],"Swift":[16000,3],"Ignis":[15000,3],"Vitara":[23000,3],"S-Cross":[25000,2],"Grand Vitara":[24000,1,2005,2014],"SX4":[17000,1,2006,2014],"Jimny":[22000,3,1998],"Splash":[12000,2,2008,2014],"Alto":[9000,2,2009,2014],"Baleno":[15000,1,2016,2019],"Across":[55000,1,2020],"Swace":[30000,1,2020]}},
+  "Tesla":{r:2,m:{"Model 3":[45000,2],"Model Y":[50000,2],"Model S":[90000,1,2013],"Model X":[100000,1,2016]}},
+  "Toyota":{r:1,m:{"Aygo":[13000,3],"Aygo X":[17000,3],"Yaris":[18000,3],"Yaris Cross":[25000,3],"Auris":[22000,2],"Corolla":[28000,3],"C-HR":[30000,3],"RAV4":[38000,2],"Prius":[30000,2],"Avensis":[28000,1,2003,2018],"Land Cruiser":[60000,2,2003],"Corolla Verso":[22000,1,2004,2009],"Hilux":[38000,3,2005],"iQ":[14000,1,2009,2015],"Urban Cruiser":[17000,1,2009],"Verso":[25000,1,2009,2018],"Verso-S":[16000,1,2011,2015],"GT86 / GR86":[35000,2,2012],"Proace":[35000,2,2013],"Mirai":[65000,1,2015],"Camry":[45000,1,2019],"Supra":[65000,2,2019],"Proace City":[24000,2,2020],"Highlander":[55000,1,2021],"bZ4X":[48000,1,2022]}},
+  "Volkswagen":{r:2,m:{"up!":[13000,3],"Polo":[18000,3],"Golf":[26000,3],"T-Cross":[23000,3],"T-Roc":[28000,3],"Tiguan":[36000,2],"Touran":[30000,2],"Passat":[36000,1],"ID.3":[38000,1],"Lupo":[10000,1,1998,2005],"Beetle / Coccinelle":[22000,2,1998,2019],"Sharan":[35000,1,2000,2022],"Touareg":[65000,2,2002],"Transporter / Multivan / California":[45000,3,2003],"Caddy":[25000,3,2004],"Fox":[10000,1,2005,2011],"Golf Plus / Sportsvan":[24000,1,2005,2020],"Jetta":[25000,1,2005,2018],"Eos":[32000,1,2006,2015],"Crafter":[40000,2,2006],"Scirocco":[28000,2,2008,2017],"Amarok":[45000,2,2010],"Arteon":[45000,1,2017],"ID.4":[45000,2,2021],"ID.5":[50000,1,2021],"Taigo":[25000,2,2021],"ID. Buzz":[60000,2,2022],"ID.7":[55000,1,2023]}},
+  "Volvo":{r:2,m:{"V40":[29000,2],"XC40":[38000,2],"XC60":[50000,1],"V60":[42000,1],"S60":[40000,1,2000],"V70 / XC70":[40000,1,2000,2016],"XC90":[70000,2,2002],"S40 / V50":[25000,1,2004,2012],"C30":[24000,1,2006,2013],"S80":[45000,1,2006,2016],"S90 / V90":[55000,1,2016],"C40 / EC40":[55000,1,2021],"EX30":[37000,2,2023],"EX90":[100000,1,2024]}},
+  "Xpeng":{r:3,m:{"G6":[45000,1,2024],"G9":[60000,1,2024],"P7":[50000,1,2024]}},
+  "Zeekr":{r:3,m:{"001":[60000,1,2024],"X":[45000,1,2024],"7X":[55000,1,2025]}}
 };
 const ETATS=[["excellent","Excellent","Comme neuve, aucun défaut",1.06],["bon","Bon","Petites traces d'usage",1],["moyen","Moyen","Rayures, usure visible",0.9],["rafraichir","À rafraîchir","Gros défauts ou travaux",0.78]];
 function catMatch(marque,modele){
@@ -910,8 +964,13 @@ const MOTEURS={
 "Tesla|Model Y":{y:[2021],e:[["Propulsion","El",0.95],["Grande Autonomie","El",1.06],["Performance","El",1.15]]}
 };
 const FUEL={E:"Essence",D:"Diesel",H:"Hybride",El:"Électrique",G:"GPL"};
-function moteursDe(b,m){return MOTEURS[b+"|"+m]||null}
+const MOTEURS_GENERIQUES=[["Essence","E",1],["Diesel","D",1],["Hybride","H",1],["Hybride rechargeable","H",1.04],["Électrique","El",1],["GPL","G",1]];
+function moteursDe(b,m){if(MOTEURS[b+"|"+m])return MOTEURS[b+"|"+m];const c=CATALOGUE[b]&&CATALOGUE[b].m[m];if(!c)return null;return{y:[c[2]||1995].concat(c[3]?[c[3]]:[]),e:MOTEURS_GENERIQUES,gen:true}}
 function anneesDe(b,m){const yNow=new Date().getFullYear(),x=moteursDe(b,m),a=x?x.y[0]:1995,z=x&&x.y[1]?x.y[1]:yNow;const out=[];for(let y=z;y>=a;y--)out.push(y);return out}
+const MODEL_INDEX=[];
+function buildIndex(){if(MODEL_INDEX.length)return;const n=x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");for(const b of Object.keys(CATALOGUE))for(const m of Object.keys(CATALOGUE[b].m))MODEL_INDEX.push({b,m,k:n(b+" "+m),k2:n(m)})}
+function searchModels(q){buildIndex();const n=x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");const words=n(q).split(/\s+/).filter(Boolean);if(!words.length)return[];return MODEL_INDEX.filter(e=>words.every(w=>e.k.includes(w))).sort((a,b)=>(b.k2.startsWith(words[words.length-1])?1:0)-(a.k2.startsWith(words[words.length-1])?1:0)||a.k.localeCompare(b.k)).slice(0,12)}
+function modelSearchHtml(scope){return'<div class="msearch full"><input type="search" data-msearch="'+scope+'" placeholder="Rechercher un modèle (ex. golf, yaris, 3008, model 3)…" aria-label="Rechercher un modèle" autocomplete="off"><div class="mres" id="mres-'+scope+'"></div></div>'}
 
 /* ---------- simulateur ---------- */
 // Équipements : [libellé, effet sur le prix en %]. 0 = équipement de série, sans effet.
@@ -970,10 +1029,10 @@ function vSim(){
   // 1 véhicule
   const mot=s.brand&&s.brand!=="Autre"&&s.model?moteursDe(s.brand,s.model):null;
   const ans=s.brand&&s.brand!=="Autre"&&s.model?anneesDe(s.brand,s.model):Array.from({length:yNow-1994},(_,i)=>yNow-i);
-  h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+sel("brand","Marque",[...Object.keys(CATALOGUE),["Autre","Autre marque"]],"Choisir la marque")+
+  h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+modelSearchHtml("sim")+sel("brand","Marque",[...Object.keys(CATALOGUE),["Autre","Autre marque"]],"Choisir la marque")+
      (s.brand==="Autre"?'<label class="f">Marque et modèle<input data-simtxt="libre" value="'+esc(s.libre||"")+'" placeholder="ex. Lancia Ypsilon"></label><label class="f">Prix neuf approximatif (€)<input data-simtxt="prixNeuf" type="number" inputmode="decimal" value="'+esc(s.prixNeuf)+'" placeholder="ex. 16000"></label>'+sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]):
       sel("model","Modèle",s.brand?Object.keys(CATALOGUE[s.brand].m):[],s.brand?"Choisir le modèle":"Choisis d'abord la marque")+
-      sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],s.model?"Toutes motorisations (facultatif)":"Choisis d'abord le modèle"))+
+      sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,mot.gen?l:l+" · "+FUEL[f]]):[],s.model?"Toutes motorisations (facultatif)":"Choisis d'abord le modèle"))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<div class="f full yr"><span>Année</span><div class="yrrow"><span>de</span><input data-simyear="anneeMin" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMin+'" aria-label="Année de"><span>à</span><input data-simyear="anneeMax" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMax+'" aria-label="Année à"></div></div>'+
      '<div class="f full yr"><span>Kilométrage <b class="num" id="kmval" style="color:var(--ink);font-size:16px">'+kmLab(s)+'</b></span><div class="dual"><div class="dtrack"></div><div class="dfill" id="kmfill" style="left:'+(s.kmMin/3000)+'%;right:'+(100-s.kmMax/3000)+'%"></div><input type="range" min="0" max="300000" step="5000" value="'+s.kmMin+'" data-simkm="kmMin" aria-label="Kilométrage minimum"><input type="range" min="0" max="300000" step="5000" value="'+s.kmMax+'" data-simkm="kmMax" aria-label="Kilométrage maximum"></div></div>'+
@@ -1083,6 +1142,11 @@ async function estimate(v){
 function estErr(e){if(e&&e.code==="rate_limited")toast("Trop de demandes, réessaie dans une minute.");else if(e&&e.code==="not_granted")toast("Estimation par Claude non autorisée.");else toast("Estimation impossible pour le moment.")}
 
 document.addEventListener("click",async e=>{
+  const mp=e.target.closest("[data-mpick]");
+  if(mp){const sc=mp.dataset.mpick,b=mp.dataset.b,m=mp.dataset.m;
+    if(sc==="sim"&&S.sim){const s=S.sim;s.brand=b;s.model=m;s.moteur="";s.carburant="Essence";s.coef=1;s.result=null;const ys=anneesDe(b,m);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax))}
+    if(sc==="veh"){const v=curVeh(route().id);if(v&&!v.demo){v.marque=b;v.autreMarque=false;v.modele=m;v.moteur="";persistVehicle(v,true)}}
+    const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   const mo=e.target.closest("[data-month]");if(mo){const i=mo.dataset.month;S.period.m=String(S.period.m)===i?"":i;render();return}
   const fb=e.target.closest("[data-filter]");
   if(fb){S.garageFilter=fb.dataset.filter;if(location.hash!=="#garage"){e.preventDefault();location.hash="garage"}else render();return}
@@ -1132,6 +1196,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("input",e=>{
   const t=e.target,r=route();
   if(t.id==="search"){S.search=t.value;const pos=t.selectionStart;render();const s=$("#search");if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(_){}}return}
+  if(t.dataset.msearch){const box=$("#mres-"+t.dataset.msearch);if(!box)return;const res=searchModels(t.value);box.innerHTML=t.value.trim()?(res.length?res.map(e=>'<button type="button" data-mpick="'+t.dataset.msearch+'" data-b="'+esc(e.b)+'" data-m="'+esc(e.m)+'"><b>'+esc(e.b)+'</b> '+esc(e.m)+'</button>').join(""):'<div class="mnone">Aucun modèle trouvé. Choisis « Autre marque » pour l\'écrire toi-même.</div>'):"";return}
   if(t.hasAttribute&&t.hasAttribute("data-eqsearch")){const q=t.value.trim().toLowerCase();const list=t.closest(".ddlist");list.querySelectorAll("[data-eq]").forEach(el=>el.style.display=!q||el.dataset.eq.includes(q)?"":"none");list.querySelectorAll("[data-grp]").forEach(g=>{let n=g.nextElementSibling,any=false;while(n&&!n.hasAttribute("data-grp")){if(n.style.display!=="none")any=true;n=n.nextElementSibling}g.style.display=any?"":"none"});return}
   if(t.dataset.simfra&&S.sim){const k=t.dataset.simfra;if(S.sim.frais[k]!=null){S.sim.frais[k]=num(t.value);simRefresh()}return}
   if(t.dataset.simkm&&S.sim){const s=S.sim,k=t.dataset.simkm;let v=+t.value;if(k==="kmMin"&&v>s.kmMax){v=s.kmMax;t.value=v}if(k==="kmMax"&&v<s.kmMin){v=s.kmMin;t.value=v}s[k]=v;$("#kmval").textContent=kmLab(s);const f=$("#kmfill");if(f){f.style.left=(s.kmMin/3000)+"%";f.style.right=(100-s.kmMax/3000)+"%"}if(s.result&&simReady(s))s.result=estimerSim(s);updateSim();return}
