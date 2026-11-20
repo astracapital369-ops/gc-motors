@@ -107,12 +107,17 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .ckline input{width:18px!important;height:18px;padding:0!important;flex:none;accent-color:var(--accent)}
 .ckline{cursor:pointer;padding-top:0!important}
 .timeline{margin-top:14px;display:flex;flex-direction:column}
-.tl{display:flex;gap:12px;position:relative;padding-bottom:14px}
-.tl:not(:last-child)::before{content:"";position:absolute;left:5px;top:14px;bottom:0;width:2px;background:var(--line)}
-.tldot{width:12px;height:12px;border-radius:50%;background:var(--accent);margin-top:4px;flex:none}
-.tlbody{flex:1;min-width:0;font-size:14.5px}
-.tlhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tlhd .x{margin-left:auto}
+.tl{display:flex;gap:12px;position:relative;padding:0 0 12px}
+.tl:not(:last-child)::before{content:"";position:absolute;left:5px;top:22px;bottom:-14px;width:2px;background:var(--line)}
+.tldot{width:12px;height:12px;border-radius:50%;background:var(--accent);margin-top:14px;flex:none}.tl.st .tldot{margin-top:6px;background:var(--muted)}
+.tlbody{flex:1;min-width:0;font-size:14.5px;background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.tl.fut .tlbody{box-shadow:inset 3px 0 0 var(--accent)}.tl.done .tlbody{opacity:.7}.tl.st .tlbody{background:none;padding:2px 0}
+.tlmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:13px;color:var(--muted)}.tlmeta .avenir{margin-left:0}
+.tlbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.tlbadges .avenir{margin-left:0;padding:4px 10px;font-size:12px}
+.tltxt{margin-top:6px;color:var(--ink);line-height:1.35}
+.tlamt{margin-left:auto;font-weight:700;white-space:nowrap}
+.tlhd{display:flex;align-items:center;gap:8px}.tlhd b{min-width:0}
+.tlhd .x{margin-left:4px;background:none;border:none;color:var(--muted);font-size:20px;line-height:1;padding:0 2px;cursor:pointer}.tlhd b+.x{margin-left:auto}
 .car{cursor:pointer}
 .stwrap{position:relative;display:inline-flex;align-items:center;height:30px;border-radius:999px;flex:none;cursor:pointer}
 .stwrap .stsel{appearance:none;-webkit-appearance:none;background:transparent;border:none;color:inherit;height:30px;line-height:30px;padding:0 30px 0 13px;font-size:13px!important;font-weight:600;cursor:pointer;text-align:center;text-align-last:center;margin:0}
@@ -443,7 +448,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="7.4";
+const APP_VERSION="7.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -488,6 +493,11 @@ const aVenir=(e,v)=>{if(!e.date||e.type==="Statut")return"";if(e.fait)return'<bu
 const foldGet=()=>{try{return JSON.parse(localStorage.getItem("gc-fold2")||"[]")}catch(e){return[]}};
 const foldSet=a=>{try{localStorage.setItem("gc-fold2",JSON.stringify(a))}catch(e){}};
 function foldApply(){const f=foldGet();document.querySelectorAll("[data-fold]").forEach(b=>{const n=+b.dataset.fold,c=b.closest(".card");if(!c)return;const on=f.includes(n);c.classList.toggle("folded",on);b.setAttribute("aria-expanded",String(!on))});const a=document.querySelector("[data-foldall]");if(a)a.textContent=f.length>=document.querySelectorAll("[data-fold]").length?"Tout ouvrir":"Tout réduire"}
+function tlItem(e,v,edit){const fut=e.date&&e.date>=today()&&e.type!=="Statut"&&!e.fait;
+  return'<div class="tl'+(fut?" fut":"")+(e.fait?" done":"")+(e.type==="Statut"?" st":"")+'"><div class="tldot"></div><div class="tlbody">'+
+    '<div class="tlhd"><b>'+esc(e.type)+'</b>'+(e.montant?'<span class="tlamt num">'+eur(num(e.montant))+'</span>':'')+(edit?'<button class="x" data-act="jdel" data-id="'+e.id+'" aria-label="Supprimer cette entrée">×</button>':'')+'</div>'+
+    '<div class="tlmeta"><span class="tldate">'+fdate(e.date)+'</span></div>'+(()=>{const a=aVenir(e,v);return a?'<div class="tlbadges">'+a+'</div>':''})()+
+    (e.texte?'<div class="tltxt">'+esc(e.texte)+'</div>':'')+'</div></div>'}
 const moisAn=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})/);return m?m[2]+"/"+m[1]:""};
 const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
 const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -922,7 +932,7 @@ function vFiche(r){
      '<label class="f full">Ce qui s\'est passé<input id="j-texte" placeholder="ex. Disques et plaquettes changés au garage partenaire"></label>'+
      '<label class="f">Montant (€, compté dans les frais)<input id="j-montant" type="number" inputmode="decimal" placeholder="facultatif"></label></div>'+
      '<button class="btn primary" style="margin-top:10px" data-act="jadd">+ Ajouter au suivi</button></div>')+
-     (J.length?'<div class="timeline">'+J.map(e=>'<div class="tl"><div class="tldot"></div><div class="tlbody"><div class="tlhd"><b>'+esc(e.type)+'</b>'+aVenir(e,v)+'<span class="note">'+fdate(e.date)+(e.montant?' · <span class="num">'+eur(num(e.montant))+'</span>':'')+'</span>'+(v.demo?"":'<button class="x" data-act="jdel" data-id="'+e.id+'" aria-label="Supprimer cette entrée">×</button>')+'</div>'+(e.texte?'<div>'+esc(e.texte)+'</div>':'')+'</div></div>').join("")+'</div>':'<p class="note" style="margin-top:12px">Aucune entrée pour l\'instant. Chaque changement de statut s\'y ajoute aussi tout seul.</p>')+
+     (J.length?'<div class="timeline">'+J.map(e=>tlItem(e,v,!v.demo)).join("")+'</div>':'<p class="note" style="margin-top:12px">Aucune entrée pour l\'instant. Chaque changement de statut s\'y ajoute aussi tout seul.</p>')+
      '<div class="row total" style="display:flex;justify-content:space-between;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-weight:600"><span>Total des frais</span><span class="num" id="vfraistotal">'+eur(fraisTotal(v))+'</span></div></div>';
   h+='<div class="card">'+step(5,"Achat")+'<div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Vendeur</div>'+inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+
      '<h3 class="subh">Facture d\'achat</h3><div id="factlist">'+factList(v)+'</div>'+(v.demo?"":'<label class="btn small" for="factinput" style="margin-top:8px">+ Ajouter une facture (photo ou PDF)</label><input id="factinput" type="file" accept="image/*,application/pdf" multiple hidden>')+'</div>';
@@ -1165,7 +1175,7 @@ function vDetails(r){
   h+='<div class="card"><h2>Achat</h2><div class="kvs">'+kv(v.statut==="reperage"?"Prix demandé":"Prix d'achat",v.prixAchat?eur(num(v.prixAchat)):"")+kv("Date d'achat",v.dateAchat?fdate(v.dateAchat):"")+kv("Source",esc(v.source||""))+kv("Coût total",eur(c.cout))+'</div><div class="note" style="margin:12px 0 6px;font-weight:600;color:var(--ink)">Vendeur</div>'+person("vendeur","du vendeur",v.vendeur)+'</div>';
   // suivi
   const J=(v.journal||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.t||0)-(a.t||0));
-  h+='<div class="card"><h2>Suivi du véhicule</h2>'+(J.length?'<div class="timeline">'+J.map(e=>'<div class="tl"><div class="tldot"></div><div class="tlbody"><div class="tlhd"><b>'+esc(e.type)+'</b>'+aVenir(e,v)+'<span class="note">'+fdate(e.date)+(e.montant?' · '+eur(num(e.montant)):'')+'</span></div>'+(e.texte?'<div>'+esc(e.texte)+'</div>':'')+'</div></div>').join("")+'</div>':'<p class="note">Aucune entrée.</p>')+'</div>';
+  h+='<div class="card"><h2>Suivi du véhicule</h2>'+(J.length?'<div class="timeline">'+J.map(e=>tlItem(e,v,false)).join("")+'</div>':'<p class="note">Aucune entrée.</p>')+'</div>';
   // dossier
   h+='<div class="card"><h2>Dossier · '+p+' %</h2><div class="bar" style="margin-bottom:10px"><i style="width:'+p+'%"></i></div><div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<div class="ckro'+(v.check&&v.check[k]?" ok":"")+'">'+(v.check&&v.check[k]?"✓":"○")+' '+l+'</div>').join("")).join("")+'</div></div>';
   if(v.notes)h+='<div class="card"><h2>Notes</h2><p style="white-space:pre-wrap;margin:0">'+esc(v.notes)+'</p></div>';
