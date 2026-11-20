@@ -332,6 +332,7 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .alert.rpa{align-items:center}.alert.rpa a{flex:1;min-width:0;color:inherit;text-decoration:none}
 .rpck{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);flex:none;cursor:pointer}
 .vnum{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:2px 8px;border-radius:6px;margin-bottom:4px}
+.vnum.rpn{display:table;margin:0 0 4px;font-size:11px;padding:1px 7px}
 .subh{font-size:14px;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line);color:var(--ink)}
 .factl{display:flex;flex-direction:column;gap:6px}.fact{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:8px;padding:6px 8px}
 .factopen{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:none;border:none;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
@@ -461,7 +462,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="7.9";
+const APP_VERSION="8.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -837,7 +838,7 @@ function alertes(L){
   const rps=[];const td=today();L.forEach(v=>(v.journal||[]).forEach(r=>{if(!r.fait&&r.date&&r.date>=td&&r.type!=="Statut")rps.push({v,r})}));
   rps.sort((a,b)=>a.r.date.localeCompare(b.r.date)).forEach(({v,r})=>{const d=daysBetween(today(),r.date),n=esc(v.marque+" "+v.modele);
     const quand=d===0?"Aujourd'hui":d===1?"Demain":"Dans "+d+" jours";
-    out.push('<div class="alert rpa '+(d<=2?"bad":d<=7?"":"ok")+'"><a href="#v-'+v.id+'"><b>'+esc(r.type)+'</b>'+(r.texte?' : '+esc(r.texte):'')+' · '+n+'<small>'+quand+' · '+fdate(r.date)+(r.montant?' · '+eur(num(r.montant)):'')+'</small></a>'+(v.demo?'':'<label class="rpck" title="Marquer comme fait"><input type="checkbox" data-rfait="'+r.id+'" data-v="'+v.id+'"><span>Fait</span></label>')+'</div>')});
+    out.push('<div class="alert rpa '+(d<=2?"bad":d<=7?"":"ok")+'"><a href="#v-'+v.id+'">'+(v.num?'<span class="vnum rpn">'+vnum(v)+'</span>':'')+'<b>'+esc(r.type)+'</b>'+(r.texte?' : '+esc(r.texte):'')+' · '+n+'<small>'+quand+' · '+fdate(r.date)+(r.montant?' · '+eur(num(r.montant)):'')+'</small></a>'+(v.demo?'':'<label class="rpck" title="Marquer comme fait"><input type="checkbox" data-rfait="'+r.id+'" data-v="'+v.id+'"><span>Fait</span></label>')+'</div>')});
   L.forEach(v=>{
     const n=esc(v.marque+" "+v.modele),j=joursStock(v),link='href="#v-'+v.id+'"';
     if(EN_STOCK.includes(v.statut)&&j!=null&&j>seuil)out.push('<a class="alert bad" '+link+'><div><b>'+n+'</b> en stock depuis '+j+' jours<small>Revois le prix ou la présentation de l\'annonce.</small></div></a>');
@@ -2384,7 +2385,7 @@ function faitModal(v,r,undo){const ov=$("#overlay");
   ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="fmt"><div class="card fmodal">'+
     '<div class="fmico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
     '<h2 id="fmt">C\'est fait</h2>'+
-    '<div class="fminfo"><b>'+esc(r.type)+'</b>'+(r.texte?'<span>'+esc(r.texte)+'</span>':'')+'<small>'+esc(v.marque+" "+v.modele)+(r.montant?' · '+eur(num(r.montant)):'')+'</small></div>'+
+    '<div class="fminfo"><b>'+esc(r.type)+'</b>'+(r.texte?'<span>'+esc(r.texte)+'</span>':'')+'<small>'+(v.num?vnum(v)+' · ':'')+esc(v.marque+" "+v.modele)+(r.montant?' · '+eur(num(r.montant)):'')+'</small></div>'+
     '<p class="fmq">Ajouter la facture du garage maintenant ?</p>'+
     '<button class="btn primary fmbig" data-fm="add">Ajouter une facture</button>'+
     '<div class="fmrow"><button class="btn" data-fm="later">Plus tard</button><button class="btn" data-fm="undo">Annuler « fait »</button></div></div></div>';
