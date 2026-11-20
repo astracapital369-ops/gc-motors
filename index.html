@@ -166,6 +166,19 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .salecli a{color:var(--accent);text-decoration:none}
 .clihd{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .clinum{font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:999px}
+.bandes{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:8px;align-items:stretch}
+.bande{border-radius:12px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.bande small{font-size:12px;font-weight:600;letter-spacing:.02em}
+.bande b{font-family:var(--display);font-size:22px;line-height:1.05}
+.bande.b1{background:var(--surface-2);color:var(--muted)}
+.bande.b1 b{color:var(--ink)}
+.bande.b2{background:var(--accent);color:var(--accent-ink);box-shadow:0 6px 16px rgba(42,95,240,.28);padding:16px 8px}
+.bande.b2 b{font-size:28px}
+.bande.b3{background:var(--surface-2);color:var(--muted)}
+.bande.b3 b{color:var(--ink)}
+.bbar{height:6px;border-radius:3px;margin:12px 6px 0;background:linear-gradient(90deg,var(--line),var(--accent),var(--line))}
+.estlinks{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:12px;font-size:14px}
+.estlinks a{color:var(--accent);font-weight:600;text-decoration:none}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -390,7 +403,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="4.9";
+const APP_VERSION="5.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -772,10 +785,9 @@ function vFiche(r){
      (v.demo?"":'<div style="margin-top:8px"><button class="btn small" data-act="addfrais">+ Ajouter un frais</button></div>')+
      '<div class="row total" style="display:flex;justify-content:space-between;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-weight:600"><span>Total des frais</span><span class="num" id="vfraistotal">'+eur(fraisTotal(v))+'</span></div></div>';
   h+='<div class="card">'+step(5,"Achat")+'<div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Vendeur</div>'+inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div></div>';
-  h+='<div class="card">'+step(6,"Prix de vente conseillé")+''+(v.demo?estBlock(v.estim):'<div class="est num">'+[["bas","Bas"],["median","Médian"],["haut","Haut"]].map(([k,l])=>'<label class="f" style="text-align:left">'+l+' (€)<input data-estim="'+k+'" type="number" inputmode="decimal" value="'+esc(v.estim&&v.estim[k]||"")+'"></label>').join("")+'</div>')+
-     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+(sample&&!v.demo?'<button class="btn primary small" data-act="estimer"'+(S.estBusy?" disabled":"")+'>'+(S.estBusy?"Estimation en cours…":(v.estim?"Réestimer avec Claude":"Estimer avec Claude"))+'</button>':"")+
-     (!v.demo&&catMatch(v.marque,v.modele)&&catMatch(v.marque,v.modele).model?'<button class="btn primary small" data-act="autoest">Estimer automatiquement</button>':"")+'<a class="btn small" href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a class="btn small" href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
-     '<p class="note" style="margin-top:10px">'+(v.estim&&v.estim.commentaire?esc(v.estim.commentaire)+" ":"")+'Compare le même modèle, la même année et un kilométrage proche, puis note le prix médian.</p><div class="buybox" style="margin-top:14px"><small>Prix d\'achat maximum</small><div id="maxbox"></div></div></div>';
+  h+='<div class="card">'+step(6,"Prix de vente conseillé")+'<div id="estbox">'+bandesHtml(v)+'</div>'+
+     '<div class="estlinks"><span class="note">Comparer :</span><a href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
+     '<div class="buybox" style="margin-top:14px"><small>Prix d\'achat maximum</small><div id="maxbox"></div></div></div>';
   h+='<div class="card">'+step(7,"Vente")+'<div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+'<div class="f full"><div id="calcbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Acomptes reçus</div>'+'<div class="full">'+(v.acomptes||[]).map(a=>'<div class="acpt"><input type="date" data-acpt="'+a.id+'" data-k="date" value="'+esc(a.date||"")+'"'+dis+'><select data-acpt="'+a.id+'" data-k="mode"'+dis+'>'+["Virement bancaire","Espèces","Bancontact","Acompte"].map(m=>'<option'+(m===a.mode?" selected":"")+'>'+m+'</option>').join("")+'</select><input class="num" type="number" inputmode="decimal" placeholder="€" data-acpt="'+a.id+'" data-k="montant" value="'+esc(a.montant??"")+'"'+dis+'>'+(v.demo?"":'<button class="x" data-act="delacpt" data-id="'+a.id+'" aria-label="Supprimer cet acompte">×</button>')+'</div>').join("")+(v.demo?"":'<button class="btn small" data-act="addacpt">+ Ajouter un acompte</button>')+'</div>'+inp("payerAvant","Payer avant le","date")+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Documents remis à la livraison</div><div class="full bdocs">'+BDC_DOCS.map(d=>'<label class="ckline"><input type="checkbox" data-bdoc="'+esc(d)+'"'+((v.bdcDocs||["Certificat d\'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass"]).includes(d)?" checked":"")+dis+'><span>'+esc(d)+'</span></label>').join("")+'</div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Client'+(v.clientNum?' · n° '+esc(v.clientNum):'')+'</div>'+inp("clientPrenom","Prénom")+inp("clientNom","Nom")+inp("clientTel","Téléphone","tel",{ph:"+32 …"})+inp("clientEmail","E-mail","email")+inp("clientAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+(v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+'</div>';
   const J=(v.journal||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.t||0)-(a.t||0));
   h+='<div class="card">'+step(8,"Suivi du véhicule")+
@@ -1023,12 +1035,21 @@ function vDetails(r){
 function detPhotos(v){const list=photoCache[v.id]||[];if(v.demo||!list.length)return'<div class="dcover">'+(v.cover?'<img src="'+v.cover+'" alt="">':'<span class="note">Aucune photo. '+(v.demo?"":'<a href="#v-'+v.id+'">Ajouter des photos</a>')+'</span>')+'</div>';
   return'<button class="dcover" data-act="viewph" data-i="0" aria-label="Agrandir la photo"><img src="'+list[0].full+'" alt=""></button>'+(list.length>1?'<div class="dthumbs">'+list.map((ph,i)=>'<button class="ph" data-act="viewph" data-i="'+i+'"><img src="'+ph.thumb+'" alt=""></button>').join("")+'</div>':"")}
 
+function estimAuto(v){const m=catMatch(v.marque,v.modele);if(!m||!m.model||!num(v.annee))return null;const mo=moteursDe(m.brand,m.model),e=mo&&v.moteur&&mo.e.find(x=>x[0]===v.moteur);
+  const r=estimer({brand:m.brand,model:m.model,annee:v.annee,km:num(v.km)||Math.max(1,new Date().getFullYear()-num(v.annee))*15000,carburant:v.carburant,coef:e?e[2]:1,boite:v.boite,etat:v.etat||"bon",options:v.options||[],entretien:v.entretien!==false,proprios:v.proprios||2});
+  return r?{bas:r.bas,median:r.median,haut:r.haut,delai:r.delai}:null}
+function syncEstim(v){if(v.demo)return v.estim;const r=estimAuto(v);if(r){if(!v.estim||v.estim.bas!==r.bas||v.estim.median!==r.median||v.estim.haut!==r.haut){v.estim={...r,date:today(),auto:true};persistVehicle(v)}}return v.estim}
+function bandesHtml(v){const e=syncEstim(v);
+  if(!e||!e.median)return'<p class="note">Choisis la marque, le modèle et l\'année : l\'estimation apparaîtra ici automatiquement.</p>';
+  return'<div class="bandes num"><div class="bande b1"><small>Vente rapide</small><b>'+eur(e.bas)+'</b></div><div class="bande b2"><small>Prix conseillé</small><b>'+eur(e.median)+'</b></div><div class="bande b3"><small>Prix haut</small><b>'+eur(e.haut)+'</b></div></div>'+
+    '<div class="bbar"><i></i></div>'+(e.delai?'<p class="note" style="margin-top:8px;text-align:center">Délai de vente estimé : '+esc(e.delai)+' jours</p>':'')}
 function estBlock(e){if(!e||!e.median)return'<p class="note">Aucune estimation pour l\'instant.</p>';return'<div class="est num"><div><small>Bas</small><b>'+eur(e.bas)+'</b></div><div><small>Médian</small><b>'+eur(e.median)+'</b></div><div><small>Haut</small><b>'+eur(e.haut)+'</b></div></div>'+(e.delai?'<p class="note" style="margin-top:8px">Délai de vente estimé : '+esc(e.delai)+' jours.</p>':"")}
 function slug(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim().split(/\s+/)[0].replace(/[^a-z0-9-]/g,"")}
 function asUrl(v){const y=num(v.annee);let u="https://www.autoscout24.be/fr/lst/"+encodeURIComponent(slug(v.marque))+"/"+encodeURIComponent(slug(v.modele));if(y)u+="?fregfrom="+(y-1)+"&fregto="+(y+1);return u}
 function dmUrl(v){return"https://www.2ememain.be/q/"+encodeURIComponent((v.marque+" "+v.modele).trim())+"/"}
 function updateCalc(){
   const id=route().id,v=curVeh(id),box=$("#calcbox");if(!v||!box)return;
+  const eb=$("#estbox");if(eb)eb.innerHTML=bandesHtml(v);
   const ab=$("#achatbox");if(ab)ab.innerHTML=row("Prix d'achat",eur(num(v.prixAchat)))+row("Total des frais",eur(fraisTotal(v)))+'<div class="row total"><span>Coût total du véhicule</span><span class="num">'+eur(num(v.prixAchat)+fraisTotal(v))+'</span></div>';
   const c=calc(v);
   let h='<div class="calc">';
