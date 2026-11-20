@@ -331,6 +331,7 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .alert small{color:var(--muted);display:block}
 .alert.rpa{align-items:center}.alert.rpa a{flex:1;min-width:0;color:inherit;text-decoration:none}
 .rpck{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);flex:none;cursor:pointer}
+.vnum{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:2px 8px;border-radius:6px;margin-bottom:4px}
 .subh{font-size:14px;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line);color:var(--ink)}
 .factl{display:flex;flex-direction:column;gap:6px}.fact{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:8px;padding:6px 8px}
 .factopen{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:none;border:none;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
@@ -460,7 +461,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="7.8";
+const APP_VERSION="7.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -510,6 +511,8 @@ function tlItem(e,v,edit){const fut=e.date&&e.date>=today()&&e.type!=="Statut"&&
     '<div class="tlhd"><b>'+esc(e.type)+'</b>'+(e.montant?'<span class="tlamt num">'+eur(num(e.montant))+'</span>':'')+(edit?'<button class="x" data-act="jdel" data-id="'+e.id+'" aria-label="Supprimer cette entrée">×</button>':'')+'</div>'+
     '<div class="tlmeta"><span class="tldate">'+fdate(e.date)+'</span></div>'+(()=>{const a=aVenir(e,v);return a?'<div class="tlbadges">'+a+'</div>':''})()+
     (e.texte?'<div class="tltxt">'+esc(e.texte)+'</div>':'')+(e.type==="Statut"?'':'<div class="jfs" data-jf="'+e.id+'" data-edit="'+(edit?1:0)+'">'+jFacts(v,e,edit)+'</div>')+'</div></div>'}
+const vnum=v=>v&&v.num?"#"+String(v.num).padStart(4,"0"):"";
+function numeroter(){const L=S.vehicles.filter(v=>!v.demo);let max=L.reduce((m,v)=>Math.max(m,num(v.num)),0);const sans=L.filter(v=>!num(v.num)).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)||(a.dateAchat||"").localeCompare(b.dateAchat||""));sans.forEach(v=>{v.num=++max;persistVehicle(v,true)})}
 const moisAn=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})/);return m?m[2]+"/"+m[1]:""};
 const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
 const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -551,7 +554,7 @@ const showingDemo=()=>S.loaded&&!S.vehicles.length&&list().length>0;
 
 /* ---------- stockage ---------- */
 const LS="negoce-auto-v1";
-function lsLoad(){try{const d=JSON.parse(localStorage.getItem(LS)||"{}");S.vehicles=(d.vehicles||[]).map(v=>(v.statut==="reperage"||!STATUTS.some(x=>x.k===v.statut))?{...v,statut:"achete"}:v);S.settings={...DEF_SETTINGS,...(d.settings||{})}}catch(e){}}
+function lsLoad(){setTimeout(()=>{if(S.mode==='local')numeroter()},0);try{const d=JSON.parse(localStorage.getItem(LS)||"{}");S.vehicles=(d.vehicles||[]).map(v=>(v.statut==="reperage"||!STATUTS.some(x=>x.k===v.statut))?{...v,statut:"achete"}:v);S.settings={...DEF_SETTINGS,...(d.settings||{})}}catch(e){}}
 function lsSave(){try{localStorage.setItem(LS,JSON.stringify({vehicles:S.vehicles,settings:S.settings}))}catch(e){}}
 function clean(o){return JSON.parse(JSON.stringify(o))}
 function persistVehicle(v,now){
@@ -716,7 +719,7 @@ async function boot(){
       Object.entries(PEND.veh).forEach(([id,p])=>{if(!merged.some(x=>x.id===id)&&!PEND.del[id]){const loc=S.vehicles.find(x=>x.id===id);merged.push(loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id})}});
       const nochange=S.loaded&&merged.length===S.vehicles.length&&merged.every(m=>{const o=S.vehicles.find(x=>x.id===m.id);return o&&(o===m||o.updatedAt===m.updatedAt)});
       if(nochange)return;
-      S.vehicles=merged;
+      S.vehicles=merged;setTimeout(numeroter,0);
       S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={};if(v.frais.length&&!v.demo&&migrateFrais(v))setTimeout(()=>persistVehicle(v,true),0);if(v.statut==='reperage'||!STATUTS.some(x=>x.k===v.statut))v.statut='achete'});
       S.loaded=true;if(!editing())render();
     },e=>{clearTimeout(timer);S.loaded=true;S.mode="db-error";render()}));
@@ -876,7 +879,7 @@ function shortE(n){return Math.abs(n)>=1000?(n/1000).toLocaleString("fr-BE",{max
 function vGarage(){
   const L=list(),f=S.garageFilter,q=S.search.toLowerCase();
   let items=L.filter(v=>f==="tous"||(f==="stock"?EN_STOCK.includes(v.statut):v.statut===f));
-  if(q)items=items.filter(v=>(v.marque+" "+v.modele+" "+(v.annee||"")).toLowerCase().includes(q));
+  if(q)items=items.filter(v=>(v.marque+" "+v.modele+" "+(v.annee||"")+" "+vnum(v)+" "+(v.num||"")).toLowerCase().includes(q));
   const order={en_vente:0,preparation:1,achete:2,reperage:3,vendu:4};
   items.sort((a,b)=>(order[a.statut]-order[b.statut])||((b.dateAchat||"").localeCompare(a.dateAchat||"")));
   const chips=[["stock","Non vendus"],["achete","En stock"],["preparation","En réparation"],["en_vente","En vente"],["vendu","Vendus"],["tous","Tous"]];
@@ -903,7 +906,7 @@ function carCard(v){
   const c=calc(v),j=joursStock(v),p=progress(v);
   const third=v.statut==="vendu"?["Vendu",eur(v.prixVente)]:["Prix affiché",v.prixAffiche?eur(v.prixAffiche):(v.estim&&v.estim.median?"≈ "+eur(v.estim.median):"—")];
   const carIco='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16v-3l2-5h14l2 5v3M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6.5 13h.01M17.5 13h.01M5 8l1.5-3h11L19 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  return'<div class="car" role="link" tabindex="0" data-open="'+v.id+'"><div class="cover" data-cover="'+v.id+'">'+coverHtml(v,carIco)+'</div><div class="hd"><div><div class="name">'+esc(v.marque)+' '+esc(v.modele)+'</div><div class="meta num">'+esc(v.annee||"—")+' · '+kmFmt(v.km)+' · '+esc(v.carburant||"")+'</div></div>'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+'</div>'+
+  return'<div class="car" role="link" tabindex="0" data-open="'+v.id+'"><div class="cover" data-cover="'+v.id+'">'+coverHtml(v,carIco)+'</div><div class="hd"><div>'+(v.num?'<span class="vnum">'+vnum(v)+'</span>':'')+'<div class="name">'+esc(v.marque)+' '+esc(v.modele)+'</div><div class="meta num">'+esc(v.annee||"—")+' · '+kmFmt(v.km)+' · '+esc(v.carburant||"")+'</div></div>'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+'</div>'+
   (v.demo?'<span class="demo-tag">Exemple</span>':"")+
   '<div class="figs num"><div>'+(v.statut==="reperage"?"Prix demandé":"Achat + frais")+'<b>'+eur(v.statut==="reperage"?c.achat:c.cout)+'</b></div><div>'+third[0]+'<b>'+third[1]+'</b></div><div>Marge nette<b class="'+(c.net==null?"":c.net<0?"neg":"pos")+'">'+(c.net==null?"—":eur(c.net))+'</b></div></div>'+
   '<div class="meta" style="display:flex;justify-content:space-between"><span>'+(j!=null?(v.statut==="vendu"?"Vendue en "+j+" j":"En stock depuis "+j+" j"):"Pas encore achetée")+'</span><span>Dossier '+p+' %</span></div><div class="bar"><i style="width:'+p+'%"></i></div>'+'<div class="cacts"><a class="btn small" href="#d-'+v.id+'">Détails du véhicule</a>'+(v.demo?'<button class="btn small danger" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<a class="btn small" href="#v-'+v.id+'">Modifier</a>')+'</div></div>';
@@ -917,7 +920,7 @@ function vFiche(r){
   const dis=v.demo?" disabled":"";
   const fb={vendeurNom:v.vendeur,clientNom:v.acheteur};const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(t==="month"?String(v[k]||"").slice(0,7):(v[k]??fb[k]??""))+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
   const sel=(k,l,opts)=>'<label class="f">'+l+'<select id="f-'+k+'" data-field="'+k+'"'+dis+'>'+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(v[k])===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
-  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span><button class="btn small" data-foldall="1">'+(foldGet().length>=9?"Tout ouvrir":"Tout réduire")+'</button>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
+  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a>'+(v.num?'<span class="vnum">'+vnum(v)+'</span>':'')+'<h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span><button class="btn small" data-foldall="1">'+(foldGet().length>=9?"Tout ouvrir":"Tout réduire")+'</button>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
   h+='<div class="ficheone">';
   const vb=CATALOGUE[v.marque]?v.marque:((v.marque||v.autreMarque)?"__autre":"");
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
@@ -996,7 +999,7 @@ async function fichePdf(v){
   // caractéristiques (mêmes champs que le bon de commande + état)
   sec("Caractéristiques du véhicule");
   const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
-  const left=[["Marque",v.marque],["Modèle",v.modele],["Motorisation",v.moteur],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
+  const left=[...(v.num?[["N° véhicule",vnum(v)]]:[]),["Marque",v.marque],["Modèle",v.modele],["Motorisation",v.moteur],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
   const right=[["Capacité cyl.",v.cylindree?fmtNum(num(v.cylindree)).replace(",00","")+" cm3":""],["Puissance",v.puissance?v.puissance+" kW ("+Math.round(num(v.puissance)*1.35962)+" ch)":""],["Carburant",v.carburant],["Boîte",v.boite],["Euronorm",v.euronorm],["État général",etat],["Carnet d'entretien",v.entretien===false?"Incomplet":"Complet"],["Propriétaires",v.proprios?(v.proprios>=3?"3 et plus":String(v.proprios)):""]];
   const rows=Math.max(left.length,right.length);need(rows*5.6+4);
   doc.setFontSize(9.5);const colW=pw/2;
@@ -1103,7 +1106,7 @@ async function bonCommandePdf(v){
   if(v.clientNum){row2("Numéro client",v.clientNum,M,y);y+=4.5}row2("Portable",v.clientTel,M,y);y+=4.5;row2("Email",v.clientEmail,M,y);y+=8;
   // véhicule
   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("Voiture d'occasion",M,y);doc.line(M,y+2,R,y+2);y+=8;
-  const left=[["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
+  const left=[...(v.num?[["N° véhicule",vnum(v)]]:[]),["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
   const right=[["Capacité cyl.",v.cylindree?fmtNum(num(v.cylindree)).replace(",00","")+" cm3":""],["Puissance (kW)",v.puissance],["Carburant",v.carburant],["Boîte",v.boite],["Euronorm",v.euronorm]];
   const y0=y;left.forEach((p,i)=>{row2(p[0],doc.splitTextToSize(T(p[1]||""),62)[0],M,y0+i*4.8)});right.forEach((p,i)=>row2(p[0],p[1],118,y0+i*4.8,27));
   y=y0+left.length*4.8+5;
@@ -1168,7 +1171,7 @@ function vDetails(r){
     if(!n&&!tel&&!em&&!ad)return'<p class="note">Aucune coordonnée '+label+'.</p>';
     return'<div class="contact"><b>'+esc(n||"—")+'</b>'+(tel?'<a href="tel:'+esc(tel.replace(/\s/g,""))+'">'+esc(tel)+'</a>':"")+(em?'<a href="mailto:'+esc(em)+'">'+esc(em)+'</a>':"")+(ad?'<span>'+esc(ad)+'</span>':"")+'</div>'};
   const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
-  let h='<div class="top"><div><a href="#garage" class="note">← Garage</a><h1>'+esc(v.marque||"Voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+[v.annee,v.km?kmFmt(v.km):"",v.moteur||v.carburant].filter(Boolean).map(esc).join(" · ")+'</p></div>'+
+  let h='<div class="top"><div><a href="#garage" class="note">← Garage</a>'+(v.num?'<span class="vnum">'+vnum(v)+'</span>':'')+'<h1>'+esc(v.marque||"Voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+[v.annee,v.km?kmFmt(v.km):"",v.moteur||v.carburant].filter(Boolean).map(esc).join(" · ")+'</p></div>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+
     (v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<a class="btn primary small" href="#v-'+v.id+'">Modifier</a>')+'<button class="btn small" data-act="pdf">PDF détails du véhicule</button><button class="btn small" data-act="bdc">Bon de commande</button></div></div>';
   h+='<div class="ficheone">';
@@ -2171,7 +2174,7 @@ function vVentes(){
   if(!vendus.length)return h+'<div class="card empty">Aucune vente pour l\'instant.</div>';
   const T={achat:0,frais:0,vente:0,tva:0,net:0};
   const rows=vendus.map(v=>{const c=calc(v);T.achat+=c.achat;T.frais+=c.frais;T.vente+=c.ref||0;T.tva+=c.tva||0;T.net+=c.net||0;
-    return'<tr><td><a href="#v-'+v.id+'">'+esc(v.marque+" "+v.modele)+'</a>'+(v.demo?' <span class="demo-tag">Exemple</span>':"")+'</td><td>'+esc([v.clientPrenom,v.clientNom||v.acheteur].filter(Boolean).join(" ")||"—")+(v.clientNum?' <span class="note">n° '+esc(v.clientNum)+'</span>':'')+'</td><td>'+fdate(v.dateVente)+'</td><td class="num">'+eur(c.achat)+'</td><td class="num">'+eur(c.frais)+'</td><td class="num">'+eur(c.ref)+'</td><td class="num">'+eur(c.tva)+'</td><td class="num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</td><td class="num">'+(joursStock(v)??"—")+' j</td></tr>'}).join("");
+    return'<tr><td>'+(v.num?'<span class="vnum" style="margin:0 6px 0 0">'+vnum(v)+'</span>':'')+'<a href="#v-'+v.id+'">'+esc(v.marque+" "+v.modele)+'</a>'+(v.demo?' <span class="demo-tag">Exemple</span>':"")+'</td><td>'+esc([v.clientPrenom,v.clientNom||v.acheteur].filter(Boolean).join(" ")||"—")+(v.clientNum?' <span class="note">n° '+esc(v.clientNum)+'</span>':'')+'</td><td>'+fdate(v.dateVente)+'</td><td class="num">'+eur(c.achat)+'</td><td class="num">'+eur(c.frais)+'</td><td class="num">'+eur(c.ref)+'</td><td class="num">'+eur(c.tva)+'</td><td class="num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</td><td class="num">'+(joursStock(v)??"—")+' j</td></tr>'}).join("");
   h+='<div class="card"><div class="tablewrap"><table class="data"><thead><tr><th>Voiture</th><th>Client</th><th>Vendue le</th><th>Achat</th><th>Frais</th><th>Vente</th><th>TVA marge</th><th>Net</th><th>Stock</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>Total</td><td></td><td></td><td class="num">'+eur(T.achat)+'</td><td class="num">'+eur(T.frais)+'</td><td class="num">'+eur(T.vente)+'</td><td class="num">'+eur(T.tva)+'</td><td class="num">'+eur(T.net)+'</td><td></td></tr></tfoot></table></div></div>';
   const cliName=v=>[v.clientPrenom,v.clientNom||v.acheteur].filter(Boolean).join(" ");
   h+='<h2 style="margin-top:6px">Détail des ventes et clients</h2><div class="sales">'+vendus.map(v=>{const c=calc(v),n=cliName(v),tel=v.clientTel,em=v.clientEmail;
@@ -2212,7 +2215,7 @@ function vReglages(){
 /* ---------- actions ---------- */
 function addVehicle(pre){
   const v={id:newId(),marque:"",modele:"",annee:"",km:"",carburant:"Essence",boite:"Manuelle",statut:"achete",prixAchat:"",dateAchat:"",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],createdAt:Date.now(),...(pre||{})};
-  migrateFrais(v);S.vehicles.push(v);persistVehicle(v,true);location.hash="v-"+v.id;
+  migrateFrais(v);v.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(v);persistVehicle(v,true);location.hash="v-"+v.id;
 }
 function modal(title,text,okLabel,onOk){
   $("#overlay").innerHTML='<div class="modal" role="dialog" aria-modal="true"><div class="card"><h2>'+esc(title)+'</h2><p>'+esc(text)+'</p><div class="acts"><button class="btn" data-m="no">Annuler</button><button class="btn danger" data-m="ok">'+esc(okLabel)+'</button></div></div></div>';
@@ -2259,7 +2262,7 @@ document.addEventListener("click",async e=>{
   if(act==="deldemo"){const id=b.dataset.id;modal("Supprimer cet exemple ?","Cette voiture d'exemple disparaîtra de ton garage et de tes statistiques.","Supprimer",()=>{S.settings.hiddenDemos=[...new Set([...(S.settings.hiddenDemos||[]),id])];persistSettings();toast("Exemple supprimé.");location.hash="garage";render()});return}
   if(act==="showdemos"){S.settings.hiddenDemos=[];persistSettings();toast("Les exemples sont de nouveau affichés (si ton garage est vide).");render();return}
   if(act==="demoimport"){const cur=b.dataset.id;let target=null;
-    for(const d of demoData().filter(x=>!(S.settings.hiddenDemos||[]).includes(x.id))){const nv=JSON.parse(JSON.stringify(d));delete nv.demo;const oid=nv.id;nv.id=newId();nv.createdAt=Date.now();nv.options=nv.options||[];nv.journal=[];S.vehicles.push(nv);persistVehicle(nv,true);if(oid===cur)target=nv.id}
+    for(const d of demoData().filter(x=>!(S.settings.hiddenDemos||[]).includes(x.id))){const nv=JSON.parse(JSON.stringify(d));delete nv.demo;nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;const oid=nv.id;nv.id=newId();nv.createdAt=Date.now();nv.options=nv.options||[];nv.journal=[];S.vehicles.push(nv);persistVehicle(nv,true);if(oid===cur)target=nv.id}
     toast("Les exemples sont maintenant dans ton garage : tu peux les modifier ou les supprimer.");location.hash="v-"+(target||S.vehicles[S.vehicles.length-1].id);return}
   if(act==="add")addVehicle();
   else if(act==="del")modal("Supprimer cette voiture ?","Elle sera retirée de ton garage et de tes statistiques. Cette action est définitive.","Supprimer",()=>{removeVehicle(b.dataset.id);location.hash="garage"});
