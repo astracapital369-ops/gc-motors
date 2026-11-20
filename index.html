@@ -135,7 +135,9 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .card.dphotos{padding:0;overflow:hidden}
 .dcover{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:16/10;background:var(--surface-2);border:none;padding:0;cursor:zoom-in}
 .dcover img{width:100%;height:100%;object-fit:cover;display:block}
-.dthumbs{display:flex;gap:6px;padding:8px;overflow-x:auto}
+.dcar{position:relative}.dtrack{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}.dtrack::-webkit-scrollbar{display:none}.dtrack .dcover{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always}
+.dcount{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 8px;border-radius:10px;pointer-events:none}
+.dthumbs{display:flex;gap:6px;padding:8px;overflow-x:auto}.dthumbs .ph.on{outline:2px solid var(--accent);outline-offset:-2px}
 .dthumbs .ph{width:72px;flex:none}
 .ckro{font-size:14px;color:var(--muted);padding:3px 0}
 .ckro.ok{color:var(--good)}
@@ -249,10 +251,14 @@ input[type=range]{width:100%;accent-color:var(--accent);padding:0!important;bord
 .lb button{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:14px}
 .lb button.del{background:rgba(255,90,80,.25)}
 .lb .lbbar{position:relative;z-index:2;padding-bottom:8px}
-.lb .img{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:pan-y}
+.lb{position:fixed}.lbtrack{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior:contain}.lbtrack::-webkit-scrollbar{display:none}
+.lbslide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;min-width:0}
+.lbslide img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.lbdots{display:flex;justify-content:center;gap:6px;padding-top:8px}.lbdots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3)}.lbdots i.on{background:#fff}
 .lb .img img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
-.lb .nav{position:absolute;z-index:2;top:50%;transform:translateY(-50%);font-size:26px;padding:10px 14px}
-.lb .prev{left:4px}.lb .next{right:4px}
+.lb .nav{position:absolute;z-index:2;top:50%;display:none;transform:translateY(-50%);font-size:26px;padding:10px 14px}
+.lb .prev{left:14px}.lb .next{right:14px}
+@media (hover:hover){.lb .nav{display:block}}
 .login{max-width:420px;margin:6vh auto 0;display:flex;flex-direction:column;gap:16px}
 .login .logo-big svg{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto}
 .login h1{text-align:center}
@@ -416,7 +422,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="6.4";
+const APP_VERSION="6.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -533,15 +539,18 @@ async function deletePhoto(id){
 }
 function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{res(i);setTimeout(()=>URL.revokeObjectURL(u),1000)};i.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("image"))};i.src=u})}
 function shrink(img,max,q){const r=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*r),h=Math.round(img.naturalHeight*r);const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);let out=c.toDataURL("image/jpeg",q);while(out.length>850000&&q>0.4){q-=0.1;out=c.toDataURL("image/jpeg",q)}return out}
+function hdFrom(src,max,q){return new Promise(res=>{const i=new Image();i.onload=()=>{try{res(shrink(i,max,q))}catch(e){res(null)}};i.onerror=()=>res(null);i.src=src})}
+async function setCover(v,p){v.cover=(await hdFrom(p.full,1000,0.82))||p.thumb;v.coverId=p.id;v.coverHd=1;persistVehicle(v,true)}
+async function upgradeCover(v){if(v.demo||v.coverHd||!v.coverId)return;const list=photoCache[v.id]||(photoCache[v.id]=await photosFor(v.id).catch(()=>[]));const p=list.find(x=>x.id===v.coverId)||list[0];if(!p)return;await setCover(v,p);if(route().view==="garage"||route().view==="tableau")render()}
 async function addPhotos(v,files){
   if(!files||!files.length)return;
   const list=photoCache[v.id]||(photoCache[v.id]=await photosFor(v.id));
   toast(files.length>1?"Ajout de "+files.length+" photos…":"Ajout de la photo…");
   let ok=0;
   for(const f of files){
-    try{const img=await loadImg(f);const p={id:newId(),vehicleId:v.id,full:shrink(img,1400,0.78),thumb:shrink(img,360,0.72),createdAt:Date.now()};
+    try{const img=await loadImg(f);const p={id:newId(),vehicleId:v.id,full:shrink(img,1920,0.85),thumb:shrink(img,480,0.8),createdAt:Date.now()};
       await savePhoto(p);list.push(p);ok++;
-      if(!v.cover){v.cover=p.thumb;v.coverId=p.id}
+      if(!v.cover){v.cover=shrink(img,1000,0.82);v.coverId=p.id;v.coverHd=1}
     }catch(e){toast(e&&e.code==="resource-exhausted"?"Quota de stockage atteint.":"Une photo n'a pas pu être ajoutée.")}
   }
   v.photoCount=list.length;persistVehicle(v,true);
@@ -552,6 +561,7 @@ async function ensurePhotos(v){
   if(v.demo||photoCache[v.id])return;
   photoCache[v.id]=[];
   try{photoCache[v.id]=await photosFor(v.id)}catch(e){}
+  upgradeCover(v);
   if(route().view==="fiche"&&route().id===v.id){const g=$("#photogrid");if(g)g.innerHTML=photoGrid(v)}
   if(route().view==="details"&&route().id===v.id){const g=$("#dphotos");if(g)g.innerHTML=detPhotos(v)}
 }
@@ -562,23 +572,27 @@ function photoGrid(v){
 }
 let lbIdx=0;
 function openLb(v,i){
-  const list=photoCache[v.id]||[];if(!list.length)return;lbIdx=(i+list.length)%list.length;const p=list[lbIdx];
-  $("#overlay").innerHTML='<div class="lb" role="dialog" aria-modal="true" aria-label="Photo"><div class="lbbar"><span>'+(lbIdx+1)+' / '+list.length+'</span><div class="acts">'+(p.id!==v.coverId?'<button data-lb="cover">Mettre en couverture</button>':"")+'<button class="del" data-lb="del">Supprimer</button><button data-lb="close" aria-label="Fermer">✕</button></div></div>'+
-    '<div class="img"><img src="'+p.full+'" alt="Photo '+(lbIdx+1)+'">'+(list.length>1?'<button class="nav prev" data-lb="prev" aria-label="Précédente">‹</button><button class="nav next" data-lb="next" aria-label="Suivante">›</button>':"")+'</div></div>';
+  const list=photoCache[v.id]||[];if(!list.length)return;lbIdx=(i+list.length)%list.length;
   const ov=$("#overlay");
-  ov.onclick=async e=>{const b=e.target.closest("[data-lb]");if(!b)return;const a=b.dataset.lb;
+  const bar=()=>{const p=list[lbIdx];return'<span>'+(lbIdx+1)+' / '+list.length+'</span><div class="acts">'+(v.demo?'':(p.id!==v.coverId?'<button data-lb="cover">Mettre en couverture</button>':'<button disabled style="opacity:.6">Couverture</button>')+'<button class="del" data-lb="del">Supprimer</button>')+'<button data-lb="close" aria-label="Fermer">✕</button></div>'};
+  ov.innerHTML='<div class="lb" role="dialog" aria-modal="true" aria-label="Photos"><div class="lbbar" id="lbbar">'+bar()+'</div>'+
+    '<div class="lbtrack" id="lbtrack">'+list.map((p,k)=>'<div class="lbslide"><img src="'+p.full+'" alt="Photo '+(k+1)+'" decoding="async"></div>').join("")+'</div>'+
+    (list.length>1?'<button class="nav prev" data-lb="prev" aria-label="Précédente">‹</button><button class="nav next" data-lb="next" aria-label="Suivante">›</button><div class="lbdots">'+list.map((_,k)=>'<i'+(k===lbIdx?' class="on"':'')+'></i>').join("")+'</div>':'')+'</div>';
+  const tr=$("#lbtrack");tr.scrollLeft=lbIdx*tr.clientWidth;
+  const sync=()=>{const n=Math.round(tr.scrollLeft/Math.max(1,tr.clientWidth));if(n!==lbIdx&&n>=0&&n<list.length){lbIdx=n;$("#lbbar").innerHTML=bar();ov.querySelectorAll(".lbdots i").forEach((d,k)=>d.classList.toggle("on",k===n))}};
+  tr.addEventListener("scroll",()=>{clearTimeout(tr._t);tr._t=setTimeout(sync,60)},{passive:true});
+  const go=n=>{n=(n+list.length)%list.length;tr.scrollTo({left:n*tr.clientWidth,behavior:"smooth"})};
+  ov.onclick=async e=>{const b=e.target.closest("[data-lb]");if(!b)return;const a=b.dataset.lb;const p=list[lbIdx];
     if(a==="close"){ov.innerHTML="";return}
-    if(a==="prev")return openLb(v,lbIdx-1);
-    if(a==="next")return openLb(v,lbIdx+1);
-    if(a==="cover"){v.cover=p.thumb;v.coverId=p.id;persistVehicle(v,true);openLb(v,lbIdx);render();return}
+    if(a==="prev")return go(lbIdx-1);
+    if(a==="next")return go(lbIdx+1);
+    if(a==="cover"){await setCover(v,p);$("#lbbar").innerHTML=bar();render();return}
     if(a==="del"){try{await deletePhoto(p.id)}catch(err){toast("Suppression impossible.");return}
       list.splice(lbIdx,1);v.photoCount=list.length;
-      if(v.coverId===p.id){const n=list[0];v.cover=n?n.thumb:"";v.coverId=n?n.id:""}
+      if(v.coverId===p.id){const n=list[0];if(n)await setCover(v,n);else{v.cover="";v.coverId="";v.coverHd=0}}
       persistVehicle(v,true);render();if(list.length)openLb(v,Math.min(lbIdx,list.length-1));else ov.innerHTML="";}
   };
-  let x0=null;const im=ov.querySelector(".img");
-  im.addEventListener("touchstart",e=>{x0=e.touches[0].clientX},{passive:true});
-  im.addEventListener("touchend",e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50&&list.length>1)openLb(v,lbIdx+(dx<0?1:-1))});
+  ov.onkeydown=null;
 }
 let setTimer=null;
 function settingsGo(){setTimer=null;const data=clean(S.settings);const ts=PEND.settings&&PEND.settings._ts;
@@ -657,7 +671,7 @@ function renderNav(view){
 }
 function modeText(){return{login:"Non connecté",loading:"Connexion…",db:"Synchronisé"+(S.email?" · "+S.email:""),local:"Données sur cet appareil uniquement","db-slow":"Synchronisé"+(S.email?" · "+S.email:""),"db-error":"Synchronisation interrompue : recharge la page"}[S.mode]||""}
 
-function render(){
+function render(){render._up=render._up||{};
   const r=route();renderNav(r.view);
   const app=$("#app");
   if(!S.loaded){app.innerHTML='<p class="note">Chargement de ton garage…</p>';return}
@@ -670,6 +684,7 @@ function render(){
   if(same)app.querySelectorAll("details[data-dd] .ddlist").forEach(l=>{keep[l.closest("details").dataset.dd]=l.scrollTop});
   app.innerHTML=h;render._last=location.hash;
   if(same){app.querySelectorAll("details[data-dd] .ddlist").forEach(l=>{const k=keep[l.closest("details").dataset.dd];if(k)l.scrollTop=k});if(Math.abs(window.scrollY-wy)>2)window.scrollTo(0,wy)}
+  if(r.view==="garage"||r.view==="tableau")list().forEach(v=>{if(v.coverId&&!v.coverHd&&!v.demo&&!render._up[v.id]){render._up[v.id]=1;upgradeCover(v)}});
   if(r.view==="fiche"){updateCalc();const fv=curVeh(r.id);if(fv)ensurePhotos(fv)}
   if(r.view==="details"){const dv=curVeh(r.id);if(dv)ensurePhotos(dv)}
   if(r.view==="simulateur")updateSim();
@@ -1090,7 +1105,7 @@ function vDetails(r){
   return h;
 }
 function detPhotos(v){const list=photoCache[v.id]||[];if(v.demo||!list.length)return'<div class="dcover">'+(v.cover?'<img src="'+v.cover+'" alt="">':'<span class="note">Aucune photo. '+(v.demo?"":'<a href="#v-'+v.id+'">Ajouter des photos</a>')+'</span>')+'</div>';
-  return'<button class="dcover" data-act="viewph" data-i="0" aria-label="Agrandir la photo"><img src="'+list[0].full+'" alt=""></button>'+(list.length>1?'<div class="dthumbs">'+list.map((ph,i)=>'<button class="ph" data-act="viewph" data-i="'+i+'"><img src="'+ph.thumb+'" alt=""></button>').join("")+'</div>':"")}
+  return'<div class="dcar"><div class="dtrack" id="dtrack">'+list.map((ph,i)=>'<button class="dcover" data-act="viewph" data-i="'+i+'" aria-label="Agrandir la photo '+(i+1)+'"><img src="'+ph.full+'" alt="" loading="'+(i?"lazy":"eager")+'" decoding="async"></button>').join("")+'</div>'+(list.length>1?'<span class="dcount" id="dcount">1 / '+list.length+'</span>':'')+'</div>'+(list.length>1?'<div class="dthumbs">'+list.map((ph,i)=>'<button class="ph'+(i?'':' on')+'" data-dthumb="'+i+'"><img src="'+ph.thumb+'" alt=""></button>').join("")+'</div>':"")}
 
 function estimAuto(v){const m=catMatch(v.marque,v.modele);if(!m||!m.model||!num(v.annee))return null;const mo=moteursDe(m.brand,m.model),e=mo&&v.moteur&&mo.e.find(x=>x[0]===v.moteur);
   const r=estimer({brand:m.brand,model:m.model,annee:v.annee,km:num(v.km)||Math.max(1,new Date().getFullYear()-num(v.annee))*15000,carburant:v.carburant,coef:e?e[2]:1,boite:v.boite,etat:v.etat||"bon",options:v.options||[],entretien:v.entretien!==false,proprios:v.proprios||2});
@@ -2256,6 +2271,8 @@ document.addEventListener("change",e=>{
 document.addEventListener("focusout",()=>{setTimeout(()=>{if(!editing()&&route().view!=="fiche"&&route().view!=="simulateur"&&route().view!=="reglages")render()},50)});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.open){location.hash="d-"+e.target.dataset.open;return}if(e.key==="Escape"){const had=$("#overlay").innerHTML;$("#overlay").innerHTML="";if(had)render()}});
 
+document.addEventListener("click",e=>{const t=e.target.closest("[data-dthumb]");if(!t)return;const tr=$("#dtrack");if(tr)tr.scrollTo({left:+t.dataset.dthumb*tr.clientWidth,behavior:"smooth"})});
+document.addEventListener("scroll",e=>{const tr=e.target;if(!tr||tr.id!=="dtrack")return;clearTimeout(tr._t);tr._t=setTimeout(()=>{const n=Math.round(tr.scrollLeft/Math.max(1,tr.clientWidth)),c=$("#dcount");if(c)c.textContent=(n+1)+" / "+tr.children.length;document.querySelectorAll("[data-dthumb]").forEach(b=>b.classList.toggle("on",+b.dataset.dthumb===n))},60)},true);
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd==="vfrais"){S.vfOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
