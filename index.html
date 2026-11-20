@@ -416,7 +416,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="6.0";
+const APP_VERSION="6.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -611,13 +611,14 @@ async function boot(){
     if(PEND.settings){const d={...PEND.settings};const ts=d._ts;delete d._ts;S.settings={...DEF_SETTINGS,...d};chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(d)).then(()=>{if(PEND.settings&&PEND.settings._ts===ts){PEND.settings=null;pendSave()}}).catch(()=>{})}
     let gotV=false;
     const timer=setTimeout(()=>{if(!gotV){S.loaded=true;S.mode="db-slow";render()}},10000);
-    unsubs.push(vehCol.onSnapshot(snap=>{
+    unsubs.push(vehCol.onSnapshot({includeMetadataChanges:true},snap=>{
+      if(!snap.metadata.fromCache&&!gotV){gotV=true;clearTimeout(timer);if(S.mode==="db-slow"){S.mode="db";if(!editing())render()}}
+      if(S.loaded&&!snap.docChanges().length)return;
       const remote=snap.docs.map(d=>({...d.data(),id:d.id}));
       const merged=remote.filter(r=>!PEND.del[r.id]).map(r=>{const p=PEND.veh[r.id];if(p&&(p.updatedAt||0)>=(r.updatedAt||0)){const loc=S.vehicles.find(x=>x.id===r.id);return loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id:r.id}}return r});
       Object.entries(PEND.veh).forEach(([id,p])=>{if(!merged.some(x=>x.id===id)&&!PEND.del[id]){const loc=S.vehicles.find(x=>x.id===id);merged.push(loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id})}});
       S.vehicles=merged;
       S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={};if(v.statut==='reperage'||!STATUTS.some(x=>x.k===v.statut))v.statut='achete'});
-      if(!snap.metadata.fromCache){gotV=true;clearTimeout(timer);if(S.mode==="db-slow")S.mode="db"}
       S.loaded=true;if(!editing())render();
     },e=>{clearTimeout(timer);S.loaded=true;S.mode="db-error";render()}));
     unsubs.push(setRef.onSnapshot(d=>{if(PEND.settings||setTimer)return;if(d.exists){S.settings={...DEF_SETTINGS,...d.data()};if(!editing())render()}},()=>{}));
@@ -652,7 +653,7 @@ function renderNav(view){
     '<div class="status">'+modeText()+'</div>';
   $("#tabs").innerHTML=NAV.map(([k,l])=>'<a class="'+(k===cur?"on":"")+'" href="#'+k+'">'+icon(k)+'<span>'+(k==="tableau"?"Accueil":l)+'</span></a>').join("");
 }
-function modeText(){return{login:"Non connecté",loading:"Connexion…",db:"Synchronisé"+(S.email?" · "+S.email:""),local:"Données sur cet appareil uniquement","db-slow":"Synchronisation lente : données peut-être pas à jour","db-error":"Synchronisation interrompue : recharge la page"}[S.mode]||""}
+function modeText(){return{login:"Non connecté",loading:"Connexion…",db:"Synchronisé"+(S.email?" · "+S.email:""),local:"Données sur cet appareil uniquement","db-slow":"Synchronisé"+(S.email?" · "+S.email:""),"db-error":"Synchronisation interrompue : recharge la page"}[S.mode]||""}
 
 function render(){
   const r=route();renderNav(r.view);
@@ -661,7 +662,7 @@ function render(){
   if(S.mode==="login"){app.innerHTML=vLogin();return}
   let h="";
   if(S.mode==="local")h+='<div class="banner info"><span>Tes données sont enregistrées sur cet appareil seulement.'+(fbReady()?' Connecte-toi pour les synchroniser entre ton téléphone et ton PC.</span><button class="btn small" data-act="gologin">Se connecter</button>':'</span>')+'</div>';
-  if(S.mode==="db-error"||S.mode==="db-slow")h+='<div class="banner"><span>'+modeText()+'</span></div>';
+  if(S.mode==="db-error")h+='<div class="banner"><span>'+modeText()+'</span></div>';
   h+=({tableau:vTableau,garage:vGarage,fiche:vFiche,details:vDetails,simulateur:vSim,ventes:vVentes,reglages:vReglages}[r.view])(r);
   app.innerHTML=h;
   if(r.view==="fiche"){updateCalc();const fv=curVeh(r.id);if(fv)ensurePhotos(fv)}
