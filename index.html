@@ -416,7 +416,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.8";
+const APP_VERSION="5.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -437,6 +437,7 @@ const NAV=[["tableau","Tableau de bord"],["garage","Garage"],["simulateur","Simu
 const S={vehicles:[],settings:{...DEF_SETTINGS},mode:"loading",loaded:false,garageFilter:"stock",search:"",sim:null,simEst:null,simBusy:false,estBusy:false};
 let db=null,uid=null,vehCol=null,setRef=null,sample=null;
 const chains={},timers={},goers={};
+const isDb=()=>!!vehCol&&/^db/.test(S.mode||"");
 /* journal local des modifications pas encore confirmées par le serveur : survit à la fermeture de l'app */
 let PEND={veh:{},del:{},settings:null};
 const pendKey=()=>"gc-pending-"+(uid||"x");
@@ -499,7 +500,7 @@ function persistVehicle(v,now){
   if(v.demo)return;
   v.updatedAt=Date.now();
   clearTimeout(timers[v.id]);
-  if(S.mode!=="db"){lsSave();return}
+  if(!isDb()){lsSave();return}
   const snap=clean(v);PEND.veh[v.id]=snap;delete PEND.del[v.id];pendSave();
   const go=()=>{delete goers[v.id];const data=clean(v);delete data.id;const ts=data.updatedAt;
     chains[v.id]=(chains[v.id]||Promise.resolve()).then(()=>vehCol.doc(v.id).set(data)).then(()=>{const p=PEND.veh[v.id];if(p&&p.updatedAt===ts){delete PEND.veh[v.id];pendSave()}}).catch(e=>{toast(e&&e.code==="quota_exceeded"?"Stockage plein : supprime d'anciens véhicules.":"Enregistrement en attente : il sera envoyé dès que possible.")});
@@ -511,7 +512,7 @@ function removeVehicle(id){
   S.vehicles=S.vehicles.filter(v=>v.id!==id);
   photosFor(id).then(ps=>ps.forEach(p=>deletePhoto(p.id).catch(()=>{}))).catch(()=>{});delete photoCache[id];
   clearTimeout(timers[id]);delete goers[id];
-  if(S.mode==="db"){delete PEND.veh[id];PEND.del[id]=Date.now();pendSave();
+  if(isDb()){delete PEND.veh[id];PEND.del[id]=Date.now();pendSave();
     chains[id]=(chains[id]||Promise.resolve()).then(()=>vehCol.doc(id).delete()).then(()=>{delete PEND.del[id];pendSave()}).catch(()=>toast("Suppression en attente : elle sera faite dès que possible."))}else lsSave();
 }
 /* ---------- photos ---------- */
@@ -519,15 +520,15 @@ let photoCol=null,idb=null;
 const photoCache={};
 function idbOpen(){if(idb)return Promise.resolve(idb);return new Promise((res,rej)=>{const r=indexedDB.open("gc-photos",1);r.onupgradeneeded=()=>{const st=r.result.createObjectStore("photos",{keyPath:"id"});st.createIndex("vehicleId","vehicleId")};r.onsuccess=()=>{idb=r.result;res(idb)};r.onerror=()=>rej(r.error)})}
 async function photosFor(vid){
-  if(S.mode==="db"&&photoCol){const q=await photoCol.where("vehicleId","==",vid).get();return q.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))}
+  if(isDb()&&photoCol){const q=await photoCol.where("vehicleId","==",vid).get();return q.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))}
   const d=await idbOpen();return new Promise(res=>{const t=d.transaction("photos").objectStore("photos").index("vehicleId").getAll(vid);t.onsuccess=()=>res((t.result||[]).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)));t.onerror=()=>res([])});
 }
 async function savePhoto(p){
-  if(S.mode==="db"&&photoCol){const data={...p};delete data.id;await photoCol.doc(p.id).set(data);return}
+  if(isDb()&&photoCol){const data={...p};delete data.id;await photoCol.doc(p.id).set(data);return}
   const d=await idbOpen();await new Promise((res,rej)=>{const t=d.transaction("photos","readwrite");t.objectStore("photos").put(p);t.oncomplete=res;t.onerror=()=>rej(t.error)});
 }
 async function deletePhoto(id){
-  if(S.mode==="db"&&photoCol){await photoCol.doc(id).delete();return}
+  if(isDb()&&photoCol){await photoCol.doc(id).delete();return}
   const d=await idbOpen();await new Promise(res=>{const t=d.transaction("photos","readwrite");t.objectStore("photos").delete(id);t.oncomplete=res;t.onerror=res});
 }
 function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{res(i);setTimeout(()=>URL.revokeObjectURL(u),1000)};i.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("image"))};i.src=u})}
@@ -583,7 +584,7 @@ let setTimer=null;
 function settingsGo(){setTimer=null;const data=clean(S.settings);const ts=PEND.settings&&PEND.settings._ts;
   chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(data)).then(()=>{if(PEND.settings&&PEND.settings._ts===ts){PEND.settings=null;pendSave()}}).catch(()=>toast("Réglages en attente : ils seront envoyés dès que possible."))}
 function persistSettings(){
-  if(S.mode!=="db"){lsSave();return}
+  if(!isDb()){lsSave();return}
   PEND.settings={...clean(S.settings),_ts:Date.now()};pendSave();
   clearTimeout(setTimer);setTimer=setTimeout(settingsGo,500)}
 function editing(){const a=document.activeElement;return a&&$("#app").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)}
