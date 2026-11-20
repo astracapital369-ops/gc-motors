@@ -113,6 +113,13 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .tlbody{flex:1;min-width:0;font-size:14.5px;background:var(--surface-2);border-radius:10px;padding:10px 12px}
 .tl.fut .tlbody{box-shadow:inset 3px 0 0 var(--accent)}.tl.done .tlbody{opacity:.7}.tl.st .tlbody{background:none;padding:2px 0}
 .tlmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:13px;color:var(--muted)}.tlmeta .avenir{margin-left:0}
+.fmodal{text-align:center;max-width:360px;margin:0 auto;padding:24px 20px 18px}
+.fmico{width:56px;height:56px;border-radius:50%;background:var(--good-soft);color:var(--good);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}.fmico svg{width:30px;height:30px}
+.fmodal h2{margin:0 0 14px;text-align:center}
+.fminfo{background:var(--surface-2);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px}.fminfo b{font-size:15.5px}.fminfo small{color:var(--muted);font-size:13px}
+.fmq{color:var(--muted);margin:16px 0 12px;font-size:14.5px}
+.fmbig{width:100%;justify-content:center;padding:13px;font-size:15.5px}
+.fmrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.fmrow .btn{justify-content:center;width:100%;padding:11px 8px}
 .jfs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.jfs:empty{display:none}
 .jf{display:inline-flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 4px 3px 3px}
 .jfo{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:inherit;font:inherit;font-size:12.5px;cursor:pointer;padding:0}
@@ -453,7 +460,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="7.7";
+const APP_VERSION="7.8";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -2371,8 +2378,13 @@ function pickFacture(v,jId){let inp=$("#jfactinput");if(!inp){inp=document.creat
     inp.addEventListener("change",()=>{const vv=S.vehicles.find(x=>x.id===inp.dataset.v);if(vv&&!vv.demo&&inp.files.length)addFactures(vv,[...inp.files],inp.dataset.j);inp.value=""})}
   inp.dataset.j=jId;inp.dataset.v=v.id;inp.click()}
 function faitModal(v,r,undo){const ov=$("#overlay");
-  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="fmt"><div class="card"><h2 id="fmt">C\'est fait ✓</h2><p><b>'+esc(r.type)+'</b>'+(r.texte?' : '+esc(r.texte):'')+'<br><span class="note">'+esc(v.marque+" "+v.modele)+'</span></p><p class="note">Tu veux ajouter la facture du garage maintenant ?</p>'+
-    '<div class="acts" style="flex-wrap:wrap"><button class="btn" data-fm="undo">Annuler « fait »</button><button class="btn" data-fm="later">Plus tard</button><button class="btn primary" data-fm="add">Ajouter une facture</button></div></div></div>';
+  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="fmt"><div class="card fmodal">'+
+    '<div class="fmico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
+    '<h2 id="fmt">C\'est fait</h2>'+
+    '<div class="fminfo"><b>'+esc(r.type)+'</b>'+(r.texte?'<span>'+esc(r.texte)+'</span>':'')+'<small>'+esc(v.marque+" "+v.modele)+(r.montant?' · '+eur(num(r.montant)):'')+'</small></div>'+
+    '<p class="fmq">Ajouter la facture du garage maintenant ?</p>'+
+    '<button class="btn primary fmbig" data-fm="add">Ajouter une facture</button>'+
+    '<div class="fmrow"><button class="btn" data-fm="later">Plus tard</button><button class="btn" data-fm="undo">Annuler « fait »</button></div></div></div>';
   ov.onclick=e=>{const b=e.target.closest("[data-fm]");if(!b&&!e.target.classList.contains("modal"))return;const a=b?b.dataset.fm:"later";ov.innerHTML="";
     if(a==="undo")undo();else if(a==="add")pickFacture(v,r.id)}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-rtog]");if(!b)return;e.preventDefault();e.stopPropagation();const v=S.vehicles.find(x=>x.id===b.dataset.v);if(!v||v.demo)return;const r=(v.journal||[]).find(x=>x.id===b.dataset.rtog);if(!r)return;r.fait=!r.fait;persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast(r.fait?"Marqué comme fait.":"Rappel remis à faire.")},true);
