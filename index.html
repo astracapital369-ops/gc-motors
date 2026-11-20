@@ -314,7 +314,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="2.5";
+const APP_VERSION="2.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -1020,11 +1020,11 @@ function vSim(){
   if(S.sim.kmMin===undefined){S.sim.kmMin=Math.max(0,S.sim.km-30000);S.sim.kmMax=S.sim.km+30000}
   const s=S.sim;if(!s.open)s.open={};
   const yNow=new Date().getFullYear();
-  if(s.result&&!s.editing)return'<div class="top"><div><h1>Simulation</h1></div></div><div class="simdone"><div class="card" id="simres">'+simResult()+'</div>'+
+  if(s.result&&!s.editing)return'<div class="top"><h1>Simulation de prix de revente</h1></div><div class="simdone"><div class="card" id="simres">'+simResult()+'</div>'+
     '<div class="simacts"><button class="btn primary big" data-act="simreset">Nouvelle simulation</button><button class="btn big" data-act="simedit">Modifier les critères</button></div></div>';
   const step=(n,t)=>'<div class="sstep"><span class="sn">'+n+'</span><h2>'+t+'</h2></div>';
   const sel=(k,label,opts,ph)=>'<label class="f">'+label+'<select data-simsel="'+k+'">'+(ph?'<option value="">'+ph+'</option>':"")+opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(v)+'"'+(String(s[k])===String(v)?" selected":"")+'>'+esc(l)+'</option>'}).join("")+'</select></label>';
-  let h='<div class="top"><div><h1>Simulateur d\'achat</h1><p>Décris la voiture repérée : l\'app estime son prix de revente et ton prix d\'achat maximum.</p></div>'+(s.brand?'<button class="btn small" data-act="simreset">Nouvelle simulation</button>':"")+'</div>';
+  let h='<div class="top"><h1>Simulation de prix de revente</h1></div>';
   h+='<div class="fiche"><div class="stack">';
   // 1 véhicule
   const mot=s.brand&&s.brand!=="Autre"&&s.model?moteursDe(s.brand,s.model):null;
