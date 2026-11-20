@@ -314,6 +314,12 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .alert small{color:var(--muted);display:block}
 .alert.rpa{align-items:center}.alert.rpa a{flex:1;min-width:0;color:inherit;text-decoration:none}
 .rpck{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);flex:none;cursor:pointer}
+.subh{font-size:14px;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line);color:var(--ink)}
+.factl{display:flex;flex-direction:column;gap:6px}.fact{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:8px;padding:6px 8px}
+.factopen{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:none;border:none;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.factopen img,.fico{width:44px;height:44px;border-radius:6px;object-fit:cover;flex:none}.fico{display:flex;align-items:center;justify-content:center;background:var(--bad-soft);color:var(--bad);font-weight:700;font-size:12px}
+.factopen span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.factopen small{display:block;color:var(--muted)}
+.fact .x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
 .avenir{font-size:11.5px;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:2px 7px;border-radius:10px;margin-left:6px;white-space:nowrap}.avenir.ok{color:var(--good);background:var(--good-soft)}
 button.avenir{border:none;cursor:pointer;font-family:inherit}.avenir.mk{color:var(--muted);background:var(--surface-2);border:1px solid var(--line,#ddd)}
 .toast .tundo{margin-left:14px;background:none;border:none;color:inherit;text-decoration:underline;font-weight:700;font-size:inherit;cursor:pointer;padding:0}
@@ -437,7 +443,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="7.2";
+const APP_VERSION="7.3";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -479,8 +485,8 @@ const today=()=>new Date().toISOString().slice(0,10);
 const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
 const aVenir=(e,v)=>{if(!e.date||e.type==="Statut")return"";if(e.fait)return'<button type="button" class="avenir ok" data-rtog="'+e.id+'" data-v="'+v.id+'" title="Annuler">Fait · annuler</button>';if(e.date<today())return"";const d=daysBetween(today(),e.date);return'<span class="avenir">À venir · '+(d===0?"aujourd'hui":d===1?"demain":"dans "+d+" j")+'</span>'+(v.demo?'':'<button type="button" class="avenir mk" data-rtog="'+e.id+'" data-v="'+v.id+'">Marquer fait</button>')};
-const foldGet=()=>{try{return JSON.parse(localStorage.getItem("gc-fold")||"[]")}catch(e){return[]}};
-const foldSet=a=>{try{localStorage.setItem("gc-fold",JSON.stringify(a))}catch(e){}};
+const foldGet=()=>{try{return JSON.parse(localStorage.getItem("gc-fold2")||"[]")}catch(e){return[]}};
+const foldSet=a=>{try{localStorage.setItem("gc-fold2",JSON.stringify(a))}catch(e){}};
 function foldApply(){const f=foldGet();document.querySelectorAll("[data-fold]").forEach(b=>{const n=+b.dataset.fold,c=b.closest(".card");if(!c)return;const on=f.includes(n);c.classList.toggle("folded",on);b.setAttribute("aria-expanded",String(!on))});const a=document.querySelector("[data-foldall]");if(a)a.textContent=f.length>=document.querySelectorAll("[data-fold]").length?"Tout ouvrir":"Tout réduire"}
 const moisAn=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})/);return m?m[2]+"/"+m[1]:""};
 const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
@@ -545,9 +551,35 @@ function removeVehicle(id){
 let photoCol=null,idb=null;
 const photoCache={};
 function idbOpen(){if(idb)return Promise.resolve(idb);return new Promise((res,rej)=>{const r=indexedDB.open("gc-photos",1);r.onupgradeneeded=()=>{const st=r.result.createObjectStore("photos",{keyPath:"id"});st.createIndex("vehicleId","vehicleId")};r.onsuccess=()=>{idb=r.result;res(idb)};r.onerror=()=>rej(r.error)})}
-async function photosFor(vid){
+async function allFilesFor(vid){
   if(isDb()&&photoCol){const q=await photoCol.where("vehicleId","==",vid).get();return q.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))}
   const d=await idbOpen();return new Promise(res=>{const t=d.transaction("photos").objectStore("photos").index("vehicleId").getAll(vid);t.onsuccess=()=>res((t.result||[]).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)));t.onerror=()=>res([])});
+}
+const factCache={};
+async function photosFor(vid){const all=await allFilesFor(vid);factCache[vid]=all.filter(x=>x.kind==="facture");return all.filter(x=>x.kind!=="facture")}
+function factList(v){
+  if(v.demo)return'<p class="note">Les factures s\'ajoutent sur tes propres voitures.</p>';
+  const L=factCache[v.id];if(!L)return'<p class="note">Chargement…</p>';
+  if(!L.length)return'<p class="note">Aucune facture ajoutée.</p>';
+  return'<div class="factl">'+L.map(f=>'<div class="fact"><button type="button" class="factopen" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>'+esc(f.name||"Facture")+'<small>'+fdate(new Date(f.createdAt).toISOString().slice(0,10))+'</small></span></button><button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button></div>').join("")+'</div>';
+}
+function fileData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(file)})}
+async function addFactures(v,files){
+  let ok=0;
+  for(const f of files){
+    try{let p;
+      if(f.type==="application/pdf"){if(f.size>700000){toast("PDF trop lourd (max 700 Ko). Prends plutôt une photo de la facture.");continue}
+        p={id:newId(),vehicleId:v.id,kind:"facture",mime:"application/pdf",name:f.name,full:await fileData(f),createdAt:Date.now()}}
+      else{const img=await loadImg(f);p={id:newId(),vehicleId:v.id,kind:"facture",mime:"image/jpeg",name:f.name||"Facture",full:shrink(img,2200,0.85),thumb:shrink(img,200,0.7),createdAt:Date.now()}}
+      await savePhoto(p);(factCache[v.id]=factCache[v.id]||[]).push(p);ok++;
+    }catch(e){toast("La facture n'a pas pu être ajoutée.")}
+  }
+  const el=$("#factlist");if(el)el.innerHTML=factList(v);if(ok)toast(ok>1?ok+" factures ajoutées.":"Facture ajoutée.");
+}
+function openFacture(f){
+  if(f.mime==="application/pdf"){try{const b=atob(f.full.split(",")[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);const u=URL.createObjectURL(new Blob([a],{type:"application/pdf"}));window.open(u,"_blank")||(location.href=u)}catch(e){toast("Impossible d'ouvrir ce PDF.")}return}
+  const ov=$("#overlay");ov.innerHTML='<div class="lb" role="dialog" aria-modal="true" aria-label="Facture"><div class="lbbar"><span>'+esc(f.name||"Facture")+'</span><div class="acts"><button data-fclose="1" aria-label="Fermer">✕</button></div></div><div class="lbtrack"><div class="lbslide" style="overflow:auto;align-items:flex-start"><img src="'+f.full+'" alt="Facture" style="max-height:none"></div></div></div>';
+  ov.onclick=e=>{if(e.target.closest("[data-fclose]"))ov.innerHTML=""};
 }
 async function savePhoto(p){
   if(isDb()&&photoCol){const data={...p};delete data.id;await photoCol.doc(p.id).set(data);return}
@@ -582,7 +614,7 @@ async function ensurePhotos(v){
   photoCache[v.id]=[];
   try{photoCache[v.id]=await photosFor(v.id)}catch(e){}
   upgradeCover(v);
-  if(route().view==="fiche"&&route().id===v.id){const g=$("#photogrid");if(g)g.innerHTML=photoGrid(v)}
+  if(route().view==="fiche"&&route().id===v.id){const g=$("#photogrid");if(g)g.innerHTML=photoGrid(v);const fl=$("#factlist");if(fl)fl.innerHTML=factList(v)}
   if(route().view==="details"&&route().id===v.id){const g=$("#dphotos");if(g)g.innerHTML=detPhotos(v)}
 }
 function photoGrid(v){
@@ -854,7 +886,7 @@ function vFiche(r){
   const dis=v.demo?" disabled":"";
   const fb={vendeurNom:v.vendeur,clientNom:v.acheteur};const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(t==="month"?String(v[k]||"").slice(0,7):(v[k]??fb[k]??""))+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
   const sel=(k,l,opts)=>'<label class="f">'+l+'<select id="f-'+k+'" data-field="'+k+'"'+dis+'>'+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(v[k])===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
-  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span><button class="btn small" data-foldall="1">'+(foldGet().length>=10?"Tout ouvrir":"Tout réduire")+'</button>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
+  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span><button class="btn small" data-foldall="1">'+(foldGet().length>=9?"Tout ouvrir":"Tout réduire")+'</button>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
   h+='<div class="ficheone">';
   const vb=CATALOGUE[v.marque]?v.marque:((v.marque||v.autreMarque)?"__autre":"");
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
@@ -864,7 +896,7 @@ function vFiche(r){
   const yNow=new Date().getFullYear();
   h+='<div class="card">'+step(1,"Photos")+'<div class="photos" id="photogrid">'+(v.demo?'<p class="note">Les photos s\'ajoutent sur tes propres voitures.</p>':photoGrid(v))+'</div>'+(v.demo?"":'<input id="phinput" type="file" accept="image/*" multiple hidden>')+'<p class="note" style="margin-top:8px">Touche une photo pour l\'agrandir, la mettre en couverture ou la supprimer.</p></div>';
   // 1 véhicule
-  h+='<div class="card">'+step(2,"Véhicule")+'<div class="form">'+sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
+  h+='<div class="card">'+step(2,"Détails véhicule")+'<div class="form">'+sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
      (vb==="__autre"?inp("marque","Marque (texte)")+inp("modele","Modèle","text",{ph:"ex. Ypsilon"}):
        vsel("modele","Modèle",(v.modele&&!vModels.includes(v.modele)?[[v.modele,v.modele]]:[]).concat(vModels),vb?"Choisir le modèle":"Choisis d'abord la marque",v.modele)+
        vsel("moteur","Motorisation",vMot?vMot.e.map(([l,f])=>[l,vMot.gen?l:l+" · "+FUEL[f]]):[],vMot?"Non précisée (facultatif)":"Choisis d'abord le modèle",v.moteur||""))+
@@ -880,24 +912,24 @@ function vFiche(r){
   // 3 frais
   const pbOn={};(v.frais||[]).forEach(f=>{if(f.pb)pbOn[f.pb]=f});
   const libres=(v.frais||[]);
-  h+='<div class="card">'+step(4,"Frais à faire sur le véhicule")+
+  const J=(v.journal||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.t||0)-(a.t||0));
+  h+='<div class="card">'+step(4,"Frais à faire et suivi véhicule")+
      (libres.length?'<table class="frais"><tbody>'+libres.map(f=>'<tr><td style="width:34%"><select data-frais="'+f.id+'" data-k="cat"'+dis+'>'+CATS.map(c=>'<option'+(c===f.cat?" selected":"")+'>'+c+'</option>').join("")+'</select></td><td><input data-frais="'+f.id+'" data-k="libelle" value="'+esc(f.libelle)+'" placeholder="Détail"'+dis+'></td><td style="width:24%"><input class="num" data-frais="'+f.id+'" data-k="montant" type="number" inputmode="decimal" value="'+esc(f.montant)+'"'+dis+'></td><td>'+(v.demo?"":'<button class="x" data-act="delfrais" data-id="'+f.id+'" aria-label="Supprimer ce frais">×</button>')+'</td></tr>').join("")+'</tbody></table>':'')+
      (v.demo?"":'<div style="margin-top:8px"><button class="btn small" data-act="addfrais">+ Ajouter un frais</button></div>')+
-     '<div class="row total" style="display:flex;justify-content:space-between;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-weight:600"><span>Total des frais</span><span class="num" id="vfraistotal">'+eur(fraisTotal(v))+'</span></div></div>';
-  h+='<div class="card">'+step(5,"Achat")+'<div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Vendeur</div>'+inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div></div>';
-  h+='<div class="card">'+step(6,"Prix de vente conseillé")+'<div id="estbox">'+bandesHtml(v)+'</div>'+
-     '<div class="estlinks"><span class="note">Comparer :</span><a href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
-     '<div class="buybox" style="margin-top:14px"><small>Prix d\'achat maximum</small><div id="maxbox"></div></div></div>';
-  h+='<div class="card">'+step(7,"Vente")+'<div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+'<div class="f full"><div id="calcbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Acomptes reçus</div>'+'<div class="full">'+(v.acomptes||[]).map(a=>'<div class="acpt"><input type="date" data-acpt="'+a.id+'" data-k="date" value="'+esc(a.date||"")+'"'+dis+'><select data-acpt="'+a.id+'" data-k="mode"'+dis+'>'+["Virement bancaire","Espèces","Bancontact","Acompte"].map(m=>'<option'+(m===a.mode?" selected":"")+'>'+m+'</option>').join("")+'</select><input class="num" type="number" inputmode="decimal" placeholder="€" data-acpt="'+a.id+'" data-k="montant" value="'+esc(a.montant??"")+'"'+dis+'>'+(v.demo?"":'<button class="x" data-act="delacpt" data-id="'+a.id+'" aria-label="Supprimer cet acompte">×</button>')+'</div>').join("")+(v.demo?"":'<button class="btn small" data-act="addacpt">+ Ajouter un acompte</button>')+'</div>'+inp("payerAvant","Payer avant le","date")+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Documents remis à la livraison</div><div class="full bdocs">'+BDC_DOCS.map(d=>'<label class="ckline"><input type="checkbox" data-bdoc="'+esc(d)+'"'+((v.bdcDocs||["Certificat d\'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass"]).includes(d)?" checked":"")+dis+'><span>'+esc(d)+'</span></label>').join("")+'</div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Client'+(v.clientNum?' · n° '+esc(v.clientNum):'')+'</div>'+inp("clientPrenom","Prénom")+inp("clientNom","Nom")+inp("clientTel","Téléphone","tel",{ph:"+32 …"})+inp("clientEmail","E-mail","email")+inp("clientAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+(v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+'</div>';
-  const J=(v.journal||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.t||0)-(a.t||0));
-  h+='<div class="card">'+step(8,"Suivi du véhicule")+
-     (v.demo?"":'<div class="jform"><div class="form"><label class="f">Date<input id="j-date" type="date" value="'+today()+'"></label><label class="f">Type<select id="j-type">'+JTYPES.map(x=>'<option>'+x+'</option>').join("")+'</select></label>'+
+     '<div class="row total" style="display:flex;justify-content:space-between;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-weight:600"><span>Total des frais</span><span class="num" id="vfraistotal">'+eur(fraisTotal(v))+'</span></div>'+
+     '<h3 class="subh">Suivi du véhicule</h3>'+(v.demo?"":'<div class="jform"><div class="form"><label class="f">Date<input id="j-date" type="date" value="'+today()+'"></label><label class="f">Type<select id="j-type">'+JTYPES.map(x=>'<option>'+x+'</option>').join("")+'</select></label>'+
      '<label class="f full">Ce qui s\'est passé<input id="j-texte" placeholder="ex. Disques et plaquettes changés au garage partenaire"></label>'+
      '<label class="f">Montant (€, facultatif)<input id="j-montant" type="number" inputmode="decimal"></label><label class="ckline full"><input id="j-frais" type="checkbox" checked><span>Ajouter le montant aux frais</span></label></div>'+
      '<button class="btn primary" style="margin-top:10px" data-act="jadd">+ Ajouter au suivi</button></div>')+
      (J.length?'<div class="timeline">'+J.map(e=>'<div class="tl"><div class="tldot"></div><div class="tlbody"><div class="tlhd"><b>'+esc(e.type)+'</b>'+aVenir(e,v)+'<span class="note">'+fdate(e.date)+(e.montant?' · <span class="num">'+eur(num(e.montant))+'</span>':'')+'</span>'+(v.demo?"":'<button class="x" data-act="jdel" data-id="'+e.id+'" aria-label="Supprimer cette entrée">×</button>')+'</div>'+(e.texte?'<div>'+esc(e.texte)+'</div>':'')+'</div></div>').join("")+'</div>':'<p class="note" style="margin-top:12px">Aucune entrée pour l\'instant. Chaque changement de statut s\'y ajoute aussi tout seul.</p>')+'</div>';
-  h+='<div class="card">'+step(9,"Dossier")+'<div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
-  h+='<div class="card">'+step(10,"Notes")+'<label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
+  h+='<div class="card">'+step(5,"Achat")+'<div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Vendeur</div>'+inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+
+     '<h3 class="subh">Facture d\'achat</h3><div id="factlist">'+factList(v)+'</div>'+(v.demo?"":'<label class="btn small" for="factinput" style="margin-top:8px">+ Ajouter une facture (photo ou PDF)</label><input id="factinput" type="file" accept="image/*,application/pdf" multiple hidden>')+'</div>';
+  h+='<div class="card">'+step(6,"Prix de vente conseillé")+'<div id="estbox">'+bandesHtml(v)+'</div>'+
+     '<div class="estlinks"><span class="note">Comparer :</span><a href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
+     '<div class="buybox" style="margin-top:14px"><small>Prix d\'achat maximum</small><div id="maxbox"></div></div></div>';
+  h+='<div class="card">'+step(7,"Vente")+'<div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+'<div class="f full"><div id="calcbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Acomptes reçus</div>'+'<div class="full">'+(v.acomptes||[]).map(a=>'<div class="acpt"><input type="date" data-acpt="'+a.id+'" data-k="date" value="'+esc(a.date||"")+'"'+dis+'><select data-acpt="'+a.id+'" data-k="mode"'+dis+'>'+["Virement bancaire","Espèces","Bancontact","Acompte"].map(m=>'<option'+(m===a.mode?" selected":"")+'>'+m+'</option>').join("")+'</select><input class="num" type="number" inputmode="decimal" placeholder="€" data-acpt="'+a.id+'" data-k="montant" value="'+esc(a.montant??"")+'"'+dis+'>'+(v.demo?"":'<button class="x" data-act="delacpt" data-id="'+a.id+'" aria-label="Supprimer cet acompte">×</button>')+'</div>').join("")+(v.demo?"":'<button class="btn small" data-act="addacpt">+ Ajouter un acompte</button>')+'</div>'+inp("payerAvant","Payer avant le","date")+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Documents remis à la livraison</div><div class="full bdocs">'+BDC_DOCS.map(d=>'<label class="ckline"><input type="checkbox" data-bdoc="'+esc(d)+'"'+((v.bdcDocs||["Certificat d\'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass"]).includes(d)?" checked":"")+dis+'><span>'+esc(d)+'</span></label>').join("")+'</div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Client'+(v.clientNum?' · n° '+esc(v.clientNum):'')+'</div>'+inp("clientPrenom","Prénom")+inp("clientNom","Nom")+inp("clientTel","Téléphone","tel",{ph:"+32 …"})+inp("clientEmail","E-mail","email")+inp("clientAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+(v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+(v.demo?"":'<button class="btn primary" style="margin-top:14px;width:100%;justify-content:center" data-act="bdc">Créer le bon de commande</button>')+'</div>';
+  h+='<div class="card">'+step(8,"Dossier")+'<div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
+  h+='<div class="card">'+step(9,"Notes")+'<label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
   h+='</div>';
   return h;
 }
@@ -2317,6 +2349,10 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fold],[dat
   if(b.dataset.foldall){const all=[...document.querySelectorAll("[data-fold]")].map(x=>+x.dataset.fold);foldSet(foldGet().length>=all.length?[]:all)}
   else{const n=+b.dataset.fold,f=foldGet();foldSet(f.includes(n)?f.filter(x=>x!==n):[...f,n]);}
   foldApply();if(!b.dataset.foldall){const c=b.closest(".card");if(c&&c.getBoundingClientRect().top<70)c.scrollIntoView({block:"start"})}});
+document.addEventListener("change",e=>{const t=e.target;if(t.id!=="factinput"||!t.files||!t.files.length)return;const v=curVeh(route().id);if(v&&!v.demo)addFactures(v,[...t.files]);t.value=""});
+document.addEventListener("click",async e=>{const o=e.target.closest("[data-factopen],[data-factdel]");if(!o)return;const v=curVeh(route().id);if(!v)return;const L=factCache[v.id]||[];
+  if(o.dataset.factopen){const f=L.find(x=>x.id===o.dataset.factopen);if(f)openFacture(f);return}
+  const id=o.dataset.factdel;if(!window.confirm("Supprimer cette facture ?"))return;try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}factCache[v.id]=L.filter(x=>x.id!==id);const el=$("#factlist");if(el)el.innerHTML=factList(v)});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd==="vfrais"){S.vfOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
