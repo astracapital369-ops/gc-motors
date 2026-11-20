@@ -118,13 +118,14 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .fmodal h2{margin:0 0 14px;text-align:center}
 .fminfo{background:var(--surface-2);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px}.fminfo b{font-size:15.5px}.fminfo small{color:var(--muted);font-size:13px}
 .fmq{color:var(--muted);margin:16px 0 12px;font-size:14.5px}
-.fmbig{width:100%;justify-content:center;padding:13px;font-size:15.5px}
+.fmbig{position:relative;width:100%;box-sizing:border-box;justify-content:center;padding:13px;font-size:15.5px}
 .fmrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.fmrow .btn{justify-content:center;width:100%;padding:11px 8px}
 .jfs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.jfs:empty{display:none}
 .jf{display:inline-flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 4px 3px 3px}
 .jfo{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:inherit;font:inherit;font-size:12.5px;cursor:pointer;padding:0}
 .jfo img,.fico.s{width:26px;height:26px;border-radius:5px;object-fit:cover;font-size:9px}.jf .x{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 3px}
-.jfadd{background:none;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
+.jfadd{position:relative;display:inline-flex;align-items:center;background:none;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}
 .tlbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.tlbadges .avenir{margin-left:0;padding:4px 10px;font-size:12px}
 .tltxt{margin-top:6px;color:var(--ink);line-height:1.35}
 .tlamt{margin-left:auto;font-weight:700;white-space:nowrap}
@@ -468,7 +469,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="8.4";
+const APP_VERSION="8.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -615,7 +616,7 @@ async function addFactures(v,files,jId){
 function jFacts(v,e,edit){const L=(factCache[v.id]||[]).filter(f=>f.jId===e.id);const can=edit&&e.type!=="Statut"&&(e.fait||(e.date&&e.date<today()));
   if(!L.length&&!can)return"";
   return L.map(f=>'<span class="jf"><button type="button" class="jfo" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico s">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>Facture</span></button>'+(edit?'<button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button>':'')+'</span>').join("")+
-    (can?'<button type="button" class="jfadd" data-jfact="'+e.id+'">+ Facture du garage</button>':'')}
+    (can?'<label class="jfadd">+ Facture du garage<input type="file" class="vh" data-jfin="'+e.id+'" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>':'')}
 function refreshFacts(v){const el=$("#factlist");if(el)el.innerHTML=factList(v);document.querySelectorAll("[data-jf]").forEach(c=>{const e=(v.journal||[]).find(x=>x.id===c.dataset.jf);if(e)c.innerHTML=jFacts(v,e,c.dataset.edit==="1")})}
 function openFacture(f){
   if(f.mime==="application/pdf"){try{const b=atob(f.full.split(",")[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);const u=URL.createObjectURL(new Blob([a],{type:"application/pdf"}));window.open(u,"_blank")||(location.href=u)}catch(e){toast("Impossible d'ouvrir ce PDF.")}return}
@@ -2413,16 +2414,17 @@ function faitModal(v,r,undo){const ov=$("#overlay");
     '<h2 id="fmt">C\'est fait</h2>'+
     '<div class="fminfo"><b>'+esc(r.type)+'</b>'+(r.texte?'<span>'+esc(r.texte)+'</span>':'')+'<small>'+(v.num?vnum(v)+' · ':'')+esc(v.marque+" "+v.modele)+(r.montant?' · '+eur(num(r.montant)):'')+'</small></div>'+
     '<p class="fmq">Ajouter la facture du garage maintenant ?</p>'+
-    '<button class="btn primary fmbig" data-fm="add">Ajouter une facture</button>'+
+    '<label class="btn primary fmbig" data-fm="add">Ajouter une facture<input type="file" class="vh" data-jfin="'+r.id+'" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>'+
     '<div class="fmrow"><button class="btn" data-fm="later">Plus tard</button><button class="btn" data-fm="undo">Annuler « fait »</button></div></div></div>';
-  ov.onclick=e=>{const b=e.target.closest("[data-fm]");if(!b&&!e.target.classList.contains("modal"))return;const a=b?b.dataset.fm:"later";ov.innerHTML="";
-    if(a==="undo")undo();else if(a==="add")pickFacture(v,r.id)}}
+  ov.onclick=e=>{const b=e.target.closest("[data-fm]");if(!b&&!e.target.classList.contains("modal"))return;const a=b?b.dataset.fm:"later";if(a==="add"){const inp=ov.querySelector("[data-jfin]");if(inp)inp.addEventListener("change",()=>setTimeout(()=>{ov.innerHTML=""},50),{once:true});return}ov.innerHTML="";
+    if(a==="undo")undo()}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-rtog]");if(!b)return;e.preventDefault();e.stopPropagation();const v=S.vehicles.find(x=>x.id===b.dataset.v);if(!v||v.demo)return;const r=(v.journal||[]).find(x=>x.id===b.dataset.rtog);if(!r)return;r.fait=!r.fait;persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast(r.fait?"Marqué comme fait.":"Rappel remis à faire.")},true);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-fold],[data-foldall]");if(!b)return;e.preventDefault();
   if(b.dataset.foldall){const all=[...document.querySelectorAll("[data-fold]")].map(x=>+x.dataset.fold);foldSet(foldGet().length>=all.length?[]:all)}
   else{const n=+b.dataset.fold,f=foldGet();foldSet(f.includes(n)?f.filter(x=>x!==n):[...f,n]);}
   foldApply();if(!b.dataset.foldall){const c=b.closest(".card");if(c&&c.getBoundingClientRect().top<70)c.scrollIntoView({block:"start"})}});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-jfact]");if(!b)return;e.preventDefault();const v=curVeh(route().id);if(v)pickFacture(v,b.dataset.jfact)});
+document.addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset.jfin===undefined||!t.files||!t.files.length)return;const v=S.vehicles.find(x=>x.id===t.dataset.v);if(v&&!v.demo)addFactures(v,[...t.files],t.dataset.jfin);t.value=""});
 document.addEventListener("change",e=>{const t=e.target;if(t.id!=="factinput"||!t.files||!t.files.length)return;const v=curVeh(route().id);if(v&&!v.demo)addFactures(v,[...t.files]);t.value=""});
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-factopen],[data-factdel]");if(!o)return;const v=curVeh(route().id);if(!v)return;const L=factCache[v.id]||[];
   if(o.dataset.factopen){const f=L.find(x=>x.id===o.dataset.factopen);if(f)openFacture(f);return}
