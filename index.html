@@ -306,7 +306,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="2.3";
+const APP_VERSION="2.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -976,7 +976,6 @@ function vSim(){
       sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],s.model?"Toutes motorisations (facultatif)":"Choisis d'abord le modèle"))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<div class="f full yr"><span>Année</span><div class="yrrow"><span>de</span><input data-simyear="anneeMin" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMin+'" aria-label="Année de"><span>à</span><input data-simyear="anneeMax" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMax+'" aria-label="Année à"></div></div>'+
-     sel("vendeur","Prix de revente",[["pro","Professionnel (avec garantie)"],["part","Particulier"],["both","Les deux"]])+
      '<div class="f full yr"><span>Kilométrage <b class="num" id="kmval" style="color:var(--ink);font-size:16px">'+kmLab(s)+'</b></span><div class="dual"><div class="dtrack"></div><div class="dfill" id="kmfill" style="left:'+(s.kmMin/3000)+'%;right:'+(100-s.kmMax/3000)+'%"></div><input type="range" min="0" max="300000" step="5000" value="'+s.kmMin+'" data-simkm="kmMin" aria-label="Kilométrage minimum"><input type="range" min="0" max="300000" step="5000" value="'+s.kmMax+'" data-simkm="kmMax" aria-label="Kilométrage maximum"></div></div>'+
      '</div><p class="note" style="margin-top:8px">'+(mot?"Modèle produit de "+mot.y[0]+(mot.y[1]?" à "+mot.y[1]:" à aujourd'hui")+". ":"")+'Kilométrage moyen attendu pour ces années : '+new Intl.NumberFormat("fr-BE").format(Math.max(1,yNow-Math.round((s.anneeMin+s.anneeMax)/2))*15000)+' km</p>'+eqDropdown(s.options,"simck",s.open.options,"dd-options","options")+'</div>';
   // 3 état
@@ -999,7 +998,7 @@ function simRefresh(){const s=S.sim;if(s.result&&simReady(s))s.result=estimerSim
 function simResult(){
   const s=S.sim,r0=s.result;
   if(!r0)return'<h2>Résultat</h2><p class="note">Remplis les étapes puis touche <b>Simuler</b>. Tu obtiendras le prix de revente minimum, médian et maximum, et le prix maximum à payer.</p>';
-  const vend=s.vendeur||"pro";
+  const vend="pro";
   const sc=(x,f)=>({bas:Math.round(x.bas*f/50)*50,median:Math.round(x.median*f/50)*50,haut:Math.round(x.haut*f/50)*50,demande:x.demande,delai:x.delai});
   const rPart=sc(r0,VENDEUR_PART),r=vend==="part"?rPart:r0;
   const fr=fraisSim(s),t=S.settings.tva,mg=num(S.settings.margeVisee);
@@ -1017,7 +1016,7 @@ function simResult(){
   let h='<h2>'+esc(nom)+' · '+yLab+'</h2><p class="note num">'+(s.moteur?esc(s.moteur)+' · '+esc(s.carburant)+' · ':(s.brand!=="Autre"?'Toutes motorisations · ':esc(s.carburant)+' · '))+kmLab(s)+' · '+esc(s.boite)+' · état '+esc((ETATS.find(e=>e[0]===s.etat)||[])[1]||"").toLowerCase()+(s.options.length?' · '+s.options.length+' équipement'+(s.options.length>1?"s":""):"")+'</p>';
   const suffix=nbPb?" (après réparations)":"";
   if(vend==="both"){h+=grid("Revente par un professionnel, avec garantie"+suffix,r0)+bar(r0)+grid("Revente entre particuliers"+suffix,rPart)+bar(rPart)}
-  else h+=grid((vend==="part"?"Revente entre particuliers":"Revente par un professionnel, avec garantie")+suffix,r)+bar(r);
+  else h+=grid((vend==="part"?"Revente entre particuliers":"Prix de revente estimé")+suffix,r)+bar(r);
   h+='<div class="calc" style="margin-top:6px">'+row("Demande sur le marché",["","Plus lente","Correcte","Forte"][r.demande])+row("Délai de vente probable",r.delai+" jours")+'</div>';
   h+='<div class="buybox"><small>Prix d\'achat maximum'+(vend==="both"?" (revente pro)":"")+'</small><div class="big num">'+eur(maxMed)+'</div><div class="note">pour revendre au prix médian avec '+eur(mg)+' de marge nette'+(isPro?", TVA sur la marge comprise":"")+' (marge réglable dans Réglages)</div>'+
      '<div class="calc" style="margin-top:10px">'+row("Scénario prudent (revente au minimum)",eur(maxBas))+(vend==="both"?row("Si tu revends entre particuliers",eur(maxFor(rPart.median,false))):"")+row("Première offre conseillée",eur(offre))+row("Frais prévus"+(nbPb?" ("+nbPb+" problème"+(nbPb>1?"s":"")+")":""),eur(fr))+'</div></div>';
