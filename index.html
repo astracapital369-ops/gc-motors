@@ -287,7 +287,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="1.6";
+const APP_VERSION="1.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -731,6 +731,7 @@ function estimer(o){
   v*=Math.min(1.15,Math.max(0.65,1-(km-attendu)/10000*0.025));
   const yr=num(o.annee);
   v*={"Essence":1,"Diesel":yr>=2018?0.97:0.88,"Hybride":1.08,"Électrique":0.9,"GPL":0.86}[o.carburant]||1;
+  v*=num(o.coef)||1;
   if(o.boite==="Automatique")v*=seg>=3&&neuf<20000?1.03:1.06;
   v*=(ETATS.find(e=>e[0]===o.etat)||ETATS[1])[3];
   if(o.entretien===false)v*=0.92;
@@ -742,6 +743,144 @@ function estimer(o){
   const demande=Math.max(1,Math.min(3,seg-(age>14?1:0)-(km>220000?1:0)));
   return{bas:r(v*(1-spread)),median:r(v),haut:r(v*(1+spread)),demande,delai:{3:"15-30",2:"30-45",1:"45-75"}[demande],neuf,age,catalogue:!!mdl};
 }
+
+/* ---------- motorisations par modèle ---------- */
+// y : [première année, dernière année] ; e : [libellé, carburant (E essence, D diesel, H hybride, El électrique, G GPL), coefficient de prix]
+const MOTEURS={
+"Toyota|Aygo":{y:[2005,2022],e:[["1.0 VVT-i 68/72 ch","E",1],["1.4 D-4D 54 ch","D",0.97]]},
+"Toyota|Aygo X":{y:[2022],e:[["1.0 VVT-i 72 ch","E",1]]},
+"Toyota|Yaris":{y:[1999],e:[["1.0 VVT-i 69/72 ch","E",0.95],["1.33 VVT-i 99 ch","E",1],["1.5 VVT-i 111/125 ch","E",1.03],["1.5 Hybrid 100/116 ch","H",1.02],["1.4 D-4D 90 ch","D",0.98],["GR Yaris 1.6 Turbo 261 ch","E",2.2]]},
+"Toyota|Yaris Cross":{y:[2021],e:[["1.5 VVT-i 125 ch","E",0.95],["1.5 Hybrid 116 ch","H",1],["1.5 Hybrid AWD-i 116 ch","H",1.06]]},
+"Toyota|Auris":{y:[2007,2018],e:[["1.33 VVT-i 99 ch","E",0.95],["1.2 Turbo 116 ch","E",1],["1.6 VVT-i 132 ch","E",1],["1.8 Hybrid 136 ch","H",1.02],["1.4 D-4D 90 ch","D",0.95],["1.6 D-4D 112 ch","D",1],["2.0 D-4D 126 ch","D",1]]},
+"Toyota|Corolla":{y:[2019],e:[["1.2 Turbo 116 ch","E",0.95],["1.8 Hybrid 122/140 ch","H",1],["2.0 Hybrid 184/196 ch","H",1.08]]},
+"Toyota|C-HR":{y:[2016],e:[["1.2 Turbo 116 ch","E",0.95],["1.8 Hybrid 122/140 ch","H",1],["2.0 Hybrid 184/197 ch","H",1.08]]},
+"Toyota|RAV4":{y:[2006],e:[["2.0 VVT-i 152 ch","E",0.95],["2.5 Hybrid 218/222 ch","H",1.02],["2.5 Plug-in Hybrid 306 ch","H",1.18],["2.0 D-4D 124 ch","D",0.92],["2.2 D-4D 150 ch","D",0.95]]},
+"Toyota|Prius":{y:[2004],e:[["1.8 Hybrid 122/136 ch","H",1],["2.0 Plug-in Hybrid 223 ch","H",1.15]]},
+"Volkswagen|up!":{y:[2011,2023],e:[["1.0 MPI 60/65 ch","E",0.97],["1.0 MPI 75 ch","E",1],["1.0 TSI 90 ch","E",1.03],["GTI 1.0 TSI 115 ch","E",1.15],["e-up! électrique 82 ch","El",1.1]]},
+"Volkswagen|Polo":{y:[2002],e:[["1.2 MPI 60/70 ch","E",0.93],["1.0 MPI 65/75/80 ch","E",0.95],["1.2 TSI 90/110 ch","E",1],["1.0 TSI 95/110 ch","E",1.03],["GTI 1.4 TSI 180 ch","E",1.2],["GTI 2.0 TSI 200/207 ch","E",1.3],["1.4 TDI 75/90 ch","D",0.97],["1.6 TDI 75/90/105 ch","D",0.98]]},
+"Volkswagen|Golf":{y:[2003],e:[["1.2 TSI 85/105/110 ch","E",0.95],["1.0 TSI 110 ch","E",0.97],["1.4 TSI 122/125/150 ch","E",1],["1.5 TSI / eTSI 130/150 ch","E",1.04],["GTI 2.0 TSI 230-245 ch","E",1.3],["R 2.0 TSI 300-320 ch","E",1.5],["GTE 1.4 TSI hybride rechargeable 204 ch","H",1.05],["1.6 TDI 90/105/115 ch","D",0.97],["2.0 TDI 110-150 ch","D",1.02],["GTD 2.0 TDI 184/200 ch","D",1.15],["e-Golf électrique 136 ch","El",0.95]]},
+"Volkswagen|T-Cross":{y:[2019],e:[["1.0 TSI 95/110/115 ch","E",1],["1.5 TSI 150 ch","E",1.08],["1.6 TDI 95 ch","D",0.97]]},
+"Volkswagen|T-Roc":{y:[2017],e:[["1.0 TSI 110/115 ch","E",0.97],["1.5 TSI 150 ch","E",1.03],["2.0 TSI 190 ch 4Motion","E",1.12],["R 2.0 TSI 300 ch","E",1.4],["1.6 TDI 115 ch","D",0.98],["2.0 TDI 150 ch","D",1.03]]},
+"Volkswagen|Tiguan":{y:[2007],e:[["1.4 TSI 125/150 ch","E",0.95],["1.5 TSI 130/150 ch","E",1],["2.0 TSI 180-245 ch","E",1.12],["eHybrid 1.4 TSI 245 ch","H",1.06],["2.0 TDI 115-190 ch","D",1]]},
+"Volkswagen|Touran":{y:[2003],e:[["1.2 TSI 110 ch","E",0.95],["1.4 TSI 150 ch","E",1],["1.5 TSI 150 ch","E",1.02],["1.6 TDI 105/115 ch","D",0.97],["2.0 TDI 150 ch","D",1.03]]},
+"Volkswagen|Passat":{y:[2005],e:[["1.4 TSI 125/150 ch","E",0.95],["1.5 TSI 150 ch","E",1],["2.0 TSI 220-280 ch","E",1.12],["GTE 1.4 TSI hybride rechargeable 218 ch","H",1],["1.6 TDI 105/120 ch","D",0.95],["2.0 TDI 140-240 ch","D",1.02]]},
+"Volkswagen|ID.3":{y:[2020],e:[["Pure 45 kWh","El",0.92],["Pro 58 kWh","El",1],["Pro S 77 kWh","El",1.08]]},
+"Peugeot|108":{y:[2014,2021],e:[["1.0 VTi 68/72 ch","E",1],["1.2 PureTech 82 ch","E",1.03]]},
+"Peugeot|208":{y:[2012],e:[["1.0 / 1.2 VTi 68/72 ch","E",0.95],["1.2 PureTech 82 ch","E",0.98],["1.2 PureTech 100/110/130 ch","E",1.03],["GTi 1.6 THP 200/208 ch","E",1.25],["1.4 / 1.6 HDi 68-92 ch","D",0.95],["1.5 / 1.6 BlueHDi 75-120 ch","D",1],["e-208 électrique 136 ch","El",1.05]]},
+"Peugeot|2008":{y:[2013],e:[["1.2 PureTech 82 ch","E",0.95],["1.2 PureTech 110/130/155 ch","E",1.02],["1.6 VTi 120 ch","E",0.97],["1.5 / 1.6 BlueHDi 100-130 ch","D",1],["e-2008 électrique 136 ch","El",1.05]]},
+"Peugeot|308":{y:[2007],e:[["1.6 VTi 120 ch","E",0.95],["1.2 PureTech 110/130 ch","E",0.98],["1.6 THP 125-270 ch","E",1.05],["Hybrid 180/225 ch","H",1.08],["1.5 / 1.6 BlueHDi 100-130 ch","D",1],["2.0 BlueHDi 150/180 ch","D",1.05]]},
+"Peugeot|3008":{y:[2009],e:[["1.2 PureTech 130 ch","E",0.98],["1.6 THP / PureTech 150-180 ch","E",1.04],["Hybrid 225 / Hybrid4 300 ch","H",1.1],["1.5 / 1.6 BlueHDi 120/130 ch","D",1],["2.0 BlueHDi 150/180 ch","D",1.06]]},
+"Peugeot|5008":{y:[2009],e:[["1.2 PureTech 130 ch","E",0.98],["1.6 PureTech 180 ch","E",1.05],["1.5 / 1.6 BlueHDi 120/130 ch","D",1],["2.0 BlueHDi 150/180 ch","D",1.06]]},
+"Peugeot|Partner / Rifter":{y:[2008],e:[["1.2 PureTech 110 ch","E",1],["1.6 HDi / BlueHDi 75-120 ch","D",1],["1.5 BlueHDi 100/130 ch","D",1.03],["e-Rifter électrique 136 ch","El",1.05]]},
+"Renault|Twingo":{y:[2007],e:[["1.2 16V 75 ch","E",0.97],["1.0 SCe 70/75 ch","E",1],["0.9 TCe 90/95 ch","E",1.03],["Electric 82 ch","El",1.05]]},
+"Renault|Clio":{y:[2005],e:[["1.2 16V 75 ch","E",0.93],["1.0 SCe 65/75 ch","E",0.95],["0.9 / 1.0 TCe 90/100 ch","E",1],["1.2 / 1.3 TCe 118-140 ch","E",1.04],["E-Tech hybride 140/145 ch","H",1.05],["RS 1.6 Turbo 200/220 ch","E",1.2],["1.5 dCi 75-110 ch","D",0.98]]},
+"Renault|Captur":{y:[2013],e:[["0.9 / 1.0 TCe 90/100 ch","E",0.97],["1.2 / 1.3 TCe 120-155 ch","E",1.02],["E-Tech hybride 145 / plug-in 160 ch","H",1.05],["1.5 dCi 90/110 ch","D",1]]},
+"Renault|Mégane":{y:[2008],e:[["1.6 16V 110 ch","E",0.93],["1.2 / 1.3 TCe 115-160 ch","E",1],["RS 1.8 TCe 280-300 ch","E",1.4],["E-Tech plug-in 160 ch","H",1.04],["1.5 dCi 90-115 ch","D",0.98],["1.6 / 1.7 dCi 130-150 ch","D",1.02],["Mégane E-Tech électrique","El",1.1]]},
+"Renault|Kadjar":{y:[2015,2022],e:[["1.2 / 1.3 TCe 130-160 ch","E",1],["1.5 dCi 110/115 ch","D",1],["1.6 / 1.7 dCi 130-150 ch","D",1.04]]},
+"Renault|Scénic":{y:[2003],e:[["1.6 16V 110 ch","E",0.93],["1.2 / 1.3 TCe 115-160 ch","E",1],["1.5 dCi 95-110 ch","D",0.98],["1.6 / 1.7 dCi 130-150 ch","D",1.02]]},
+"Renault|Zoe":{y:[2013],e:[["22 kWh (R90 / Q90)","El",0.8],["41 kWh (R110)","El",1],["52 kWh (R135)","El",1.08]]},
+"Renault|Kangoo":{y:[2008],e:[["1.6 16V 105 ch","E",0.95],["1.2 / 1.3 TCe 115-130 ch","E",1],["1.5 dCi 75-115 ch","D",1],["Kangoo électrique","El",0.95]]},
+"Citroën|C1":{y:[2005,2022],e:[["1.0 68/72 ch","E",1],["1.2 PureTech 82 ch","E",1.03],["1.4 HDi 54 ch","D",0.95]]},
+"Citroën|C3":{y:[2002],e:[["1.4 / 1.6 VTi 73-120 ch","E",0.95],["1.0 / 1.2 PureTech 68-83 ch","E",0.97],["1.2 PureTech 110 ch","E",1.03],["1.4 / 1.6 HDi / BlueHDi 68-100 ch","D",0.98],["ë-C3 électrique","El",1.05]]},
+"Citroën|C3 Aircross":{y:[2017],e:[["1.2 PureTech 82/110/130 ch","E",1],["1.5 / 1.6 BlueHDi 100/120 ch","D",1]]},
+"Citroën|C4":{y:[2004],e:[["1.6 VTi / THP 120-155 ch","E",0.97],["1.2 PureTech 110/130 ch","E",1],["1.5 / 1.6 BlueHDi 100-130 ch","D",1],["ë-C4 électrique 136 ch","El",1.05]]},
+"Citroën|C4 Picasso / SpaceTourer":{y:[2006],e:[["1.2 PureTech 130 ch","E",1],["1.6 THP 155/165 ch","E",1],["1.6 HDi / BlueHDi 110-120 ch","D",0.98],["2.0 BlueHDi 150/160 ch","D",1.04]]},
+"Citroën|Berlingo":{y:[2008],e:[["1.2 PureTech 110 ch","E",1],["1.6 HDi / BlueHDi 75-120 ch","D",1],["1.5 BlueHDi 100/130 ch","D",1.03],["ë-Berlingo électrique","El",1.05]]},
+"Opel|Karl":{y:[2015,2019],e:[["1.0 75 ch","E",1]]},
+"Opel|Corsa":{y:[2006],e:[["1.0 / 1.2 60-80 ch","E",0.95],["1.4 90/100 ch","E",0.98],["1.0 Turbo 90/115 ch","E",1],["1.2 Turbo 100/130 ch","E",1.03],["OPC 1.6 Turbo 192/207 ch","E",1.2],["1.3 CDTI 75-95 ch","D",0.97],["1.5 D 100 ch","D",1],["Corsa-e électrique 136 ch","El",1.05]]},
+"Opel|Astra":{y:[2004],e:[["1.0 / 1.2 Turbo 105-130 ch","E",0.97],["1.4 Turbo 125-150 ch","E",1],["1.6 Turbo 180-200 ch","E",1.05],["Plug-in Hybrid 180/225 ch","H",1.06],["1.6 CDTI 110-136 ch","D",1],["1.5 D 105-122 ch","D",1]]},
+"Opel|Crossland":{y:[2017],e:[["1.2 83 ch","E",0.95],["1.2 Turbo 110/130 ch","E",1.02],["1.5 D 102/120 ch","D",1]]},
+"Opel|Mokka":{y:[2012],e:[["1.4 Turbo 140 ch","E",0.97],["1.2 Turbo 100/130 ch","E",1.02],["1.6 CDTI 110/136 ch","D",1],["1.5 D 110 ch","D",1],["Mokka-e électrique 136 ch","El",1.05]]},
+"Opel|Grandland":{y:[2017],e:[["1.2 Turbo 130 ch","E",1],["Hybrid 225 / 300 ch","H",1.1],["1.5 D 130 ch","D",1.02],["2.0 D 177 ch","D",1.06]]},
+"Opel|Zafira":{y:[2005,2019],e:[["1.4 Turbo 120-140 ch","E",1],["1.6 / 2.0 CDTI 120-170 ch","D",1.02]]},
+"Ford|Ka / Ka+":{y:[2008,2021],e:[["1.2 69 ch","E",0.97],["1.2 Ti-VCT 70/85 ch","E",1],["1.5 TDCi 95 ch","D",0.98]]},
+"Ford|Fiesta":{y:[2002,2023],e:[["1.25 60-82 ch","E",0.93],["1.1 Ti-VCT 70/85 ch","E",0.97],["1.0 EcoBoost 100-125 ch","E",1],["1.0 EcoBoost mHEV 125/155 ch","E",1.05],["ST 1.5 / 1.6 EcoBoost 180-200 ch","E",1.25],["1.4 / 1.6 TDCi 68-95 ch","D",0.95],["1.5 TDCi 75-120 ch","D",0.98]]},
+"Ford|Focus":{y:[2004],e:[["1.6 Ti-VCT 105/125 ch","E",0.93],["1.0 EcoBoost 100-125 ch","E",0.97],["1.5 EcoBoost 150/182 ch","E",1.03],["ST / RS 2.0-2.3 EcoBoost 250-350 ch","E",1.4],["1.5 / 1.6 TDCi 95-120 ch","D",0.98],["2.0 TDCi / EcoBlue 150-190 ch","D",1.04]]},
+"Ford|Puma":{y:[2019],e:[["1.0 EcoBoost 125 ch","E",0.97],["1.0 EcoBoost mHEV 125/155 ch","E",1.02],["ST 1.5 EcoBoost 200 ch","E",1.2]]},
+"Ford|EcoSport":{y:[2014,2022],e:[["1.5 Ti-VCT 112 ch","E",0.97],["1.0 EcoBoost 100-140 ch","E",1],["1.5 TDCi 95-125 ch","D",1]]},
+"Ford|Kuga":{y:[2008],e:[["1.5 EcoBoost 120-182 ch","E",1],["2.5 Hybrid / PHEV 190-225 ch","H",1.06],["1.5 TDCi / EcoBlue 120 ch","D",1],["2.0 TDCi / EcoBlue 150-190 ch","D",1.04]]},
+"Ford|C-Max":{y:[2007,2019],e:[["1.6 Ti-VCT 105/125 ch","E",0.95],["1.0 EcoBoost 100/125 ch","E",0.97],["1.5 EcoBoost 150 ch","E",1.02],["1.5 / 1.6 TDCi 95-120 ch","D",1],["2.0 TDCi 150 ch","D",1.04]]},
+"Skoda|Citigo":{y:[2012,2020],e:[["1.0 MPI 60/75 ch","E",1],["e-Citigo électrique","El",1.05]]},
+"Skoda|Fabia":{y:[2000],e:[["1.2 HTP 60/70 ch","E",0.92],["1.0 MPI 60-80 ch","E",0.95],["1.2 TSI 90/110 ch","E",1],["1.0 TSI 95/110 ch","E",1.03],["1.4 TDI 75-105 ch","D",0.97],["1.6 TDI 75-105 ch","D",0.98]]},
+"Skoda|Scala":{y:[2019],e:[["1.0 TSI 95-116 ch","E",1],["1.5 TSI 150 ch","E",1.06],["1.6 TDI 116 ch","D",1]]},
+"Skoda|Octavia":{y:[2004],e:[["1.0 TSI 110/115 ch","E",0.95],["1.2 / 1.4 TSI 105-150 ch","E",0.98],["1.5 TSI 150 ch","E",1.03],["RS 2.0 TSI 230-245 ch","E",1.25],["iV hybride rechargeable 204/245 ch","H",1.04],["1.6 TDI 90-115 ch","D",0.98],["2.0 TDI 115-200 ch","D",1.04]]},
+"Skoda|Kamiq":{y:[2019],e:[["1.0 TSI 95-116 ch","E",1],["1.5 TSI 150 ch","E",1.06],["1.6 TDI 116 ch","D",1]]},
+"Skoda|Karoq":{y:[2017],e:[["1.0 TSI 115 ch","E",0.97],["1.5 TSI 150 ch","E",1.02],["2.0 TSI 190 ch","E",1.1],["1.6 TDI 115 ch","D",0.98],["2.0 TDI 116-190 ch","D",1.04]]},
+"Skoda|Kodiaq":{y:[2016],e:[["1.5 TSI 150 ch","E",0.98],["2.0 TSI 180-245 ch","E",1.1],["2.0 TDI 150-200 ch","D",1.04]]},
+"Skoda|Superb":{y:[2008],e:[["1.4 / 1.5 TSI 150 ch","E",0.97],["2.0 TSI 220-280 ch","E",1.12],["iV hybride rechargeable 218 ch","H",1.04],["1.6 TDI 120 ch","D",0.95],["2.0 TDI 150-200 ch","D",1.03]]},
+"Seat|Mii":{y:[2012,2021],e:[["1.0 MPI 60/75 ch","E",1],["Mii electric","El",1.05]]},
+"Seat|Ibiza":{y:[2002],e:[["1.2 / 1.4 MPI 70-85 ch","E",0.93],["1.0 MPI 65-80 ch","E",0.95],["1.2 TSI 90-110 ch","E",1],["1.0 TSI 95-115 ch","E",1.03],["FR / Cupra 1.4 TSI 150-180 ch","E",1.15],["1.4 / 1.6 TDI 75-105 ch","D",0.97]]},
+"Seat|Arona":{y:[2017],e:[["1.0 TSI 95-115 ch","E",1],["1.5 TSI 150 ch","E",1.06],["1.6 TDI 95/115 ch","D",0.98]]},
+"Seat|Leon":{y:[2005],e:[["1.0 / 1.2 TSI 105-115 ch","E",0.97],["1.4 / 1.5 TSI 125-150 ch","E",1],["Cupra 2.0 TSI 265-310 ch","E",1.35],["e-Hybrid 204 ch","H",1.04],["1.6 TDI 90-115 ch","D",0.97],["2.0 TDI 150-184 ch","D",1.04]]},
+"Seat|Ateca":{y:[2016],e:[["1.0 TSI 110/115 ch","E",0.97],["1.5 TSI 150 ch","E",1.02],["2.0 TSI 190 ch","E",1.1],["1.6 TDI 115 ch","D",0.98],["2.0 TDI 150/190 ch","D",1.04]]},
+"Hyundai|i10":{y:[2008],e:[["1.0 66/67 ch","E",0.98],["1.2 85/87 ch","E",1.02],["1.0 T-GDi 100 ch","E",1.05]]},
+"Hyundai|i20":{y:[2009],e:[["1.2 75-84 ch","E",0.97],["1.4 100 ch","E",0.98],["1.0 T-GDi 100/120 ch","E",1.03],["N 1.6 T-GDi 204 ch","E",1.3],["1.1 / 1.4 CRDi 75-90 ch","D",0.95]]},
+"Hyundai|i30":{y:[2007],e:[["1.4 / 1.6 100-130 ch","E",0.95],["1.0 T-GDi 120 ch","E",0.97],["1.4 / 1.5 T-GDi 140-160 ch","E",1.03],["N 2.0 T-GDi 250-280 ch","E",1.35],["1.6 CRDi 90-136 ch","D",1]]},
+"Hyundai|Bayon":{y:[2021],e:[["1.2 84 ch","E",0.95],["1.0 T-GDi 100/120 ch","E",1]]},
+"Hyundai|Kona":{y:[2017],e:[["1.0 T-GDi 120 ch","E",0.97],["1.6 T-GDi 177/198 ch","E",1.05],["1.6 Hybrid 141 ch","H",0.97],["Électrique 39 kWh","El",0.95],["Électrique 64 kWh","El",1.08],["1.6 CRDi 115/136 ch","D",1]]},
+"Hyundai|Tucson":{y:[2015],e:[["1.6 GDi 132 ch","E",0.95],["1.6 T-GDi 150-177 ch","E",1.02],["1.6 Hybrid 230 / Plug-in 265 ch","H",1.06],["1.7 / 1.6 CRDi 115-136 ch","D",1],["2.0 CRDi 136-185 ch","D",1.04]]},
+"Hyundai|Ioniq":{y:[2016,2022],e:[["Hybrid 141 ch","H",0.95],["Plug-in 141 ch","H",1],["Électrique 28/38 kWh","El",0.95]]},
+"Kia|Picanto":{y:[2004],e:[["1.0 66/67 ch","E",1],["1.2 84 ch","E",1.03],["1.0 T-GDi 100 ch","E",1.06]]},
+"Kia|Rio":{y:[2005],e:[["1.2 84 ch","E",0.97],["1.4 100/109 ch","E",0.98],["1.0 T-GDi 100/120 ch","E",1.03],["1.1 / 1.4 CRDi 75-90 ch","D",0.95]]},
+"Kia|Stonic":{y:[2017],e:[["1.2 84 ch","E",0.95],["1.4 100 ch","E",0.97],["1.0 T-GDi 100/120 ch","E",1.02],["1.6 CRDi 110 ch","D",1]]},
+"Kia|Ceed":{y:[2007],e:[["1.4 / 1.6 100-130 ch","E",0.95],["1.0 T-GDi 100/120 ch","E",0.97],["1.4 / 1.5 T-GDi 140-160 ch","E",1.03],["GT 1.6 T-GDi 204 ch","E",1.2],["1.6 Plug-in 141 ch","H",1.04],["1.6 CRDi 90-136 ch","D",1]]},
+"Kia|Niro":{y:[2016],e:[["1.6 Hybrid 141 ch","H",0.95],["1.6 Plug-in 141/183 ch","H",1.01],["e-Niro électrique 64 kWh","El",1.08]]},
+"Kia|Sportage":{y:[2010],e:[["1.6 GDi 132 ch","E",0.95],["1.6 T-GDi 150-177 ch","E",1.02],["1.6 Hybrid 230 / Plug-in 265 ch","H",1.06],["1.7 / 1.6 CRDi 115-136 ch","D",1],["2.0 CRDi 136-185 ch","D",1.04]]},
+"Dacia|Sandero":{y:[2008],e:[["1.2 75 ch","E",0.95],["1.0 SCe 65/73 ch","E",0.97],["0.9 / 1.0 TCe 90/100 ch","E",1.03],["1.0 ECO-G 100 ch (GPL)","G",1.03],["1.5 dCi 75/90 ch","D",0.98]]},
+"Dacia|Logan":{y:[2004],e:[["1.2 75 ch","E",0.97],["0.9 / 1.0 TCe 90/100 ch","E",1.02],["1.0 ECO-G 100 ch (GPL)","G",1.02],["1.5 dCi 75/90 ch","D",0.98]]},
+"Dacia|Duster":{y:[2010],e:[["1.6 SCe 105/115 ch","E",0.95],["1.0 TCe 90/100 ch","E",0.98],["1.2 / 1.3 TCe 125-150 ch","E",1.03],["1.0 ECO-G 100 ch (GPL)","G",1],["Hybrid 140 ch","H",1.02],["1.5 dCi 90-115 ch","D",1]]},
+"Dacia|Jogger":{y:[2022],e:[["1.0 TCe 110 ch","E",1],["1.0 ECO-G 100 ch (GPL)","G",0.98],["Hybrid 140 ch","H",1.02]]},
+"Dacia|Spring":{y:[2021],e:[["Électrique 45/65 ch","El",1]]},
+"Fiat|500":{y:[2007],e:[["1.2 69 ch","E",1],["0.9 TwinAir 65-85 ch","E",0.97],["1.0 Hybrid 70 ch","E",1.02],["1.4 16V 100 ch","E",1.03],["Abarth 1.4 T-Jet 135-180 ch","E",1.35],["1.3 Multijet 75-95 ch","D",0.97],["500e électrique","El",1.05]]},
+"Fiat|Panda":{y:[2003],e:[["1.2 60/69 ch","E",1],["0.9 TwinAir 65-85 ch","E",1],["1.0 Hybrid 70 ch","E",1.03],["4x4","E",1.12],["1.3 Multijet 75-95 ch","D",0.98]]},
+"Fiat|Tipo":{y:[2016],e:[["1.4 95 ch","E",0.97],["1.4 T-Jet 120 ch","E",1],["1.0 T3 100 ch","E",1],["1.3 / 1.6 Multijet 95-130 ch","D",1]]},
+"Fiat|500X":{y:[2015],e:[["1.0 FireFly 120 ch","E",0.98],["1.4 MultiAir 140 ch","E",1],["1.3 FireFly 150 ch","E",1.04],["1.3 / 1.6 Multijet 95-120 ch","D",1]]},
+"Mini|Mini 3/5 portes":{y:[2001],e:[["One 1.2 / 1.5 75-102 ch","E",0.92],["Cooper 1.5 136 ch","E",1],["Cooper S 2.0 178-192 ch","E",1.15],["John Cooper Works 231 ch","E",1.35],["Cooper D 1.5 116 ch","D",0.98],["Cooper SE électrique","El",1.05]]},
+"Mini|Countryman":{y:[2010],e:[["One / Cooper 1.5 102-136 ch","E",0.97],["Cooper S 2.0 178-192 ch","E",1.08],["Cooper SE ALL4 hybride rechargeable 224 ch","H",1.04],["Cooper D / SD 2.0 150-190 ch","D",1.02]]},
+"Mini|Clubman":{y:[2007],e:[["Cooper 1.5 136 ch","E",1],["Cooper S 2.0 192 ch","E",1.1],["Cooper D 2.0 150 ch","D",1]]},
+"Honda|Jazz":{y:[2002],e:[["1.2 i-VTEC 90 ch","E",0.97],["1.3 / 1.4 i-VTEC 100-102 ch","E",1],["1.3 Hybrid 98 ch","H",0.98],["1.5 e:HEV hybride 109/122 ch","H",1.04]]},
+"Honda|Civic":{y:[2006],e:[["1.4 / 1.8 i-VTEC 100-142 ch","E",0.97],["1.0 VTEC Turbo 129 ch","E",0.97],["1.5 VTEC Turbo 182 ch","E",1.05],["Type R 2.0 310-329 ch","E",1.8],["2.0 e:HEV 184 ch","H",1.06],["2.2 i-CTDi 140 ch","D",0.95],["1.6 i-DTEC 120 ch","D",1]]},
+"Honda|HR-V":{y:[2015],e:[["1.5 i-VTEC 130 ch","E",1],["1.5 e:HEV 131 ch","H",1.04],["1.6 i-DTEC 120 ch","D",0.98]]},
+"Honda|CR-V":{y:[2007],e:[["2.0 i-VTEC 150/155 ch","E",0.95],["1.5 VTEC Turbo 173/193 ch","E",1],["2.0 Hybrid 184 ch","H",1.04],["2.2 i-DTEC 150 ch","D",0.98],["1.6 i-DTEC 120-160 ch","D",1]]},
+"Mazda|Mazda2":{y:[2007],e:[["1.3 75-84 ch","E",0.97],["1.5 Skyactiv-G 75-115 ch","E",1],["1.5 Hybrid 116 ch","H",1],["1.5 Skyactiv-D 105 ch","D",0.98]]},
+"Mazda|Mazda3":{y:[2009],e:[["1.6 105 ch","E",0.93],["2.0 Skyactiv-G 120-165 ch","E",1],["2.0 Skyactiv-X 180/186 ch","E",1.06],["1.5 / 1.8 / 2.2 Skyactiv-D 105-150 ch","D",1]]},
+"Mazda|CX-3":{y:[2015,2021],e:[["2.0 Skyactiv-G 120/150 ch","E",1],["1.5 / 1.8 Skyactiv-D 105/115 ch","D",1]]},
+"Mazda|CX-30":{y:[2019],e:[["2.0 Skyactiv-G 122/150 ch","E",1],["2.0 Skyactiv-X 180/186 ch","E",1.06],["1.8 Skyactiv-D 116 ch","D",1]]},
+"Mazda|CX-5":{y:[2012],e:[["2.0 Skyactiv-G 160/165 ch","E",0.98],["2.5 Skyactiv-G 194 ch","E",1.05],["2.2 Skyactiv-D 150-184 ch","D",1.02]]},
+"Suzuki|Celerio":{y:[2014,2020],e:[["1.0 68 ch","E",1]]},
+"Suzuki|Swift":{y:[2005],e:[["1.2 Dualjet 90 ch","E",1],["1.2 Hybrid 83/90 ch","H",0.97],["1.0 Boosterjet 111 ch","E",1.03],["Sport 1.4 Boosterjet 129/140 ch","E",1.15],["1.3 DDiS 75 ch","D",0.95]]},
+"Suzuki|Ignis":{y:[2016],e:[["1.2 Dualjet 90 ch","E",1],["1.2 Hybrid 83/90 ch","H",0.97],["AllGrip 4x4","E",1.08]]},
+"Suzuki|Vitara":{y:[2015],e:[["1.6 VVT 120 ch","E",0.97],["1.0 / 1.4 Boosterjet 111-140 ch","E",1.03],["1.4 / 1.5 Hybrid 115-129 ch","H",1],["1.6 DDiS 120 ch","D",1]]},
+"Suzuki|S-Cross":{y:[2013],e:[["1.6 VVT 120 ch","E",0.97],["1.0 / 1.4 Boosterjet 111-140 ch","E",1.03],["1.4 Hybrid 129 ch","H",1],["1.6 DDiS 120 ch","D",1]]},
+"Nissan|Micra":{y:[2003],e:[["1.0 / 1.2 65-80 ch","E",0.95],["0.9 / 1.0 IG-T 90-100 ch","E",1.03],["1.5 dCi 68-90 ch","D",0.97]]},
+"Nissan|Note":{y:[2006,2017],e:[["1.2 / 1.4 80-88 ch","E",0.97],["1.2 DIG-S 98 ch","E",1.03],["1.5 dCi 86-90 ch","D",0.98]]},
+"Nissan|Juke":{y:[2010],e:[["1.6 94-117 ch","E",0.95],["1.0 DIG-T 114/117 ch","E",1],["1.2 / 1.6 DIG-T 115-190 ch","E",1.03],["1.6 Hybrid 143 ch","H",1.04],["1.5 dCi 110 ch","D",0.98]]},
+"Nissan|Qashqai":{y:[2007],e:[["1.6 / 2.0 117-141 ch","E",0.93],["1.2 / 1.3 DIG-T 115-160 ch","E",1],["1.5 e-Power 190 ch","H",1.06],["1.5 dCi 106-115 ch","D",1],["1.6 / 1.7 dCi 130-150 ch","D",1.03]]},
+"Nissan|Leaf":{y:[2011],e:[["24 / 30 kWh","El",0.75],["40 kWh","El",1],["e+ 62 kWh","El",1.15]]},
+"BMW|Série 1":{y:[2004],e:[["116i / 118i","E",0.97],["120i / 125i","E",1.05],["M135i / M140i","E",1.35],["116d / 118d","D",0.98],["120d / 123d","D",1.05]]},
+"BMW|Série 2":{y:[2014],e:[["218i / 220i","E",1],["M235i / M240i","E",1.3],["225xe hybride rechargeable","H",1],["216d / 218d / 220d","D",1]]},
+"BMW|Série 3":{y:[2005],e:[["318i / 320i","E",0.97],["330i / 340i","E",1.12],["330e hybride rechargeable","H",1],["M3","E",1.9],["316d / 318d","D",0.95],["320d","D",1],["330d / 335d","D",1.12]]},
+"BMW|X1":{y:[2009],e:[["sDrive18i / 20i","E",0.97],["xDrive25e hybride rechargeable","H",1],["sDrive16d / 18d","D",0.97],["xDrive20d / 25d","D",1.05],["iX1 électrique","El",1.1]]},
+"BMW|X3":{y:[2004],e:[["20i / 30i","E",1],["M40i","E",1.25],["30e hybride rechargeable","H",1],["18d / 20d","D",1],["30d / M40d","D",1.12],["iX3 électrique","El",1.08]]},
+"Mercedes|Classe A":{y:[2004],e:[["A160 / A180","E",0.97],["A200 / A250","E",1.05],["A35 / A45 AMG","E",1.5],["A250e hybride rechargeable","H",1],["A160d / A180d","D",0.97],["A200d / A220d","D",1.03]]},
+"Mercedes|Classe B":{y:[2005],e:[["B160 / B180","E",0.97],["B200 / B250","E",1.03],["B250e hybride rechargeable","H",0.98],["B180d / B200d","D",1]]},
+"Mercedes|Classe C":{y:[2007],e:[["C180 / C200","E",0.97],["C250 / C300","E",1.06],["C43 / C63 AMG","E",1.6],["C300e / C350e hybride rechargeable","H",1],["C200d / C220d","D",1],["C250d / C300d","D",1.06]]},
+"Mercedes|GLA":{y:[2014],e:[["GLA180 / 200","E",0.98],["GLA250","E",1.05],["GLA35 / 45 AMG","E",1.45],["GLA250e hybride rechargeable","H",1],["GLA180d / 200d","D",0.98],["GLA220d","D",1.03]]},
+"Audi|A1":{y:[2010],e:[["1.0 TFSI / 25-30 TFSI 95-116 ch","E",1],["1.4 TFSI 122-150 ch","E",1.03],["35 / 40 TFSI 150-207 ch","E",1.12],["1.4 / 1.6 TDI 90-116 ch","D",0.98]]},
+"Audi|A3":{y:[2003],e:[["1.0 / 1.2 TFSI / 30 TFSI 105-116 ch","E",0.97],["1.4 / 1.5 TFSI / 35 TFSI 125-150 ch","E",1],["40 / 45 TFSI e hybride rechargeable","H",1.02],["S3 / RS3","E",1.5],["1.6 TDI / 30 TDI","D",0.97],["2.0 TDI / 35 TDI","D",1.03]]},
+"Audi|A4":{y:[2008],e:[["1.4 TFSI / 35 TFSI 150 ch","E",0.97],["2.0 TFSI / 40-45 TFSI 190-265 ch","E",1.06],["S4 / RS4","E",1.6],["2.0 TDI / 35-40 TDI 136-204 ch","D",1],["3.0 TDI / 50 TDI","D",1.12]]},
+"Audi|Q2":{y:[2016],e:[["1.0 TFSI / 30 TFSI 110/116 ch","E",0.97],["1.4 / 1.5 TFSI / 35 TFSI 150 ch","E",1.02],["SQ2 2.0 TFSI","E",1.2],["1.6 TDI / 30 TDI 116 ch","D",0.97],["2.0 TDI / 35 TDI","D",1.03]]},
+"Audi|Q3":{y:[2011],e:[["1.4 / 1.5 TFSI / 35 TFSI 150 ch","E",0.98],["2.0 TFSI / 40-45 TFSI 180-245 ch","E",1.08],["45 TFSI e hybride rechargeable 245 ch","H",1.02],["2.0 TDI / 35-40 TDI 120-200 ch","D",1.02]]},
+"Volvo|V40":{y:[2012,2019],e:[["T2 / T3 122-152 ch","E",0.98],["T4 / T5 180-245 ch","E",1.05],["D2 120 ch","D",0.98],["D3 / D4 150-190 ch","D",1.03]]},
+"Volvo|XC40":{y:[2017],e:[["T2 / T3 129-163 ch","E",0.97],["B3 / B4 hybride léger 163-197 ch","E",1.03],["T4 / T5 Recharge hybride rechargeable","H",1.02],["D3 / D4 150-190 ch","D",1],["Recharge électrique","El",1.1]]},
+"Volvo|XC60":{y:[2008],e:[["T5 / B5 250 ch","E",1],["T6 / T8 Recharge hybride rechargeable","H",1.04],["D4 / B4 190-197 ch","D",1],["D5 / B5 235 ch","D",1.04]]},
+"Volvo|V60":{y:[2010],e:[["T3 / T4 / B4 150-197 ch","E",0.98],["T5 / B5 250 ch","E",1.03],["T6 / T8 Recharge hybride rechargeable","H",1.04],["D3 / D4 / B4 150-197 ch","D",1]]},
+"Tesla|Model 3":{y:[2019],e:[["Propulsion / Standard Range","El",0.95],["Grande Autonomie","El",1.08],["Performance","El",1.18]]},
+"Tesla|Model Y":{y:[2021],e:[["Propulsion","El",0.95],["Grande Autonomie","El",1.06],["Performance","El",1.15]]}
+};
+const FUEL={E:"Essence",D:"Diesel",H:"Hybride",El:"Électrique",G:"GPL"};
+function moteursDe(b,m){return MOTEURS[b+"|"+m]||null}
+function anneesDe(b,m){const yNow=new Date().getFullYear(),x=moteursDe(b,m),a=x?x.y[0]:1995,z=x&&x.y[1]?x.y[1]:yNow;const out=[];for(let y=z;y>=a;y--)out.push(y);return out}
 
 /* ---------- simulateur ---------- */
 const OPTIONS=["Climatisation","Climatisation automatique","GPS","Caméra de recul","Capteurs de stationnement","Régulateur / limiteur de vitesse","Régulateur adaptatif","Bluetooth","CarPlay / Android Auto","Jantes alu","Phares LED / xénon","Toit ouvrant / panoramique","Sièges chauffants","Volant chauffant","Sièges cuir","Démarrage sans clé","Hayon électrique","Attelage","Vitres arrière teintées","Pack sport"];
@@ -762,71 +901,66 @@ const PROBLEMES=[
 ];
 const PB_INDEX={};PROBLEMES.forEach(([g,items])=>items.forEach(([k,l,c,cat])=>PB_INDEX[k]={l,c,cat,g}));
 function fraisSim(s){return Object.values(s.frais||{}).reduce((a,b)=>a+num(b),0)+num(s.reparations)}
-function simDefaults(){return{brand:"",model:"",prixNeuf:"",annee:new Date().getFullYear()-8,km:110000,carburant:"Essence",boite:"Manuelle",etat:"bon",options:[],entretien:true,proprios:2,achat:"",marge:null,frais:{ct:60,carpass:10,nettoyage:80},reparations:"",result:null,open:{}}}
+function simDefaults(){const y=new Date().getFullYear();return{brand:"",model:"",moteur:"",prixNeuf:"",anneeMin:y-10,anneeMax:y-8,km:110000,carburant:"Essence",coef:1,boite:"Manuelle",etat:"bon",options:[],entretien:true,proprios:2,frais:{ct:60,carpass:10,nettoyage:80},reparations:"",result:null,open:{}}}
 function ddSummary(kind){
   const s=S.sim;
   if(kind==="options"){const n=s.options.length;return n?n+" équipement"+(n>1?"s":"")+" coché"+(n>1?"s":""):"Aucun équipement coché"}
   const n=Object.keys(s.frais).length;return n?n+" élément"+(n>1?"s":"")+" · "+eur(fraisSim(s)-num(s.reparations)):"Aucun frais coché"}
 function vSim(){
-  if(!S.sim||S.sim.brand===undefined||!S.sim.frais||Array.isArray(S.sim.frais))S.sim=simDefaults();
-  const s=S.sim;if(s.marge==null)s.marge=S.settings.margeVisee;if(!s.open)s.open={};
+  if(!S.sim||S.sim.anneeMin===undefined)S.sim=simDefaults();
+  const s=S.sim;if(!s.open)s.open={};
   const yNow=new Date().getFullYear();
   const step=(n,t)=>'<div class="sstep"><span class="sn">'+n+'</span><h2>'+t+'</h2></div>';
   const sel=(k,label,opts,ph)=>'<label class="f">'+label+'<select data-simsel="'+k+'">'+(ph?'<option value="">'+ph+'</option>':"")+opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(v)+'"'+(String(s[k])===String(v)?" selected":"")+'>'+esc(l)+'</option>'}).join("")+'</select></label>';
   let h='<div class="top"><div><h1>Simulateur d\'achat</h1><p>Décris la voiture repérée : l\'app estime son prix de revente et ton prix d\'achat maximum.</p></div>'+(s.brand?'<button class="btn small" data-act="simreset">Nouvelle simulation</button>':"")+'</div>';
   h+='<div class="fiche"><div class="stack">';
   // 1 véhicule
+  const mot=s.brand&&s.brand!=="Autre"&&s.model?moteursDe(s.brand,s.model):null;
+  const ans=s.brand&&s.brand!=="Autre"&&s.model?anneesDe(s.brand,s.model):Array.from({length:yNow-1994},(_,i)=>yNow-i);
   h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+sel("brand","Marque",[...Object.keys(CATALOGUE),["Autre","Autre marque"]],"Choisir la marque")+
-     (s.brand==="Autre"?'<label class="f">Marque et modèle<input data-simtxt="libre" value="'+esc(s.libre||"")+'" placeholder="ex. Lancia Ypsilon"></label><label class="f full">Prix neuf approximatif (€)<input data-simtxt="prixNeuf" type="number" inputmode="decimal" value="'+esc(s.prixNeuf)+'" placeholder="ex. 16000"></label>':
-      sel("model","Modèle",s.brand?Object.keys(CATALOGUE[s.brand].m):[],s.brand?"Choisir le modèle":"Choisis d'abord la marque"))+
-     sel("annee","Année",Array.from({length:yNow-1994},(_,i)=>{const y=yNow-i;return[y,y+" ("+(yNow-y)+" an"+(yNow-y>1?"s":"")+")"]}))+
+     (s.brand==="Autre"?'<label class="f">Marque et modèle<input data-simtxt="libre" value="'+esc(s.libre||"")+'" placeholder="ex. Lancia Ypsilon"></label><label class="f">Prix neuf approximatif (€)<input data-simtxt="prixNeuf" type="number" inputmode="decimal" value="'+esc(s.prixNeuf)+'" placeholder="ex. 16000"></label>'+sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]):
+      sel("model","Modèle",s.brand?Object.keys(CATALOGUE[s.brand].m):[],s.brand?"Choisir le modèle":"Choisis d'abord la marque")+
+      sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],s.model?"Choisir la motorisation":"Choisis d'abord le modèle"))+
+     sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
+     sel("anneeMin","Année de",ans)+sel("anneeMax","Année à",ans)+
      sel("km","Kilométrage",Array.from({length:61},(_,i)=>{const k=i*5000;return[k,new Intl.NumberFormat("fr-BE").format(k)+" km"]}))+
-     '</div><p class="note" style="margin-top:8px">Moyenne attendue pour cet âge : '+new Intl.NumberFormat("fr-BE").format(Math.max(1,yNow-s.annee)*15000)+' km</p></div>';
-  // 2 motorisation
-  h+='<div class="card">'+step(2,"Motorisation")+'<div class="form">'+sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"])+sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+'</div></div>';
+     '</div><p class="note" style="margin-top:8px">'+(mot?"Modèle produit de "+mot.y[0]+(mot.y[1]?" à "+mot.y[1]:" à aujourd'hui")+". ":"")+'Kilométrage moyen attendu : '+new Intl.NumberFormat("fr-BE").format(Math.max(1,yNow-Math.round((s.anneeMin+s.anneeMax)/2))*15000)+' km</p></div>';
   // 3 état
-  h+='<div class="card">'+step(3,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
+  h+='<div class="card">'+step(2,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
      sel("entretien","Carnet d'entretien",[["1","Complet"],["0","Incomplet ou absent"]])+sel("proprios","Propriétaires",[["1","1 propriétaire"],["2","2 propriétaires"],["3","3 propriétaires et plus"]])+'</div></div>';
   // 4 équipements
-  h+='<div class="card">'+step(4,"Équipements")+'<details class="dd" data-dd="options"'+(s.open.options?" open":"")+'><summary><span id="dd-options">'+ddSummary("options")+'</span></summary><div class="ddlist">'+
+  h+='<div class="card">'+step(3,"Équipements")+'<details class="dd" data-dd="options"'+(s.open.options?" open":"")+'><summary><span id="dd-options">'+ddSummary("options")+'</span></summary><div class="ddlist">'+
      OPTIONS.map(o=>'<label class="ck"><input type="checkbox" data-simck="'+esc(o)+'"'+(s.options.includes(o)?" checked":"")+'><span>'+esc(o)+'</span></label>').join("")+'</div></details></div>';
   // 5 frais
-  h+='<div class="card">'+step(5,"Frais prévus et problèmes constatés")+'<details class="dd" data-dd="frais"'+(s.open.frais?" open":"")+'><summary><span id="dd-frais">'+ddSummary("frais")+'</span></summary><div class="ddlist">'+
+  h+='<div class="card">'+step(4,"Frais prévus et problèmes constatés")+'<details class="dd" data-dd="frais"'+(s.open.frais?" open":"")+'><summary><span id="dd-frais">'+ddSummary("frais")+'</span></summary><div class="ddlist">'+
      PROBLEMES.map(([g,items])=>'<div class="ddg">'+esc(g)+'</div>'+items.map(([k,l,c])=>{const on=s.frais[k]!=null;return'<div class="ck fr"><label><input type="checkbox" data-simfr="'+k+'"'+(on?" checked":"")+'><span>'+esc(l)+'</span></label><input class="num amt" type="number" inputmode="decimal" data-simfra="'+k+'" value="'+esc(on?s.frais[k]:c)+'"'+(on?"":" disabled")+' aria-label="Coût '+esc(l)+'"><span class="eu">€</span></div>'}).join("")).join("")+
      '</div></details><p class="note" style="margin-top:8px">Coûts moyens dans un garage indépendant, modifiables. Coche ce que tu constates, ajuste avec un devis si tu en as un.</p>'+
-     '<div class="form" style="margin-top:10px"><label class="f">Autres frais (€)<input data-simtxt="reparations" type="number" inputmode="decimal" value="'+esc(s.reparations)+'" placeholder="0"></label><div style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500"><span>Total des frais</span><b class="num" id="fraistotal" style="font-size:22px;color:var(--ink)">'+eur(fraisSim(s))+'</b></div></div></div>';
-  // 6 prix
-  h+='<div class="card">'+step(6,"Prix demandé et marge visée")+'<div class="form"><label class="f">Prix demandé par le vendeur (€)<input data-simtxt="achat" type="number" inputmode="decimal" value="'+esc(s.achat)+'" placeholder="facultatif"></label>'+
-     sel("marge","Marge nette visée",Array.from({length:28},(_,i)=>{const m=300+i*100;return[m,eur(m)]}))+'</div></div>';
-  h+='<button class="btn primary big" data-act="simuler"'+(simReady(s)?"":" disabled")+'>'+(simReady(s)?"Simuler":"Choisis la marque et le modèle")+'</button>';
+     '<div class="form" style="margin-top:10px"><label class="f">Autres frais (€)<input data-simtxt="reparations" type="number" inputmode="decimal" value="'+esc(s.reparations)+'" placeholder="0"></label><div class="f"><span>Total des frais</span><b class="num" id="fraistotal" style="font-size:22px;color:var(--ink)">'+eur(fraisSim(s))+'</b></div></div></div>';
+  h+='<button class="btn primary big" data-act="simuler"'+(simReady(s)?"":" disabled")+'>'+(simReady(s)?"Simuler":"Choisis la marque, le modèle et la motorisation")+'</button>';
   h+='</div><div class="stack sticky"><div class="card" id="simres">'+simResult()+'</div></div></div>';
   return h;
 }
-function simReady(s){return s.brand==="Autre"?num(s.prixNeuf)>0:!!(s.brand&&s.model)}
-function simInput(s){return{brand:s.brand,model:s.model,prixNeuf:s.brand==="Autre"?s.prixNeuf:"",annee:s.annee,km:s.km,carburant:s.carburant,boite:s.boite,etat:s.etat,options:s.options,entretien:s.entretien,proprios:s.proprios}}
-function simRefresh(){const s=S.sim;if(s.result&&simReady(s))s.result=estimer(simInput(s));const a=$("#dd-options"),b=$("#dd-frais"),t=$("#fraistotal");if(a)a.textContent=ddSummary("options");if(b)b.textContent=ddSummary("frais");if(t)t.textContent=eur(fraisSim(s));updateSim()}
+function simReady(s){return s.brand==="Autre"?num(s.prixNeuf)>0:!!(s.brand&&s.model&&s.moteur)}
+function simInput(s,annee){return{brand:s.brand,model:s.model,prixNeuf:s.brand==="Autre"?s.prixNeuf:"",annee,km:s.km,carburant:s.carburant,coef:s.coef,boite:s.boite,etat:s.etat,options:s.options,entretien:s.entretien,proprios:s.proprios}}
+function estimerSim(s){const a=Math.min(s.anneeMin,s.anneeMax),z=Math.max(s.anneeMin,s.anneeMax),lo=estimer(simInput(s,a)),hi=estimer(simInput(s,z)),mid=estimer(simInput(s,Math.round((a+z)/2)));if(!lo||!hi||!mid)return null;return{bas:Math.min(lo.bas,mid.bas),median:mid.median,haut:Math.max(hi.haut,mid.haut),demande:mid.demande,delai:mid.delai}}
+function simRefresh(){const s=S.sim;if(s.result&&simReady(s))s.result=estimerSim(s);const a=$("#dd-options"),b=$("#dd-frais"),t=$("#fraistotal");if(a)a.textContent=ddSummary("options");if(b)b.textContent=ddSummary("frais");if(t)t.textContent=eur(fraisSim(s));updateSim()}
 function simResult(){
   const s=S.sim,r=s.result;
   if(!r)return'<h2>Résultat</h2><p class="note">Remplis les étapes puis touche <b>Simuler</b>. Tu obtiendras le prix de revente minimum, médian et maximum, et le prix maximum à payer.</p>';
-  const fr=fraisSim(s),t=S.settings.tva,mg=num(s.marge);
+  const fr=fraisSim(s),t=S.settings.tva,mg=num(S.settings.margeVisee);
+  const ya=Math.min(s.anneeMin,s.anneeMax),yz=Math.max(s.anneeMin,s.anneeMax),yLab=ya===yz?String(ya):ya+" à "+yz;
   const maxMed=prixAchatMax(r.median,fr,mg,t),maxBas=prixAchatMax(r.bas,fr,mg,t);
   const offre=Math.round(Math.min(maxBas,maxMed*0.9)/50)*50;
   const pos=x=>Math.max(0,Math.min(100,(x-r.bas*0.85)/(r.haut*1.15-r.bas*0.85)*100));
   const nom=s.brand==="Autre"?(s.libre||"Véhicule"):s.brand+" "+s.model;
   const nbPb=Object.keys(s.frais).filter(k=>PB_INDEX[k]&&PB_INDEX[k].g!=="Préparation à la vente").length;
-  let h='<h2>'+esc(nom)+' · '+s.annee+'</h2><p class="note num">'+new Intl.NumberFormat("fr-BE").format(s.km)+' km · '+esc(s.carburant)+' · '+esc(s.boite)+' · état '+esc((ETATS.find(e=>e[0]===s.etat)||[])[1]||"").toLowerCase()+(s.options.length?' · '+s.options.length+' équipement'+(s.options.length>1?"s":""):"")+'</p>';
+  let h='<h2>'+esc(nom)+' · '+yLab+'</h2><p class="note num">'+(s.moteur?esc(s.moteur)+' · ':'')+new Intl.NumberFormat("fr-BE").format(s.km)+' km · '+esc(s.carburant)+' · '+esc(s.boite)+' · état '+esc((ETATS.find(e=>e[0]===s.etat)||[])[1]||"").toLowerCase()+(s.options.length?' · '+s.options.length+' équipement'+(s.options.length>1?"s":""):"")+'</p>';
   h+='<div class="note" style="margin-top:12px;font-weight:600;color:var(--ink)">Prix de revente estimé'+(nbPb?" (après réparations)":"")+'</div><div class="est num" style="margin-top:6px"><div><small>Minimum</small><b>'+eur(r.bas)+'</b></div><div class="mid"><small>Médian</small><b>'+eur(r.median)+'</b></div><div><small>Maximum</small><b>'+eur(r.haut)+'</b></div></div>';
   h+='<div class="range"><i style="left:'+pos(r.bas)+'%;right:'+(100-pos(r.haut))+'%"></i><span style="left:'+pos(r.median)+'%"></span></div>';
   h+='<div class="calc" style="margin-top:6px">'+row("Demande sur le marché",["","Plus lente","Correcte","Forte"][r.demande])+row("Délai de vente probable",r.delai+" jours")+'</div>';
-  h+='<div class="buybox"><small>Prix d\'achat maximum</small><div class="big num">'+eur(maxMed)+'</div><div class="note">pour revendre au prix médian avec '+eur(mg)+' de marge nette</div>'+
+  h+='<div class="buybox"><small>Prix d\'achat maximum</small><div class="big num">'+eur(maxMed)+'</div><div class="note">pour revendre au prix médian avec '+eur(mg)+' de marge nette (réglable dans Réglages)</div>'+
      '<div class="calc" style="margin-top:10px">'+row("Scénario prudent (revente au minimum)",eur(maxBas))+row("Première offre conseillée",eur(offre))+row("Frais prévus"+(nbPb?" ("+nbPb+" problème"+(nbPb>1?"s":"")+")":""),eur(fr))+'</div></div>';
-  const a=num(s.achat);
-  if(a){const v={prixAchat:a,prixAffiche:r.median,frais:[{montant:fr}],statut:"en_vente"},c=calc(v);
-    const ok=a<=maxMed;
-    h+='<div class="verdict '+(a<=maxBas?"good":ok?"mid":"bad")+'"><b>'+(a<=maxBas?"Bonne affaire":ok?"Jouable":"Trop cher")+'</b><span>'+
-      (a<=maxBas?"Même en revendant au minimum, tu gardes ta marge.":ok?"Tu gardes ta marge si tu revends au prix médian. Négocie vers "+eur(offre)+".":"Il faudrait l'obtenir "+eur(a-maxMed)+" moins cher pour garder ta marge.")+
-      '</span><div class="calc" style="margin-top:8px">'+row("Prix demandé",eur(a))+row("Marge nette au prix médian",eur(c.net),c.net<0?"neg":"pos")+'</div></div>';}
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn small" href="'+asUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model,annee:s.annee})+'" target="_blank" rel="noopener">Comparer sur AutoScout24</a><a class="btn small" href="'+dmUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model})+'" target="_blank" rel="noopener">2ememain</a></div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn small" href="'+asUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model,annee:Math.round((s.anneeMin+s.anneeMax)/2)})+'" target="_blank" rel="noopener">Comparer sur AutoScout24</a><a class="btn small" href="'+dmUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model})+'" target="_blank" rel="noopener">2ememain</a></div>';
   h+='<button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-act="simsave">Ajouter au garage en repérage</button>';
   h+='<p class="note" style="margin-top:10px">Estimation calculée par l\'app (prix neuf de référence, âge, kilométrage, état). Elle ne lit pas les annonces : vérifie toujours avec 3 ou 4 annonces comparables avant d\'acheter.</p>';
   return h;
@@ -918,12 +1052,12 @@ document.addEventListener("click",async e=>{
     try{S.simEst=await estimate(s);if(!num(s.revente))s.revente=S.simEst.median}catch(err){estErr(err)}
     S.simBusy=false;render();
   }
-  else if(act==="simuler"&&S.sim&&simReady(S.sim)){S.sim.result=estimer(simInput(S.sim));render();const r=$("#simres");if(r&&window.innerWidth<980)r.scrollIntoView({behavior:"smooth",block:"start"})}
+  else if(act==="simuler"&&S.sim&&simReady(S.sim)){S.sim.result=estimerSim(S.sim);render();const r=$("#simres");if(r&&window.innerWidth<980)r.scrollIntoView({behavior:"smooth",block:"start"})}
   else if(act==="simreset"){S.sim=simDefaults();render();window.scrollTo(0,0)}
   else if(act==="autoest"&&v&&!v.demo){const m=catMatch(v.marque,v.modele);if(m&&m.model){const r=estimer({brand:m.brand,model:m.model,annee:v.annee,km:v.km,carburant:v.carburant,boite:v.boite,etat:"bon",options:[],entretien:true,proprios:2});if(r){v.estim={bas:r.bas,median:r.median,haut:r.haut,delai:r.delai,date:today()};persistVehicle(v,true);render();toast("Estimation ajoutée.")}}}
   else if(act==="simsave"&&S.sim&&S.sim.result){const s=S.sim,r=s.result,fr=fraisSim(s);const autre=s.brand==="Autre";
-    addVehicle({marque:autre?(s.libre||"").split(" ")[0]:s.brand,modele:autre?(s.libre||"").split(" ").slice(1).join(" "):s.model,annee:s.annee,km:s.km,carburant:s.carburant,boite:s.boite,prixAchat:numOrNull(s.achat)??"",estim:{bas:r.bas,median:r.median,haut:r.haut,delai:r.delai,date:today()},
-      notes:"Simulation : revente "+eur(r.bas)+" – "+eur(r.haut)+" (médian "+eur(r.median)+"), achat max "+eur(prixAchatMax(r.median,fr,num(s.marge),S.settings.tva))+", frais prévus "+eur(fr)+".",
+    addVehicle({marque:autre?(s.libre||"").split(" ")[0]:s.brand,modele:autre?(s.libre||"").split(" ").slice(1).join(" "):s.model+(s.moteur?" "+s.moteur:""),annee:s.anneeMin===s.anneeMax?s.anneeMin:"",km:s.km,carburant:s.carburant,boite:s.boite,prixAchat:"",estim:{bas:r.bas,median:r.median,haut:r.haut,delai:r.delai,date:today()},
+      notes:"Simulation ("+(s.anneeMin===s.anneeMax?s.anneeMin:s.anneeMin+" à "+s.anneeMax)+") : revente "+eur(r.bas)+" – "+eur(r.haut)+" (médian "+eur(r.median)+"), achat max "+eur(prixAchatMax(r.median,fr,num(S.settings.margeVisee),S.settings.tva))+", frais prévus "+eur(fr)+".",
       frais:[...Object.entries(s.frais).map(([k,m])=>({id:newId(),cat:PB_INDEX[k]?PB_INDEX[k].cat:"Autre",libelle:PB_INDEX[k]?PB_INDEX[k].l:"",montant:num(m)})),...(num(s.reparations)?[{id:newId(),cat:"Autre",libelle:"Autres frais",montant:num(s.reparations)}]:[])]})}
   else if(act==="export"){const txt=JSON.stringify({app:"negoce-auto",version:1,date:today(),settings:S.settings,vehicles:S.vehicles},null,1);const ta=$("#backup");ta.value=txt;
     try{await navigator.clipboard.writeText(txt);toast("Données copiées. Colle-les dans une note ou un e-mail pour les garder.")}catch(err){ta.select();toast("Sélectionne le texte et copie-le.")}}
@@ -938,7 +1072,7 @@ document.addEventListener("input",e=>{
   const t=e.target,r=route();
   if(t.id==="search"){S.search=t.value;const pos=t.selectionStart;render();const s=$("#search");if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(_){}}return}
   if(t.dataset.simfra&&S.sim){const k=t.dataset.simfra;if(S.sim.frais[k]!=null){S.sim.frais[k]=num(t.value);simRefresh()}return}
-  if(t.dataset.simrange&&S.sim){const k=t.dataset.simrange;S.sim[k]=+t.value;if(k==="km")$("#kmval").textContent=new Intl.NumberFormat("fr-BE").format(+t.value)+" km";if(k==="marge")$("#margeval").textContent=eur(+t.value);if(S.sim.result&&simReady(S.sim))S.sim.result=estimer(simInput(S.sim));updateSim();return}
+  if(t.dataset.simrange&&S.sim){const k=t.dataset.simrange;S.sim[k]=+t.value;if(k==="km")$("#kmval").textContent=new Intl.NumberFormat("fr-BE").format(+t.value)+" km";if(k==="marge")$("#margeval").textContent=eur(+t.value);if(S.sim.result&&simReady(S.sim))S.sim.result=estimerSim(S.sim);updateSim();return}
   if(t.dataset.simtxt&&S.sim){S.sim[t.dataset.simtxt]=t.value;simRefresh();if(t.dataset.simtxt==="prixNeuf"){const b=$('[data-act="simuler"]');if(b){b.disabled=!simReady(S.sim);b.textContent=simReady(S.sim)?"Simuler":"Choisis la marque et le modèle"}}return}
   if(t.dataset.set){S.settings[t.dataset.set]=num(t.value);persistSettings();return}
   if(r.view!=="fiche")return;const v=curVeh(r.id);if(!v||v.demo)return;
@@ -952,7 +1086,13 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("change",e=>{
   const t=e.target,r=route();
-  if(t.dataset.simsel&&S.sim){const s=S.sim,k=t.dataset.simsel;let v=t.value;if(["annee","km","proprios","marge"].includes(k))v=+v;if(k==="entretien")v=v==="1";s[k]=v;if(k==="brand"){s.model="";s.result=null}if(s.result&&simReady(s))s.result=estimer(simInput(s));const y0=window.scrollY;render();window.scrollTo(0,y0);return}
+  if(t.dataset.simsel&&S.sim){const s=S.sim,k=t.dataset.simsel;let v=t.value;if(["anneeMin","anneeMax","km","proprios"].includes(k))v=+v;if(k==="entretien")v=v==="1";s[k]=v;
+    if(k==="brand"){s.model="";s.moteur="";s.result=null}
+    if(k==="model"){s.moteur="";s.result=null;const ys=anneesDe(s.brand,s.model);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax))}
+    if(k==="moteur"){const m=moteursDe(s.brand,s.model),e=m&&m.e.find(x=>x[0]===v);if(e){s.carburant=FUEL[e[1]];s.coef=e[2]}}
+    if(k==="anneeMin"&&s.anneeMin>s.anneeMax)s.anneeMax=s.anneeMin;
+    if(k==="anneeMax"&&s.anneeMax<s.anneeMin)s.anneeMin=s.anneeMax;
+    if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   if(t.dataset.simck&&S.sim){const s=S.sim,o=t.dataset.simck;s.options=t.checked?[...new Set([...s.options,o])]:s.options.filter(x=>x!==o);simRefresh();return}
   if(t.dataset.simfr&&S.sim){const s=S.sim,k=t.dataset.simfr,amt=document.querySelector('[data-simfra="'+k+'"]');if(t.checked){s.frais[k]=num(amt&&amt.value)||PB_INDEX[k].c;if(amt)amt.disabled=false}else{delete s.frais[k];if(amt){amt.disabled=true;amt.value=PB_INDEX[k].c}}simRefresh();return}
   if(t.dataset.period){S.period[t.dataset.period]=t.dataset.period==="y"?+t.value:t.value;render();return}
