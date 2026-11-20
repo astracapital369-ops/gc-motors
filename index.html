@@ -70,6 +70,8 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .yr{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
 .yrrow{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:15px}
 .yrrow input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:center}
+.ddsearch{padding:6px 10px 2px}
+.ddsearch input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.hide-m{display:none}}
@@ -294,7 +296,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="1.9";
+const APP_VERSION="2.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -742,7 +744,7 @@ function estimer(o){
   v*=(ETATS.find(e=>e[0]===o.etat)||ETATS[1])[3];
   if(o.entretien===false)v*=0.92;
   if(num(o.proprios)>=3)v*=0.95;
-  v*=1+Math.min(4,(o.options||[]).length)*0.01;
+  v*=1+Math.min(10,(o.options||[]).reduce((a,l)=>a+(EQ_POIDS[l]!=null?EQ_POIDS[l]:0.5),0))/100;
   v=Math.max(900,v);
   const spread=0.08+Math.min(0.08,age*0.005);
   const r=x=>Math.round(x/50)*50;
@@ -889,6 +891,22 @@ function moteursDe(b,m){return MOTEURS[b+"|"+m]||null}
 function anneesDe(b,m){const yNow=new Date().getFullYear(),x=moteursDe(b,m),a=x?x.y[0]:1995,z=x&&x.y[1]?x.y[1]:yNow;const out=[];for(let y=z;y>=a;y--)out.push(y);return out}
 
 /* ---------- simulateur ---------- */
+// Équipements : [libellé, effet sur le prix en %]. 0 = équipement de série, sans effet.
+const EQUIPEMENTS=[
+ ["Confort",[["Climatisation manuelle",0.5],["Climatisation automatique",1],["Climatisation bi-zone",1.2],["Climatisation tri ou quadri-zone",1.5],["Sièges chauffants avant",0.8],["Sièges chauffants arrière",0.5],["Sièges ventilés",1.2],["Sièges massants",1.2],["Siège conducteur électrique",0.8],["Sièges électriques à mémoire",1],["Volant chauffant",0.5],["Pare-brise chauffant",0.5],["Accoudoir central",0.2],["Lève-vitres électriques avant",0],["Lève-vitres électriques arrière",0.3],["Rétroviseurs électriques",0.2],["Rétroviseurs rabattables électriquement",0.4],["Rétroviseurs chauffants",0.2],["Démarrage sans clé",0.6],["Accès sans clé (keyless)",0.8],["Hayon électrique",0.8],["Hayon mains libres",1],["Portes coulissantes électriques",1],["Fermeture assistée des portes",0.8],["Toit ouvrant",1],["Toit panoramique",1.5],["Toit ouvrant panoramique",2],["Rideaux pare-soleil arrière",0.3],["Vitres arrière surteintées",0.4],["Chauffage de stationnement",1],["Pré-climatisation à distance",0.8],["Suspension pneumatique",1.5],["Suspension pilotée",1]]],
+ ["Multimédia et connectivité",[["Radio / lecteur CD",0],["Radio DAB+",0.3],["Bluetooth",0.5],["Prises USB / USB-C",0.2],["Chargeur à induction",0.5],["Écran tactile",0.5],["GPS intégré",1.2],["Apple CarPlay",1],["Android Auto",1],["Système audio premium (Bose, Harman Kardon, B&O…)",1.2],["Affichage tête haute",1.2],["Tableau de bord numérique",0.8],["Commandes au volant",0.3],["Commande vocale",0.3],["Wi-Fi embarqué",0.3],["Services connectés / application",0.4],["Écrans arrière (divertissement)",0.8]]],
+ ["Aides à la conduite",[["Régulateur de vitesse",0.8],["Limiteur de vitesse",0.3],["Régulateur adaptatif (ACC)",1.5],["Capteurs de stationnement avant",0.6],["Capteurs de stationnement arrière",0.6],["Caméra de recul",1],["Caméra 360°",1.5],["Stationnement automatique",0.8],["Alerte de franchissement de ligne",0.3],["Maintien dans la voie",0.6],["Surveillance des angles morts",0.8],["Alerte de trafic arrière",0.4],["Freinage d'urgence automatique",0.5],["Détection piétons et cyclistes",0.3],["Reconnaissance des panneaux",0.3],["Détecteur de fatigue",0.2],["Feux de route automatiques",0.4],["Aide au démarrage en côte",0.1],["Conduite semi-autonome",1.2],["Vision nocturne",1],["Allumage automatique des phares",0.2],["Capteur de pluie",0.2]]],
+ ["Éclairage",[["Phares LED",1],["Phares xénon",0.8],["Phares Matrix LED / adaptatifs",1.5],["Feux de jour LED",0.3],["Antibrouillards",0.2],["Feux arrière LED",0.3],["Éclairage d'ambiance",0.4]]],
+ ["Extérieur",[["Jantes alu",0.8],["Jantes 18 pouces et plus",1],["Peinture métallisée",0.8],["Pack sport (AMG, M, RS, S line, R-Line, GT Line…)",2.5],["Pack chrome",0.3],["Barres de toit",0.4],["Attelage",1],["Attelage rétractable électrique",1.2],["Marchepieds",0.4],["Spoiler / becquet",0.2]]],
+ ["Intérieur",[["Sellerie cuir",1.5],["Sellerie cuir / Alcantara",1.5],["Sièges sport",0.8],["Volant cuir",0.3],["Ciel de pavillon noir",0.3],["Tapis de sol premium",0.1],["7 places",2],["Banquette arrière coulissante",0.4],["Dossiers arrière 40/20/40",0.2],["Cache-bagages",0.1],["Plancher de coffre réglable",0.1]]],
+ ["Sécurité",[["ABS",0],["ESP",0],["Airbags frontaux",0],["Airbags latéraux",0],["Airbags rideaux",0],["Airbag genoux",0.1],["Fixations Isofix",0],["Alarme",0.3],["Antidémarrage",0],["Roue de secours",0.3],["Kit anti-crevaison",0],["Pneus run-flat",0.2],["Contrôle de pression des pneus",0],["Appel d'urgence eCall",0]]],
+ ["Technique et motricité",[["Transmission intégrale / 4x4",2.5],["Différentiel autobloquant",0.8],["Palettes au volant",0.5],["Modes de conduite",0.3],["Start & Stop",0],["Frein de stationnement électrique",0.3],["Auto Hold",0.2],["Échappement sport",0.8],["Freins sport",0.6]]],
+ ["Électrique et hybride",[["Pompe à chaleur",1.5],["Charge rapide DC",1.5],["Chargeur embarqué 11 kW ou plus",1],["Câble de recharge fourni",0.5],["Récupération d'énergie réglable",0.2],["Programmation de la charge",0.2]]],
+ ["Historique et état",[["Garantie constructeur restante",2.5],["Deuxième clé",0.8],["Factures d'entretien",1],["Véhicule non fumeur",0.8],["Pneus neufs",0.8],["Distribution faite récemment",1.5],["Premier propriétaire belge",0.5]]]
+];
+const EQ_POIDS={};EQUIPEMENTS.forEach(([g,items])=>items.forEach(([l,w])=>EQ_POIDS[l]=w));
+const VENDEUR_PART=0.87; // prix entre particuliers ≈ 87 % du prix pro avec garantie
+
 const OPTIONS=["Climatisation","Climatisation automatique","GPS","Caméra de recul","Capteurs de stationnement","Régulateur / limiteur de vitesse","Régulateur adaptatif","Bluetooth","CarPlay / Android Auto","Jantes alu","Phares LED / xénon","Toit ouvrant / panoramique","Sièges chauffants","Volant chauffant","Sièges cuir","Démarrage sans clé","Hayon électrique","Attelage","Vitres arrière teintées","Pack sport"];
 // Frais et problèmes possibles : [clé, libellé, coût moyen estimé en €, catégorie de frais du garage]
 const PROBLEMES=[
@@ -907,7 +925,7 @@ const PROBLEMES=[
 ];
 const PB_INDEX={};PROBLEMES.forEach(([g,items])=>items.forEach(([k,l,c,cat])=>PB_INDEX[k]={l,c,cat,g}));
 function fraisSim(s){return Object.values(s.frais||{}).reduce((a,b)=>a+num(b),0)+num(s.reparations)}
-function simDefaults(){const y=new Date().getFullYear();return{brand:"",model:"",moteur:"",prixNeuf:"",anneeMin:y-10,anneeMax:y-8,km:110000,carburant:"Essence",coef:1,boite:"Manuelle",etat:"bon",options:[],entretien:true,proprios:2,frais:{ct:60,carpass:10,nettoyage:80},reparations:"",result:null,open:{}}}
+function simDefaults(){const y=new Date().getFullYear();return{brand:"",model:"",moteur:"",prixNeuf:"",anneeMin:y-10,anneeMax:y-8,km:110000,vendeur:"pro",carburant:"Essence",coef:1,boite:"Manuelle",etat:"bon",options:[],entretien:true,proprios:2,frais:{ct:60,carpass:10,nettoyage:80},reparations:"",result:null,open:{}}}
 function ddSummary(kind){
   const s=S.sim;
   if(kind==="options"){const n=s.options.length;return n?n+" équipement"+(n>1?"s":"")+" coché"+(n>1?"s":""):"Aucun équipement coché"}
@@ -931,6 +949,7 @@ function vSim(){
       sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],s.model?"Choisir la motorisation":"Choisis d'abord le modèle"))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<div class="f full yr"><span>Année</span><div class="yrrow"><span>de</span><input data-simyear="anneeMin" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMin+'" aria-label="Année de"><span>à</span><input data-simyear="anneeMax" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMax+'" aria-label="Année à"></div></div>'+
+     sel("vendeur","Prix de revente",[["pro","Professionnel (avec garantie)"],["part","Particulier"],["both","Les deux"]])+
      '<label class="f full">Kilométrage <b class="num" id="kmval" style="color:var(--ink);font-size:16px">'+new Intl.NumberFormat("fr-BE").format(s.km)+' km</b><input type="range" min="0" max="300000" step="5000" value="'+s.km+'" data-simrange="km" aria-label="Kilométrage"></label>'+
      '</div><p class="note" style="margin-top:8px">'+(mot?"Modèle produit de "+mot.y[0]+(mot.y[1]?" à "+mot.y[1]:" à aujourd'hui")+". ":"")+'Kilométrage moyen attendu : '+new Intl.NumberFormat("fr-BE").format(Math.max(1,yNow-Math.round((s.anneeMin+s.anneeMax)/2))*15000)+' km</p></div>';
   // 3 état
@@ -938,7 +957,7 @@ function vSim(){
      sel("entretien","Carnet d'entretien",[["1","Complet"],["0","Incomplet ou absent"]])+sel("proprios","Propriétaires",[["1","1 propriétaire"],["2","2 propriétaires"],["3","3 propriétaires et plus"]])+'</div></div>';
   // 4 équipements
   h+='<div class="card">'+step(3,"Équipements")+'<details class="dd" data-dd="options"'+(s.open.options?" open":"")+'><summary><span id="dd-options">'+ddSummary("options")+'</span></summary><div class="ddlist">'+
-     OPTIONS.map(o=>'<label class="ck"><input type="checkbox" data-simck="'+esc(o)+'"'+(s.options.includes(o)?" checked":"")+'><span>'+esc(o)+'</span></label>').join("")+'</div></details></div>';
+     '<div class="ddsearch"><input type="search" data-eqsearch placeholder="Rechercher un équipement…" aria-label="Rechercher un équipement"></div>'+EQUIPEMENTS.map(([g,items])=>'<div class="ddg" data-grp>'+esc(g)+'</div>'+items.map(([o])=>'<label class="ck" data-eq="'+esc(o.toLowerCase())+'"><input type="checkbox" data-simck="'+esc(o)+'"'+(s.options.includes(o)?" checked":"")+'><span>'+esc(o)+'</span></label>').join("")).join("")+'</div></details></div>';
   // 5 frais
   h+='<div class="card">'+step(4,"Frais prévus et problèmes constatés")+'<details class="dd" data-dd="frais"'+(s.open.frais?" open":"")+'><summary><span id="dd-frais">'+ddSummary("frais")+'</span></summary><div class="ddlist">'+
      PROBLEMES.map(([g,items])=>'<div class="ddg">'+esc(g)+'</div>'+items.map(([k,l,c])=>{const on=s.frais[k]!=null;return'<div class="ck fr"><label><input type="checkbox" data-simfr="'+k+'"'+(on?" checked":"")+'><span>'+esc(l)+'</span></label><input class="num amt" type="number" inputmode="decimal" data-simfra="'+k+'" value="'+esc(on?s.frais[k]:c)+'"'+(on?"":" disabled")+' aria-label="Coût '+esc(l)+'"><span class="eu">€</span></div>'}).join("")).join("")+
@@ -953,21 +972,30 @@ function simInput(s,annee){return{brand:s.brand,model:s.model,prixNeuf:s.brand==
 function estimerSim(s){const a=Math.min(s.anneeMin,s.anneeMax),z=Math.max(s.anneeMin,s.anneeMax),lo=estimer(simInput(s,a)),hi=estimer(simInput(s,z)),mid=estimer(simInput(s,Math.round((a+z)/2)));if(!lo||!hi||!mid)return null;return{bas:Math.min(lo.bas,mid.bas),median:mid.median,haut:Math.max(hi.haut,mid.haut),demande:mid.demande,delai:mid.delai}}
 function simRefresh(){const s=S.sim;if(s.result&&simReady(s))s.result=estimerSim(s);const a=$("#dd-options"),b=$("#dd-frais"),t=$("#fraistotal");if(a)a.textContent=ddSummary("options");if(b)b.textContent=ddSummary("frais");if(t)t.textContent=eur(fraisSim(s));updateSim()}
 function simResult(){
-  const s=S.sim,r=s.result;
-  if(!r)return'<h2>Résultat</h2><p class="note">Remplis les étapes puis touche <b>Simuler</b>. Tu obtiendras le prix de revente minimum, médian et maximum, et le prix maximum à payer.</p>';
+  const s=S.sim,r0=s.result;
+  if(!r0)return'<h2>Résultat</h2><p class="note">Remplis les étapes puis touche <b>Simuler</b>. Tu obtiendras le prix de revente minimum, médian et maximum, et le prix maximum à payer.</p>';
+  const vend=s.vendeur||"pro";
+  const sc=(x,f)=>({bas:Math.round(x.bas*f/50)*50,median:Math.round(x.median*f/50)*50,haut:Math.round(x.haut*f/50)*50,demande:x.demande,delai:x.delai});
+  const rPart=sc(r0,VENDEUR_PART),r=vend==="part"?rPart:r0;
   const fr=fraisSim(s),t=S.settings.tva,mg=num(S.settings.margeVisee);
+  const maxFor=(rev,pro)=>pro?prixAchatMax(rev,fr,mg,t):rev-fr-mg;
   const ya=Math.min(s.anneeMin,s.anneeMax),yz=Math.max(s.anneeMin,s.anneeMax),yLab=ya===yz?String(ya):ya+" à "+yz;
-  const maxMed=prixAchatMax(r.median,fr,mg,t),maxBas=prixAchatMax(r.bas,fr,mg,t);
+  const isPro=vend!=="part";
+  const maxMed=maxFor(r.median,isPro),maxBas=maxFor(r.bas,isPro);
   const offre=Math.round(Math.min(maxBas,maxMed*0.9)/50)*50;
-  const pos=x=>Math.max(0,Math.min(100,(x-r.bas*0.85)/(r.haut*1.15-r.bas*0.85)*100));
+  const lo=vend==="both"?rPart.bas:r.bas,hi=r.haut;
+  const pos=x=>Math.max(0,Math.min(100,(x-lo*0.9)/(hi*1.1-lo*0.9)*100));
   const nom=s.brand==="Autre"?(s.libre||"Véhicule"):s.brand+" "+s.model;
   const nbPb=Object.keys(s.frais).filter(k=>PB_INDEX[k]&&PB_INDEX[k].g!=="Préparation à la vente").length;
+  const grid=(title,x)=>'<div class="note" style="margin-top:12px;font-weight:600;color:var(--ink)">'+title+'</div><div class="est num" style="margin-top:6px"><div><small>Minimum</small><b>'+eur(x.bas)+'</b></div><div class="mid"><small>Médian</small><b>'+eur(x.median)+'</b></div><div><small>Maximum</small><b>'+eur(x.haut)+'</b></div></div>';
+  const bar=x=>'<div class="range"><i style="left:'+pos(x.bas)+'%;right:'+(100-pos(x.haut))+'%"></i><span style="left:'+pos(x.median)+'%"></span></div>';
   let h='<h2>'+esc(nom)+' · '+yLab+'</h2><p class="note num">'+(s.moteur?esc(s.moteur)+' · ':'')+new Intl.NumberFormat("fr-BE").format(s.km)+' km · '+esc(s.carburant)+' · '+esc(s.boite)+' · état '+esc((ETATS.find(e=>e[0]===s.etat)||[])[1]||"").toLowerCase()+(s.options.length?' · '+s.options.length+' équipement'+(s.options.length>1?"s":""):"")+'</p>';
-  h+='<div class="note" style="margin-top:12px;font-weight:600;color:var(--ink)">Prix de revente estimé'+(nbPb?" (après réparations)":"")+'</div><div class="est num" style="margin-top:6px"><div><small>Minimum</small><b>'+eur(r.bas)+'</b></div><div class="mid"><small>Médian</small><b>'+eur(r.median)+'</b></div><div><small>Maximum</small><b>'+eur(r.haut)+'</b></div></div>';
-  h+='<div class="range"><i style="left:'+pos(r.bas)+'%;right:'+(100-pos(r.haut))+'%"></i><span style="left:'+pos(r.median)+'%"></span></div>';
+  const suffix=nbPb?" (après réparations)":"";
+  if(vend==="both"){h+=grid("Revente par un professionnel, avec garantie"+suffix,r0)+bar(r0)+grid("Revente entre particuliers"+suffix,rPart)+bar(rPart)}
+  else h+=grid((vend==="part"?"Revente entre particuliers":"Revente par un professionnel, avec garantie")+suffix,r)+bar(r);
   h+='<div class="calc" style="margin-top:6px">'+row("Demande sur le marché",["","Plus lente","Correcte","Forte"][r.demande])+row("Délai de vente probable",r.delai+" jours")+'</div>';
-  h+='<div class="buybox"><small>Prix d\'achat maximum</small><div class="big num">'+eur(maxMed)+'</div><div class="note">pour revendre au prix médian avec '+eur(mg)+' de marge nette (réglable dans Réglages)</div>'+
-     '<div class="calc" style="margin-top:10px">'+row("Scénario prudent (revente au minimum)",eur(maxBas))+row("Première offre conseillée",eur(offre))+row("Frais prévus"+(nbPb?" ("+nbPb+" problème"+(nbPb>1?"s":"")+")":""),eur(fr))+'</div></div>';
+  h+='<div class="buybox"><small>Prix d\'achat maximum'+(vend==="both"?" (revente pro)":"")+'</small><div class="big num">'+eur(maxMed)+'</div><div class="note">pour revendre au prix médian avec '+eur(mg)+' de marge nette'+(isPro?", TVA sur la marge comprise":"")+' (marge réglable dans Réglages)</div>'+
+     '<div class="calc" style="margin-top:10px">'+row("Scénario prudent (revente au minimum)",eur(maxBas))+(vend==="both"?row("Si tu revends entre particuliers",eur(maxFor(rPart.median,false))):"")+row("Première offre conseillée",eur(offre))+row("Frais prévus"+(nbPb?" ("+nbPb+" problème"+(nbPb>1?"s":"")+")":""),eur(fr))+'</div></div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn small" href="'+asUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model,annee:Math.round((s.anneeMin+s.anneeMax)/2)})+'" target="_blank" rel="noopener">Comparer sur AutoScout24</a><a class="btn small" href="'+dmUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model})+'" target="_blank" rel="noopener">2ememain</a></div>';
   h+='<button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-act="simsave">Ajouter au garage en repérage</button>';
   h+='<p class="note" style="margin-top:10px">Estimation calculée par l\'app (prix neuf de référence, âge, kilométrage, état). Elle ne lit pas les annonces : vérifie toujours avec 3 ou 4 annonces comparables avant d\'acheter.</p>';
@@ -1080,6 +1108,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("input",e=>{
   const t=e.target,r=route();
   if(t.id==="search"){S.search=t.value;const pos=t.selectionStart;render();const s=$("#search");if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(_){}}return}
+  if(t.hasAttribute&&t.hasAttribute("data-eqsearch")){const q=t.value.trim().toLowerCase();const list=t.closest(".ddlist");list.querySelectorAll("[data-eq]").forEach(el=>el.style.display=!q||el.dataset.eq.includes(q)?"":"none");list.querySelectorAll("[data-grp]").forEach(g=>{let n=g.nextElementSibling,any=false;while(n&&!n.hasAttribute("data-grp")){if(n.style.display!=="none")any=true;n=n.nextElementSibling}g.style.display=any?"":"none"});return}
   if(t.dataset.simfra&&S.sim){const k=t.dataset.simfra;if(S.sim.frais[k]!=null){S.sim.frais[k]=num(t.value);simRefresh()}return}
   if(t.dataset.simrange&&S.sim){const k=t.dataset.simrange;S.sim[k]=+t.value;if(k==="km")$("#kmval").textContent=new Intl.NumberFormat("fr-BE").format(+t.value)+" km";if(k==="marge")$("#margeval").textContent=eur(+t.value);if(S.sim.result&&simReady(S.sim))S.sim.result=estimerSim(S.sim);updateSim();return}
   if(t.dataset.simtxt&&S.sim){S.sim[t.dataset.simtxt]=t.value;simRefresh();if(t.dataset.simtxt==="prixNeuf"){const b=$('[data-act="simuler"]');if(b){b.disabled=!simReady(S.sim);b.textContent=simReady(S.sim)?"Simuler":"Choisis la marque et le modèle"}}return}
