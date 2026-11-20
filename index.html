@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>GC Motors</title>
 <meta name="theme-color" content="#0f1d3d">
 <meta name="apple-mobile-web-app-title" content="GC Motors">
@@ -37,7 +37,8 @@
   --good:#4cc283; --good-soft:#15291e; --warn:#e8a83a; --warn-soft:#2c2212; --bad:#ff7b6e; --bad-soft:#331a18; color-scheme:dark;}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased;touch-action:manipulation;-webkit-text-size-adjust:100%}
+input,select,textarea{font-size:16px!important}
 .num{font-variant-numeric:tabular-nums}
 h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
 h1{font-size:30px;line-height:1.1} h2{font-size:21px} h3{font-size:17px}
@@ -66,6 +67,9 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .ck .amt{width:80px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);text-align:right;font-size:14px}
 .ck .amt:disabled{opacity:.45}
 .ck .eu{color:var(--muted);font-size:13px}
+.simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.simacts{display:flex;flex-direction:column;gap:8px}
+@media (max-width:980px){.hide-m{display:none}}
 .sstep{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .sstep h2{margin:0}
 .sn{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:none}
@@ -287,7 +291,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="1.7";
+const APP_VERSION="1.8";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -508,7 +512,6 @@ function render(){
   let h="";
   if(S.mode==="local")h+='<div class="banner info"><span>Tes données sont enregistrées sur cet appareil seulement.'+(fbReady()?' Connecte-toi pour les synchroniser entre ton téléphone et ton PC.</span><button class="btn small" data-act="gologin">Se connecter</button>':'</span>')+'</div>';
   if(S.mode==="db-error"||S.mode==="db-slow")h+='<div class="banner"><span>'+modeText()+'</span></div>';
-  if(showingDemo()&&r.view!=="reglages")h+='<div class="banner"><span><b>Exemples affichés.</b> Ces 4 voitures montrent comment l\'app fonctionne. Elles disparaissent dès que tu ajoutes ta première voiture.</span><button class="btn primary small" data-act="add">Ajouter ma première voiture</button></div>';
   h+=({tableau:vTableau,garage:vGarage,fiche:vFiche,simulateur:vSim,ventes:vVentes,reglages:vReglages}[r.view])(r);
   app.innerHTML=h;
   if(r.view==="fiche"){updateCalc();const fv=curVeh(r.id);if(fv)ensurePhotos(fv)}
@@ -910,6 +913,8 @@ function vSim(){
   if(!S.sim||S.sim.anneeMin===undefined)S.sim=simDefaults();
   const s=S.sim;if(!s.open)s.open={};
   const yNow=new Date().getFullYear();
+  if(s.result&&!s.editing)return'<div class="top"><div><h1>Simulation</h1></div></div><div class="simdone"><div class="card" id="simres">'+simResult()+'</div>'+
+    '<div class="simacts"><button class="btn primary big" data-act="simreset">Nouvelle simulation</button><button class="btn big" data-act="simedit">Modifier les critères</button></div></div>';
   const step=(n,t)=>'<div class="sstep"><span class="sn">'+n+'</span><h2>'+t+'</h2></div>';
   const sel=(k,label,opts,ph)=>'<label class="f">'+label+'<select data-simsel="'+k+'">'+(ph?'<option value="">'+ph+'</option>':"")+opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(v)+'"'+(String(s[k])===String(v)?" selected":"")+'>'+esc(l)+'</option>'}).join("")+'</select></label>';
   let h='<div class="top"><div><h1>Simulateur d\'achat</h1><p>Décris la voiture repérée : l\'app estime son prix de revente et ton prix d\'achat maximum.</p></div>'+(s.brand?'<button class="btn small" data-act="simreset">Nouvelle simulation</button>':"")+'</div>';
@@ -937,7 +942,7 @@ function vSim(){
      '</div></details><p class="note" style="margin-top:8px">Coûts moyens dans un garage indépendant, modifiables. Coche ce que tu constates, ajuste avec un devis si tu en as un.</p>'+
      '<div class="form" style="margin-top:10px"><label class="f">Autres frais (€)<input data-simtxt="reparations" type="number" inputmode="decimal" value="'+esc(s.reparations)+'" placeholder="0"></label><div class="f"><span>Total des frais</span><b class="num" id="fraistotal" style="font-size:22px;color:var(--ink)">'+eur(fraisSim(s))+'</b></div></div></div>';
   h+='<button class="btn primary big" data-act="simuler"'+(simReady(s)?"":" disabled")+'>'+(simReady(s)?"Simuler":"Choisis la marque, le modèle et la motorisation")+'</button>';
-  h+='</div><div class="stack sticky"><div class="card" id="simres">'+simResult()+'</div></div></div>';
+  h+='</div><div class="stack sticky'+(s.result?'':' hide-m')+'"><div class="card" id="simres">'+simResult()+'</div></div></div>';
   return h;
 }
 function simReady(s){return s.brand==="Autre"?num(s.prixNeuf)>0:!!(s.brand&&s.model&&s.moteur)}
@@ -1052,7 +1057,8 @@ document.addEventListener("click",async e=>{
     try{S.simEst=await estimate(s);if(!num(s.revente))s.revente=S.simEst.median}catch(err){estErr(err)}
     S.simBusy=false;render();
   }
-  else if(act==="simuler"&&S.sim&&simReady(S.sim)){S.sim.result=estimerSim(S.sim);render();const r=$("#simres");if(r&&window.innerWidth<980)r.scrollIntoView({behavior:"smooth",block:"start"})}
+  else if(act==="simuler"&&S.sim&&simReady(S.sim)){S.sim.result=estimerSim(S.sim);S.sim.editing=false;render();window.scrollTo(0,0)}
+  else if(act==="simedit"&&S.sim){S.sim.editing=true;render();window.scrollTo(0,0)}
   else if(act==="simreset"){S.sim=simDefaults();render();window.scrollTo(0,0)}
   else if(act==="autoest"&&v&&!v.demo){const m=catMatch(v.marque,v.modele);if(m&&m.model){const r=estimer({brand:m.brand,model:m.model,annee:v.annee,km:v.km,carburant:v.carburant,boite:v.boite,etat:"bon",options:[],entretien:true,proprios:2});if(r){v.estim={bas:r.bas,median:r.median,haut:r.haut,delai:r.delai,date:today()};persistVehicle(v,true);render();toast("Estimation ajoutée.")}}}
   else if(act==="simsave"&&S.sim&&S.sim.result){const s=S.sim,r=s.result,fr=fraisSim(s);const autre=s.brand==="Autre";
