@@ -296,7 +296,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="2.0";
+const APP_VERSION="2.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -946,7 +946,7 @@ function vSim(){
   h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+sel("brand","Marque",[...Object.keys(CATALOGUE),["Autre","Autre marque"]],"Choisir la marque")+
      (s.brand==="Autre"?'<label class="f">Marque et modèle<input data-simtxt="libre" value="'+esc(s.libre||"")+'" placeholder="ex. Lancia Ypsilon"></label><label class="f">Prix neuf approximatif (€)<input data-simtxt="prixNeuf" type="number" inputmode="decimal" value="'+esc(s.prixNeuf)+'" placeholder="ex. 16000"></label>'+sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]):
       sel("model","Modèle",s.brand?Object.keys(CATALOGUE[s.brand].m):[],s.brand?"Choisir le modèle":"Choisis d'abord la marque")+
-      sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],s.model?"Choisir la motorisation":"Choisis d'abord le modèle"))+
+      sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],s.model?"Toutes motorisations (facultatif)":"Choisis d'abord le modèle"))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<div class="f full yr"><span>Année</span><div class="yrrow"><span>de</span><input data-simyear="anneeMin" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMin+'" aria-label="Année de"><span>à</span><input data-simyear="anneeMax" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMax+'" aria-label="Année à"></div></div>'+
      sel("vendeur","Prix de revente",[["pro","Professionnel (avec garantie)"],["part","Particulier"],["both","Les deux"]])+
@@ -963,11 +963,11 @@ function vSim(){
      PROBLEMES.map(([g,items])=>'<div class="ddg">'+esc(g)+'</div>'+items.map(([k,l,c])=>{const on=s.frais[k]!=null;return'<div class="ck fr"><label><input type="checkbox" data-simfr="'+k+'"'+(on?" checked":"")+'><span>'+esc(l)+'</span></label><input class="num amt" type="number" inputmode="decimal" data-simfra="'+k+'" value="'+esc(on?s.frais[k]:c)+'"'+(on?"":" disabled")+' aria-label="Coût '+esc(l)+'"><span class="eu">€</span></div>'}).join("")).join("")+
      '</div></details><p class="note" style="margin-top:8px">Coûts moyens dans un garage indépendant, modifiables. Coche ce que tu constates, ajuste avec un devis si tu en as un.</p>'+
      '<div class="form" style="margin-top:10px"><label class="f">Autres frais (€)<input data-simtxt="reparations" type="number" inputmode="decimal" value="'+esc(s.reparations)+'" placeholder="0"></label><div class="f"><span>Total des frais</span><b class="num" id="fraistotal" style="font-size:22px;color:var(--ink)">'+eur(fraisSim(s))+'</b></div></div></div>';
-  h+='<button class="btn primary big" data-act="simuler"'+(simReady(s)?"":" disabled")+'>'+(simReady(s)?"Simuler":"Choisis la marque, le modèle et la motorisation")+'</button>';
+  h+='<button class="btn primary big" data-act="simuler"'+(simReady(s)?"":" disabled")+'>'+(simReady(s)?"Simuler":"Choisis la marque et le modèle")+'</button>';
   h+='</div><div class="stack sticky'+(s.result?'':' hide-m')+'"><div class="card" id="simres">'+simResult()+'</div></div></div>';
   return h;
 }
-function simReady(s){return s.brand==="Autre"?num(s.prixNeuf)>0:!!(s.brand&&s.model&&s.moteur)}
+function simReady(s){return s.brand==="Autre"?num(s.prixNeuf)>0:!!(s.brand&&s.model)}
 function simInput(s,annee){return{brand:s.brand,model:s.model,prixNeuf:s.brand==="Autre"?s.prixNeuf:"",annee,km:s.km,carburant:s.carburant,coef:s.coef,boite:s.boite,etat:s.etat,options:s.options,entretien:s.entretien,proprios:s.proprios}}
 function estimerSim(s){const a=Math.min(s.anneeMin,s.anneeMax),z=Math.max(s.anneeMin,s.anneeMax),lo=estimer(simInput(s,a)),hi=estimer(simInput(s,z)),mid=estimer(simInput(s,Math.round((a+z)/2)));if(!lo||!hi||!mid)return null;return{bas:Math.min(lo.bas,mid.bas),median:mid.median,haut:Math.max(hi.haut,mid.haut),demande:mid.demande,delai:mid.delai}}
 function simRefresh(){const s=S.sim;if(s.result&&simReady(s))s.result=estimerSim(s);const a=$("#dd-options"),b=$("#dd-frais"),t=$("#fraistotal");if(a)a.textContent=ddSummary("options");if(b)b.textContent=ddSummary("frais");if(t)t.textContent=eur(fraisSim(s));updateSim()}
@@ -989,7 +989,7 @@ function simResult(){
   const nbPb=Object.keys(s.frais).filter(k=>PB_INDEX[k]&&PB_INDEX[k].g!=="Préparation à la vente").length;
   const grid=(title,x)=>'<div class="note" style="margin-top:12px;font-weight:600;color:var(--ink)">'+title+'</div><div class="est num" style="margin-top:6px"><div><small>Minimum</small><b>'+eur(x.bas)+'</b></div><div class="mid"><small>Médian</small><b>'+eur(x.median)+'</b></div><div><small>Maximum</small><b>'+eur(x.haut)+'</b></div></div>';
   const bar=x=>'<div class="range"><i style="left:'+pos(x.bas)+'%;right:'+(100-pos(x.haut))+'%"></i><span style="left:'+pos(x.median)+'%"></span></div>';
-  let h='<h2>'+esc(nom)+' · '+yLab+'</h2><p class="note num">'+(s.moteur?esc(s.moteur)+' · ':'')+new Intl.NumberFormat("fr-BE").format(s.km)+' km · '+esc(s.carburant)+' · '+esc(s.boite)+' · état '+esc((ETATS.find(e=>e[0]===s.etat)||[])[1]||"").toLowerCase()+(s.options.length?' · '+s.options.length+' équipement'+(s.options.length>1?"s":""):"")+'</p>';
+  let h='<h2>'+esc(nom)+' · '+yLab+'</h2><p class="note num">'+(s.moteur?esc(s.moteur)+' · '+esc(s.carburant)+' · ':(s.brand!=="Autre"?'Toutes motorisations · ':esc(s.carburant)+' · '))+new Intl.NumberFormat("fr-BE").format(s.km)+' km · '+esc(s.boite)+' · état '+esc((ETATS.find(e=>e[0]===s.etat)||[])[1]||"").toLowerCase()+(s.options.length?' · '+s.options.length+' équipement'+(s.options.length>1?"s":""):"")+'</p>';
   const suffix=nbPb?" (après réparations)":"";
   if(vend==="both"){h+=grid("Revente par un professionnel, avec garantie"+suffix,r0)+bar(r0)+grid("Revente entre particuliers"+suffix,rPart)+bar(rPart)}
   else h+=grid((vend==="part"?"Revente entre particuliers":"Revente par un professionnel, avec garantie")+suffix,r)+bar(r);
@@ -1125,9 +1125,9 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
   const t=e.target,r=route();
   if(t.dataset.simsel&&S.sim){const s=S.sim,k=t.dataset.simsel;let v=t.value;if(["anneeMin","anneeMax","km","proprios"].includes(k))v=+v;if(k==="entretien")v=v==="1";s[k]=v;
-    if(k==="brand"){s.model="";s.moteur="";s.result=null}
-    if(k==="model"){s.moteur="";s.result=null;const ys=anneesDe(s.brand,s.model);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax))}
-    if(k==="moteur"){const m=moteursDe(s.brand,s.model),e=m&&m.e.find(x=>x[0]===v);if(e){s.carburant=FUEL[e[1]];s.coef=e[2]}}
+    if(k==="brand"){s.model="";s.moteur="";s.carburant="Essence";s.coef=1;s.result=null}
+    if(k==="model"){s.moteur="";s.carburant="Essence";s.coef=1;s.result=null;const ys=anneesDe(s.brand,s.model);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax))}
+    if(k==="moteur"){const m=moteursDe(s.brand,s.model),e=m&&m.e.find(x=>x[0]===v);if(e){s.carburant=FUEL[e[1]];s.coef=e[2]}else{s.carburant="Essence";s.coef=1}}
     if(k==="anneeMin"&&s.anneeMin>s.anneeMax)s.anneeMax=s.anneeMin;
     if(k==="anneeMax"&&s.anneeMax<s.anneeMin)s.anneeMin=s.anneeMax;
     if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
