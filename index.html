@@ -376,7 +376,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="4.0";
+const APP_VERSION="4.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -1810,6 +1810,25 @@ const PROBLEMES=[
 const PB_INDEX={};PROBLEMES.forEach(([g,items])=>items.forEach(([k,l,c,cat])=>PB_INDEX[k]={l,c,cat,g}));
 function fraisSim(s){return Object.values(s.frais||{}).reduce((a,b)=>a+num(b),0)+num(s.reparations)}
 function simDefaults(){const y=new Date().getFullYear();return{brand:"",model:"",moteur:"",prixNeuf:"",anneeMin:y-10,anneeMax:y-8,km:110000,kmMin:80000,kmMax:140000,vendeur:"pro",carburant:"Essence",coef:1,boite:"Manuelle",etat:"bon",options:[],entretien:true,proprios:2,frais:{ct:60,carpass:10,nettoyage:80},reparations:"",result:null,open:{}}}
+function applyStatut(v,nv,extra){v.statut=nv;if(extra)Object.assign(v,extra);
+  if(nv==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(nv)&&!v.dateAchat)v.dateAchat=today();
+  v.journal=v.journal||[];v.journal.push({id:newId(),t:Date.now(),date:today(),type:"Statut",texte:"Passage en « "+stLabel(nv)+" »"+(nv==="vendu"&&v.prixVente?" · vendue "+eur(num(v.prixVente)):"")});
+  persistVehicle(v,true)}
+function changerStatut(v,nv){
+  if(nv===v.statut){render();return}
+  if(nv!=="vendu"){applyStatut(v,nv);toast("Statut : "+stLabel(nv));const y0=window.scrollY;render();window.scrollTo(0,y0);return}
+  const prop=num(v.prixVente)||num(v.prixAffiche)||(v.estim?num(v.estim.median):0)||"";
+  const ov=$("#overlay");
+  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="vtitle"><div class="card"><h2 id="vtitle">Vente : '+esc((v.marque||"")+" "+(v.modele||""))+'</h2><p class="note">Indique le prix de vente final avant de passer la voiture en « Vendu ».</p>'+
+    '<div class="form" style="margin-top:12px"><label class="f full">Prix de vente final (€)<input id="mv-prix" type="number" inputmode="decimal" value="'+esc(prop)+'"></label><label class="f">Date de vente<input id="mv-date" type="date" value="'+esc(v.dateVente||today())+'"></label><label class="f">Nom du client (facultatif)<input id="mv-client" value="'+esc(v.clientNom||v.acheteur||"")+'"></label></div>'+
+    '<div id="mv-marge" class="calc" style="margin-top:10px"></div><div class="acts"><button class="btn" data-mv="no">Annuler</button><button class="btn primary" data-mv="ok">Confirmer la vente</button></div></div></div>';
+  const upd=()=>{const p=num($("#mv-prix").value);const box=$("#mv-marge");if(!box)return;if(!p){box.innerHTML="";return}const c=calc({...v,statut:"vendu",prixVente:p});box.innerHTML=row("Coût total (achat + frais)",eur(c.cout))+'<div class="row total"><span>Marge nette</span><span class="num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</span></div>'};
+  upd();$("#mv-prix").addEventListener("input",upd);setTimeout(()=>{const i=$("#mv-prix");if(i){i.focus();i.select()}},50);
+  ov.onclick=e=>{const b=e.target.closest("[data-mv]");if(e.target.classList.contains("modal")||(b&&b.dataset.mv==="no")){ov.innerHTML="";render();return}
+    if(b&&b.dataset.mv==="ok"){const p=numOrNull($("#mv-prix").value);if(p==null||p<=0){toast("Indique le prix de vente final.");$("#mv-prix").focus();return}
+      const cl=$("#mv-client").value.trim();const extra={prixVente:p,dateVente:$("#mv-date").value||today()};if(cl&&!v.clientNom)extra.clientNom=cl;
+      applyStatut(v,"vendu",extra);ov.innerHTML="";toast("Vente enregistrée : "+eur(p));const y0=window.scrollY;render();window.scrollTo(0,y0)}};
+}
 function stSelect(v){return'<span class="stwrap st-'+v.statut+'"><select class="stsel" data-cstat="'+v.id+'" aria-label="Changer le statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select><svg class="stico" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'}
 function vfSummary(v){const l=(v.frais||[]).filter(f=>f.pb);return l.length?l.length+" élément"+(l.length>1?"s":"")+" · "+eur(l.reduce((a,f)=>a+num(f.montant),0)):"Aucun frais coché"}
 function eqSummary(list){const n=list.length;return n?n+" équipement"+(n>1?"s":"")+" coché"+(n>1?"s":""):"Aucun équipement coché"}
@@ -2038,8 +2057,8 @@ document.addEventListener("input",e=>{
   if(t.dataset.vfra){const f=v.frais.find(x=>x.pb===t.dataset.vfra);if(f){f.montant=numOrNull(t.value)??"";persistVehicle(v);const sm=$("#dd-vfrais");if(sm)sm.textContent=vfSummary(v);const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v));updateCalc()}return}
   if(t.hasAttribute("data-vkm")){v.km=+t.value;const n=document.querySelector('[data-field="km"]');if(n)n.value=v.km;persistVehicle(v);updateCalc();return}
   if(t.dataset.field==='km'){const sl=document.querySelector('[data-vkm]');if(sl)sl.value=num(t.value)}
+  if(t.dataset.field==="statut")return;
   if(t.dataset.field){const k=t.dataset.field,numeric=["annee","km","prixAchat","prixAffiche","prixVente"].includes(k);v[k]=numeric?(numOrNull(t.value)??""):t.value;
-    if(k==="dateVente"&&t.value&&v.statut!=="vendu"){v.statut="vendu";render()}
     if(k==="dateAchat"&&t.value&&v.statut==="reperage"){v.statut="achete";render()}
     persistVehicle(v);updateCalc();return}
   if(t.dataset.frais){const f=v.frais.find(x=>x.id===t.dataset.frais);if(f){f[t.dataset.k]=t.dataset.k==="montant"?(numOrNull(t.value)??""):t.value;persistVehicle(v);updateCalc();const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v))}return}
@@ -2055,10 +2074,7 @@ document.addEventListener("change",e=>{
     if(k==="anneeMin"&&s.anneeMin>s.anneeMax)s.anneeMax=s.anneeMin;
     if(k==="anneeMax"&&s.anneeMax<s.anneeMin)s.anneeMin=s.anneeMax;
     if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
-  if(t.dataset.cstat){const v=S.vehicles.find(x=>x.id===t.dataset.cstat);if(!v)return;const nv=t.value;if(nv===v.statut)return;v.statut=nv;
-    if(nv==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(nv)&&!v.dateAchat)v.dateAchat=today();
-    v.journal=v.journal||[];v.journal.push({id:newId(),t:Date.now(),date:today(),type:"Statut",texte:"Passage en « "+stLabel(nv)+" »"});
-    persistVehicle(v,true);toast("Statut : "+stLabel(nv));render();return}
+  if(t.dataset.cstat){const v=S.vehicles.find(x=>x.id===t.dataset.cstat);if(!v)return;changerStatut(v,t.value);return}
   if(t.dataset.vsel&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo)return;const k=t.dataset.vsel,val=t.value;
     if(k==="marque"){if(val==="__autre"){v.autreMarque=true;if(CATALOGUE[v.marque])v.marque=""}else{v.autreMarque=false;v.marque=val}v.modele="";v.moteur=""}
     if(k==="modele"){v.modele=val;v.moteur=""}
@@ -2078,11 +2094,11 @@ document.addEventListener("change",e=>{
   if(t.dataset.period){S.period[t.dataset.period]=t.dataset.period==="y"?+t.value:t.value;render();return}
   if(t.id==="phinput"){const v=curVeh(r.id);if(v&&!v.demo)addPhotos(v,[...t.files]);t.value="";return}
   if(t.dataset.sim&&t.tagName==="SELECT"){S.sim[t.dataset.sim]=t.value;return}
-  if(r.view==="fiche"&&t.dataset.field==="statut"){const v=curVeh(r.id);if(v&&!v.demo){v.journal=v.journal||[];v.journal.push({id:newId(),t:Date.now(),date:today(),type:"Statut",texte:"Passage en « "+stLabel(t.value)+" »"});if(t.value==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(t.value)&&!v.dateAchat)v.dateAchat=today();persistVehicle(v,true);render()}}
+  if(r.view==="fiche"&&t.dataset.field==="statut"){const v=curVeh(r.id);if(v&&!v.demo)changerStatut(v,t.value);return}
   if(r.view==="fiche"&&(t.dataset.field||t.dataset.frais)){const v=curVeh(r.id);if(v&&!v.demo)persistVehicle(v,true)}
 });
 document.addEventListener("focusout",()=>{setTimeout(()=>{if(!editing()&&route().view!=="fiche"&&route().view!=="simulateur"&&route().view!=="reglages")render()},50)});
-document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.open){location.hash="d-"+e.target.dataset.open;return}if(e.key==="Escape")$("#overlay").innerHTML=""});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.open){location.hash="d-"+e.target.dataset.open;return}if(e.key==="Escape"){const had=$("#overlay").innerHTML;$("#overlay").innerHTML="";if(had)render()}});
 
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd==="vfrais"){S.vfOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
 let installEvt=null;
