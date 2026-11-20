@@ -152,6 +152,9 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .acpt input,.acpt select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0}
 .bdocs{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
 @media (max-width:760px){.bdocs{grid-template-columns:1fr}.acpt{grid-template-columns:1fr 1fr;}.acpt .x{grid-column:2;justify-self:end}}
+.gfilter{flex:1;min-width:180px;max-width:320px}
+.gfilter select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.toolbar{align-items:flex-end}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -376,7 +379,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="4.1";
+const APP_VERSION="4.2";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -703,7 +706,8 @@ function vGarage(){
   items.sort((a,b)=>(order[a.statut]-order[b.statut])||((b.dateAchat||"").localeCompare(a.dateAchat||"")));
   const chips=[["stock","En stock"],["reperage","Repérage"],["achete","Achetés"],["preparation","En préparation"],["en_vente","En vente"],["vendu","Vendus"],["tous","Tous"]];
   let h='<div class="top"><div><h1>Garage</h1><p>'+L.filter(v=>EN_STOCK.includes(v.statut)).length+' voiture(s) à ta disposition · '+L.filter(v=>v.statut==="reperage").length+' en repérage</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
-  h+='<div class="toolbar"><div class="chips">'+chips.map(([k,l])=>'<button class="chip'+(f===k?" on":"")+'" data-filter="'+k+'">'+l+'</button>').join("")+'</div><input class="search" id="search" type="search" placeholder="Rechercher une marque, un modèle…" value="'+esc(S.search)+'"></div>';
+  const cnt=k=>L.filter(v=>k==="tous"||(k==="stock"?EN_STOCK.includes(v.statut):v.statut===k)).length;
+  h+='<div class="toolbar"><label class="f gfilter">Afficher<select data-gfilter aria-label="Filtrer les voitures">'+chips.map(([k,l])=>'<option value="'+k+'"'+(f===k?" selected":"")+'>'+l+' ('+cnt(k)+')</option>').join("")+'</select></label><input class="search" id="search" type="search" placeholder="Rechercher une marque, un modèle…" value="'+esc(S.search)+'"></div>';
   if(!items.length)return h+'<div class="card empty">Aucune voiture dans cette catégorie.</div>';
   h+='<div class="cars">'+items.map(carCard).join("")+'</div>';
   return h;
@@ -2074,6 +2078,7 @@ document.addEventListener("change",e=>{
     if(k==="anneeMin"&&s.anneeMin>s.anneeMax)s.anneeMax=s.anneeMin;
     if(k==="anneeMax"&&s.anneeMax<s.anneeMin)s.anneeMin=s.anneeMax;
     if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
+  if(t.hasAttribute&&t.hasAttribute("data-gfilter")){S.garageFilter=t.value;render();return}
   if(t.dataset.cstat){const v=S.vehicles.find(x=>x.id===t.dataset.cstat);if(!v)return;changerStatut(v,t.value);return}
   if(t.dataset.vsel&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo)return;const k=t.dataset.vsel,val=t.value;
     if(k==="marque"){if(val==="__autre"){v.autreMarque=true;if(CATALOGUE[v.marque])v.marque=""}else{v.autreMarque=false;v.marque=val}v.modele="";v.moteur=""}
