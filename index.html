@@ -144,7 +144,9 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .pdfov{position:fixed;inset:0;z-index:80;background:#0b1120;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
 .pdfbar{display:flex;justify-content:space-between;align-items:center;color:#fff;padding-bottom:10px;font-size:16px}
 .pdfpages{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:12px;-webkit-overflow-scrolling:touch}
-.pdfpage{width:100%;max-width:800px;height:auto;background:#fff;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+.pdfpages.zoomed{align-items:flex-start}
+.pdfzoom{display:flex;gap:6px;align-items:center}.pdfzoom .btn{min-width:38px;padding:6px 10px;font-size:17px;line-height:1}.pdfzoom span{min-width:44px;text-align:center;font-size:13px;color:#cfd6e6}
+.pdfpage{width:100%;max-width:800px;height:auto;flex:none;background:#fff;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.4)}
 .pdfframe{width:100%;max-width:800px;height:100%;border:none;background:#fff}
 .pdfacts{display:flex;gap:8px;padding-top:10px}
 .pdfacts .btn{flex:1}
@@ -414,7 +416,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.6";
+const APP_VERSION="5.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -882,16 +884,22 @@ let lastPdf=null;
 async function apercuPdf(v,kind){
   const r=kind==="bdc"?await bonCommandePdf(v):await fichePdf(v);if(!r)return;lastPdf=r;
   const ov=$("#overlay");
-  ov.innerHTML='<div class="pdfov" role="dialog" aria-modal="true" aria-label="Aperçu de la fiche PDF"><div class="pdfbar"><b>'+(kind==="bdc"?"Aperçu du bon de commande":"Aperçu de la fiche")+'</b><button class="btn small" data-pdf="close">Fermer</button></div><div class="pdfpages" id="pdfpages"><p class="note" style="color:#cfd6e6">Préparation de l\'aperçu…</p></div><div class="pdfacts"><button class="btn big" data-pdf="edit">Modifier la fiche</button><button class="btn primary big" data-pdf="send">Télécharger / envoyer</button></div></div>';
-  ov.onclick=async e=>{const b=e.target.closest("[data-pdf]");if(!b)return;
+  ov.innerHTML='<div class="pdfov" role="dialog" aria-modal="true" aria-label="Aperçu de la fiche PDF"><div class="pdfbar"><b>'+(kind==="bdc"?"Bon de commande":"Fiche")+'</b><div class="pdfzoom"><button class="btn small" data-pdf="zout" aria-label="Dézoomer">−</button><span id="pdfz">100 %</span><button class="btn small" data-pdf="zin" aria-label="Zoomer">+</button><button class="btn small" data-pdf="close">Fermer</button></div></div><div class="pdfpages" id="pdfpages"><p class="note" style="color:#cfd6e6">Préparation de l\'aperçu…</p></div><div class="pdfacts"><button class="btn big" data-pdf="edit">'+(kind==="bdc"?"Modifier le bon":"Modifier la fiche")+'</button><button class="btn primary big" data-pdf="send">Télécharger / envoyer</button></div></div>';
+  let z=1;const setZ=nz=>{const box=$("#pdfpages");if(!box)return;const old=z;z=Math.max(1,Math.min(3,nz));const cx=(box.scrollLeft+box.clientWidth/2)/box.scrollWidth,cy=(box.scrollTop+box.clientHeight/2)/box.scrollHeight;
+    box.classList.toggle("zoomed",z>1);box.querySelectorAll(".pdfpage").forEach(c=>{c.style.width=(z*100)+"%";c.style.maxWidth=z>1?"none":""});$("#pdfz").textContent=Math.round(z*100)+" %";
+    if(old!==z){box.scrollLeft=cx*box.scrollWidth-box.clientWidth/2;box.scrollTop=cy*box.scrollHeight-box.clientHeight/2}};
+  ov.onclick=async e=>{if(e.target.classList.contains("pdfpage")){setZ(z>1?1:2);return}
+    const b=e.target.closest("[data-pdf]");if(!b)return;
+    if(b.dataset.pdf==="zin"){setZ(z+0.5);return}
+    if(b.dataset.pdf==="zout"){setZ(z-0.5);return}
     if(b.dataset.pdf==="close"){ov.innerHTML="";return}
-    if(b.dataset.pdf==="edit"){ov.innerHTML="";location.hash="v-"+v.id;return}
+    if(b.dataset.pdf==="edit"){ov.innerHTML="";if(kind==="bdc")demanderBdc(v);else location.hash="v-"+v.id;return}
     if(b.dataset.pdf==="send"){const file=new File([r.blob],r.name,{type:"application/pdf"});
       try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:r.titre});return}}catch(err){if(err&&err.name==="AbortError")return}
       r.doc.save(r.name);toast("PDF téléchargé.")}};
   try{await loadPdfJs();const pdf=await window.pdfjsLib.getDocument({data:await r.blob.arrayBuffer()}).promise;const box=$("#pdfpages");if(!box)return;box.innerHTML="";
-    for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp0=page.getViewport({scale:1});const scale=Math.min(2.5,(Math.min(box.clientWidth,800)*(window.devicePixelRatio||1))/vp0.width);const vp=page.getViewport({scale});
-      const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";box.appendChild(c);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}}
+    for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp0=page.getViewport({scale:1});const scale=Math.min(5,(Math.min(box.clientWidth,800)*2*(window.devicePixelRatio||1))/vp0.width);const vp=page.getViewport({scale});
+      const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";if(z>1){c.style.width=(z*100)+"%";c.style.maxWidth="none"}box.appendChild(c);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}}
   catch(e){const box=$("#pdfpages");if(box)box.innerHTML='<iframe class="pdfframe" src="'+URL.createObjectURL(r.blob)+'" title="Aperçu PDF"></iframe>'}
 }
 
