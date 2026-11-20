@@ -90,9 +90,16 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .mres button:last-child{border-bottom:none}
 .mres button:hover,.mres button:focus{background:var(--accent-soft)}
 .mres .mnone{padding:10px 12px;color:var(--muted);font-size:14px}
+.bplab{font-size:13px;color:var(--muted);font-weight:500}
+.f .bp{margin-top:4px}
+.bp summary{padding:9px 40px 9px 10px;font-size:16px;font-weight:400}
+.bp .ddlist{max-height:320px}
+.bpi{display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:15px;color:var(--ink);cursor:pointer}
+.bpi:hover,.bpi:focus{background:var(--accent-soft)}
+.bpi.on{color:var(--accent);font-weight:600}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
-@media (max-width:980px){.hide-m{display:none}}
+@media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
 .sstep{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .sstep h2{margin:0}
 .sn{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:none}
@@ -314,7 +321,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="2.7";
+const APP_VERSION="2.8";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -666,8 +673,7 @@ function vFiche(r){
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
   const vMot=vb&&vb!=="__autre"&&vModels.includes(v.modele)?moteursDe(vb,v.modele):null;
   const vsel=(k,l,opts,ph,cur)=>'<label class="f">'+l+'<select data-vsel="'+k+'"'+dis+'>'+(ph!=null?'<option value="">'+esc(ph)+'</option>':"")+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(cur)===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
-  h+='<div class="card"><h2>Véhicule</h2><div class="form">'+(v.demo?"":modelSearchHtml("veh"))+
-     vsel("marque","Marque",[...Object.keys(CATALOGUE),["__autre","Autre marque"]],"Choisir la marque",vb)+
+  h+='<div class="card"><h2>Véhicule</h2><div class="form">'+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
      (vb==="__autre"?inp("marque","Marque (texte)")+inp("modele","Modèle","text",{ph:"ex. Ypsilon"}):
        vsel("modele","Modèle",(v.modele&&!vModels.includes(v.modele)?[[v.modele,v.modele]]:[]).concat(vModels),vb?"Choisir le modèle":"Choisis d'abord la marque",v.modele)+
        vsel("moteur","Motorisation",vMot?vMot.e.map(([l,f])=>[l,vMot.gen?l:l+" · "+FUEL[f]]):[],vMot?"Non précisée":"Choisis d'abord le modèle",v.moteur||""))+
@@ -1449,6 +1455,10 @@ function anneesDe(b,m){const yNow=new Date().getFullYear(),x=moteursDe(b,m),a=x?
 const MODEL_INDEX=[];
 function buildIndex(){if(MODEL_INDEX.length)return;const n=x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");for(const b of Object.keys(CATALOGUE))for(const m of Object.keys(CATALOGUE[b].m))MODEL_INDEX.push({b,m,k:n(b+" "+m),k2:n(m)})}
 function searchModels(q){buildIndex();const n=x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");const words=n(q).split(/\s+/).filter(Boolean);if(!words.length)return[];return MODEL_INDEX.filter(e=>words.every(w=>e.k.includes(w))).sort((a,b)=>(b.k2.startsWith(words[words.length-1])?1:0)-(a.k2.startsWith(words[words.length-1])?1:0)||a.k.localeCompare(b.k)).slice(0,12)}
+function brandPicker(scope,cur){return'<div class="f"><span class="bplab">Marque</span><details class="dd bp" data-dd="brand-'+scope+'"><summary>'+(cur?esc(cur):'<span style="color:var(--muted)">Choisir la marque</span>')+'</summary><div class="ddlist">'+
+  '<div class="ddsearch"><input type="search" data-bsearch placeholder="Rechercher une marque…" aria-label="Rechercher une marque" autocomplete="off"></div>'+
+  Object.keys(CATALOGUE).map(b=>'<button type="button" class="bpi'+(b===cur?" on":"")+'" data-bpick="'+scope+'" data-b="'+esc(b)+'" data-k="'+esc(b.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""))+'">'+esc(b)+'</button>').join("")+
+  '<button type="button" class="bpi" data-bpick="'+scope+'" data-b="__autre" data-k="autre">Autre marque</button></div></details></div>'}
 function modelSearchHtml(scope){return'<div class="msearch full"><input type="search" data-msearch="'+scope+'" placeholder="Rechercher un modèle (ex. golf, yaris, 3008, model 3)…" aria-label="Rechercher un modèle" autocomplete="off"><div class="mres" id="mres-'+scope+'"></div></div>'}
 
 /* ---------- simulateur ---------- */
@@ -1508,7 +1518,7 @@ function vSim(){
   // 1 véhicule
   const mot=s.brand&&s.brand!=="Autre"&&s.model?moteursDe(s.brand,s.model):null;
   const ans=s.brand&&s.brand!=="Autre"&&s.model?anneesDe(s.brand,s.model):Array.from({length:yNow-1994},(_,i)=>yNow-i);
-  h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+modelSearchHtml("sim")+sel("brand","Marque",[...Object.keys(CATALOGUE),["Autre","Autre marque"]],"Choisir la marque")+
+  h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+brandPicker("sim",s.brand==="Autre"?"Autre marque":s.brand)+
      (s.brand==="Autre"?'<label class="f">Marque et modèle<input data-simtxt="libre" value="'+esc(s.libre||"")+'" placeholder="ex. Lancia Ypsilon"></label><label class="f">Prix neuf approximatif (€)<input data-simtxt="prixNeuf" type="number" inputmode="decimal" value="'+esc(s.prixNeuf)+'" placeholder="ex. 16000"></label>'+sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]):
       sel("model","Modèle",s.brand?Object.keys(CATALOGUE[s.brand].m):[],s.brand?"Choisir le modèle":"Choisis d'abord la marque")+
       sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,mot.gen?l:l+" · "+FUEL[f]]):[],s.model?"Toutes motorisations (facultatif)":"Choisis d'abord le modèle"))+
@@ -1621,6 +1631,11 @@ async function estimate(v){
 function estErr(e){if(e&&e.code==="rate_limited")toast("Trop de demandes, réessaie dans une minute.");else if(e&&e.code==="not_granted")toast("Estimation par Claude non autorisée.");else toast("Estimation impossible pour le moment.")}
 
 document.addEventListener("click",async e=>{
+  const bp=e.target.closest("[data-bpick]");
+  if(bp){const sc=bp.dataset.bpick,b=bp.dataset.b;
+    if(sc==="sim"&&S.sim){const s=S.sim;s.brand=b==="__autre"?"Autre":b;s.model="";s.moteur="";s.carburant="Essence";s.coef=1;s.result=null}
+    if(sc==="veh"){const v=curVeh(route().id);if(v&&!v.demo){if(b==="__autre"){v.autreMarque=true;if(CATALOGUE[v.marque])v.marque=""}else{v.autreMarque=false;v.marque=b}v.modele="";v.moteur="";persistVehicle(v,true)}}
+    const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   const mp=e.target.closest("[data-mpick]");
   if(mp){const sc=mp.dataset.mpick,b=mp.dataset.b,m=mp.dataset.m;
     if(sc==="sim"&&S.sim){const s=S.sim;s.brand=b;s.model=m;s.moteur="";s.carburant="Essence";s.coef=1;s.result=null;const ys=anneesDe(b,m);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax))}
@@ -1675,6 +1690,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("input",e=>{
   const t=e.target,r=route();
   if(t.id==="search"){S.search=t.value;const pos=t.selectionStart;render();const s=$("#search");if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(_){}}return}
+  if(t.hasAttribute&&t.hasAttribute("data-bsearch")){const q=t.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");t.closest(".ddlist").querySelectorAll("[data-bpick]").forEach(el=>el.style.display=!q||el.dataset.k.split(/[\s\/&()-]+/).some(w=>w.startsWith(q))||el.dataset.k.startsWith(q)?"":"none");return}
   if(t.dataset.msearch){const box=$("#mres-"+t.dataset.msearch);if(!box)return;const res=searchModels(t.value);box.innerHTML=t.value.trim()?(res.length?res.map(e=>'<button type="button" data-mpick="'+t.dataset.msearch+'" data-b="'+esc(e.b)+'" data-m="'+esc(e.m)+'"><b>'+esc(e.b)+'</b> '+esc(e.m)+'</button>').join(""):'<div class="mnone">Aucun modèle trouvé. Choisis « Autre marque » pour l\'écrire toi-même.</div>'):"";return}
   if(t.hasAttribute&&t.hasAttribute("data-eqsearch")){const q=t.value.trim().toLowerCase();const list=t.closest(".ddlist");list.querySelectorAll("[data-eq]").forEach(el=>el.style.display=!q||el.dataset.eq.includes(q)?"":"none");list.querySelectorAll("[data-grp]").forEach(g=>{let n=g.nextElementSibling,any=false;while(n&&!n.hasAttribute("data-grp")){if(n.style.display!=="none")any=true;n=n.nextElementSibling}g.style.display=any?"":"none"});return}
   if(t.dataset.simfra&&S.sim){const k=t.dataset.simfra;if(S.sim.frais[k]!=null){S.sim.frais[k]=num(t.value);simRefresh()}return}
@@ -1721,7 +1737,7 @@ document.addEventListener("change",e=>{
 document.addEventListener("focusout",()=>{setTimeout(()=>{if(!editing()&&route().view!=="fiche"&&route().view!=="simulateur"&&route().view!=="reglages")render()},50)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#overlay").innerHTML=""});
 
-document.addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
+document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{}));
