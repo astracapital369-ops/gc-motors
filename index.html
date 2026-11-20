@@ -414,7 +414,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.3";
+const APP_VERSION="5.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -680,7 +680,7 @@ function vTableau(){
   const achats=acq.reduce((a,v)=>a+num(v.prixAchat),0),fraisTot=acq.reduce((a,v)=>a+fraisTotal(v),0);
   const capDep=num(S.settings.capitalDepart),ajust=num(S.settings.ajustTreso);
   const liq=capDep+ajust+encaisse-achats-fraisTot;
-  h+='<details class="card liq"><summary><span class="lbl">Liquidités restantes</span><span class="liqval num '+(liq<0?"neg":"")+'">'+eur(liq)+'</span></summary>'+
+  h+='<details class="card liq"><summary><span class="lbl">Liquidités disponibles</span><span class="liqval num '+(liq<0?"neg":"")+'">'+eur(liq)+'</span></summary>'+
      '<div class="liqrows num"><span>Capital de départ <b>'+eur(capDep)+'</b></span><span>+ Ventes <b>'+eur(encaisse)+'</b></span><span>− Achats <b>'+eur(achats)+'</b></span><span>− Frais <b>'+eur(fraisTot)+'</b></span>'+(ajust?'<span>± Apports / retraits <b>'+eur(ajust)+'</b></span>':'')+'<a href="#reglages">'+(capDep?"Modifier le capital":"Définir le capital de départ")+'</a></div></details>';
   h+='<div class="grid kpis">'+
     kpi("Chiffre d'affaires",eur(ca),vendusAn.length+" voiture"+(vendusAn.length>1?"s":"")+" vendue"+(vendusAn.length>1?"s":"")+" · "+per)+
