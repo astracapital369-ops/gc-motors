@@ -97,6 +97,9 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .bpi{display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:15px;color:var(--ink);cursor:pointer}
 .bpi:hover,.bpi:focus{background:var(--accent-soft)}
 .bpi.on{color:var(--accent);font-weight:600}
+.kmrow{display:flex;align-items:center;gap:12px}
+.kmrow input[type=range]{flex:1;margin:0}
+.kmrow input[type=number]{width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -321,7 +324,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="2.8";
+const APP_VERSION="2.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -673,21 +676,34 @@ function vFiche(r){
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
   const vMot=vb&&vb!=="__autre"&&vModels.includes(v.modele)?moteursDe(vb,v.modele):null;
   const vsel=(k,l,opts,ph,cur)=>'<label class="f">'+l+'<select data-vsel="'+k+'"'+dis+'>'+(ph!=null?'<option value="">'+esc(ph)+'</option>':"")+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(cur)===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
-  h+='<div class="card"><h2>Véhicule</h2><div class="form">'+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
+  const step=(n,t)=>'<div class="sstep"><span class="sn">'+n+'</span><h2>'+t+'</h2></div>';
+  const yNow=new Date().getFullYear();
+  // 1 véhicule
+  h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
      (vb==="__autre"?inp("marque","Marque (texte)")+inp("modele","Modèle","text",{ph:"ex. Ypsilon"}):
        vsel("modele","Modèle",(v.modele&&!vModels.includes(v.modele)?[[v.modele,v.modele]]:[]).concat(vModels),vb?"Choisir le modèle":"Choisis d'abord la marque",v.modele)+
-       vsel("moteur","Motorisation",vMot?vMot.e.map(([l,f])=>[l,vMot.gen?l:l+" · "+FUEL[f]]):[],vMot?"Non précisée":"Choisis d'abord le modèle",v.moteur||""))+
-     sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"])+sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
-     inp("annee","Année","number")+inp("km","Kilométrage","number")+
-     sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
+       vsel("moteur","Motorisation",vMot?vMot.e.map(([l,f])=>[l,vMot.gen?l:l+" · "+FUEL[f]]):[],vMot?"Non précisée (facultatif)":"Choisis d'abord le modèle",v.moteur||""))+
+     (v.moteur&&vb!=="__autre"?"":sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]))+
+     sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
+     '<div class="f full yr"><span>Année</span><div class="yrrow"><input data-field="annee" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+esc(v.annee??"")+'" placeholder="ex. 2015" aria-label="Année"'+dis+'></div></div>'+
+     '<div class="f full yr"><span>Kilométrage</span><div class="kmrow"><input type="range" min="0" max="300000" step="1000" value="'+(num(v.km)||0)+'" data-vkm aria-label="Kilométrage"'+dis+'><input class="num" data-field="km" type="number" inputmode="numeric" value="'+esc(v.km??"")+'" placeholder="km" aria-label="Kilométrage exact"'+dis+'></div></div>'+
+     '</div>'+(v.demo?"":eqDropdown(v.options||[],"vopt",S.vOpen,"dd-vopt","vopt"))+'</div>';
+  // 2 état
+  h+='<div class="card">'+step(2,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
      vsel("entretien","Carnet d'entretien",[["1","Complet"],["0","Incomplet ou absent"]],null,v.entretien===false?"0":"1")+
-     vsel("proprios","Propriétaires",[["1","1 propriétaire"],["2","2 propriétaires"],["3","3 propriétaires et plus"]],null,v.proprios||2)+
-     inp("couleur","Couleur")+inp("vin","N° de châssis (VIN)","text",{ph:"facultatif"})+
-     sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+'</div>'+(v.demo?"":eqDropdown(v.options||[],"vopt",S.vOpen,"dd-vopt","vopt"))+'</div>';
-  h+='<div class="card"><h2>Achat</h2><div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+inp("vendeur","Vendeur","text",{ph:"Nom / téléphone"})+'</div></div>';
-  h+='<div class="card"><h2>Frais</h2><table class="frais"><thead><tr><th style="width:34%">Catégorie</th><th>Détail</th><th style="width:22%">Montant (€)</th><th></th></tr></thead><tbody>'+
-     (v.frais||[]).map(f=>'<tr><td><select data-frais="'+f.id+'" data-k="cat"'+dis+'>'+CATS.map(c=>'<option'+(c===f.cat?" selected":"")+'>'+c+'</option>').join("")+'</select></td><td><input data-frais="'+f.id+'" data-k="libelle" value="'+esc(f.libelle)+'"'+dis+'></td><td><input class="num" data-frais="'+f.id+'" data-k="montant" type="number" inputmode="decimal" value="'+esc(f.montant)+'"'+dis+'></td><td>'+(v.demo?"":'<button class="x" data-act="delfrais" data-id="'+f.id+'" aria-label="Supprimer ce frais">×</button>')+'</td></tr>').join("")+
-     '</tbody></table>'+(v.demo?"":'<div class="fraisadd"><label class="f">Ajouter depuis la liste<select data-addpb><option value="">Choisir un frais ou un problème…</option>'+PROBLEMES.map(([g,items])=>'<optgroup label="'+esc(g)+'">'+items.map(([k,l,c])=>'<option value="'+k+'">'+esc(l)+' · '+c+' €</option>').join("")+'</optgroup>').join("")+'</select></label><button class="btn small" data-act="addfrais">+ Frais libre</button></div>')+'</div>';
+     vsel("proprios","Propriétaires",[["1","1 propriétaire"],["2","2 propriétaires"],["3","3 propriétaires et plus"]],null,v.proprios||2)+'</div></div>';
+  // 3 frais
+  const pbOn={};(v.frais||[]).forEach(f=>{if(f.pb)pbOn[f.pb]=f});
+  const libres=(v.frais||[]).filter(f=>!f.pb);
+  h+='<div class="card">'+step(3,"Frais prévus et problèmes constatés")+(v.demo?"":'<details class="dd" data-dd="vfrais"'+(S.vfOpen?" open":"")+'><summary><span id="dd-vfrais">'+vfSummary(v)+'</span></summary><div class="ddlist">'+
+     PROBLEMES.map(([g,items])=>'<div class="ddg">'+esc(g)+'</div>'+items.map(([k,l,c])=>{const on=pbOn[k];return'<div class="ck fr"><label><input type="checkbox" data-vfr="'+k+'"'+(on?" checked":"")+'><span>'+esc(l)+'</span></label><input class="num amt" type="number" inputmode="decimal" data-vfra="'+k+'" value="'+esc(on?on.montant:c)+'"'+(on?"":" disabled")+' aria-label="Coût '+esc(l)+'"><span class="eu">€</span></div>'}).join("")).join("")+
+     '</div></details><p class="note" style="margin-top:8px">Coûts moyens dans un garage indépendant, modifiables. Remplace-les par le montant réel quand tu as la facture.</p>')+
+     '<div class="f full" style="margin-top:12px;font-size:13px;color:var(--muted);font-weight:500">Autres frais</div>'+
+     (libres.length?'<table class="frais"><tbody>'+libres.map(f=>'<tr><td style="width:34%"><select data-frais="'+f.id+'" data-k="cat"'+dis+'>'+CATS.map(c=>'<option'+(c===f.cat?" selected":"")+'>'+c+'</option>').join("")+'</select></td><td><input data-frais="'+f.id+'" data-k="libelle" value="'+esc(f.libelle)+'" placeholder="Détail"'+dis+'></td><td style="width:24%"><input class="num" data-frais="'+f.id+'" data-k="montant" type="number" inputmode="decimal" value="'+esc(f.montant)+'"'+dis+'></td><td>'+(v.demo?"":'<button class="x" data-act="delfrais" data-id="'+f.id+'" aria-label="Supprimer ce frais">×</button>')+'</td></tr>').join("")+'</tbody></table>':'')+
+     (v.demo?"":'<div style="margin-top:8px"><button class="btn small" data-act="addfrais">+ Ajouter un autre frais</button></div>')+
+     '<div class="row total" style="display:flex;justify-content:space-between;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-weight:600"><span>Total des frais</span><span class="num" id="vfraistotal">'+eur(fraisTotal(v))+'</span></div></div>';
+  // 4 achat
+  h+='<div class="card">'+step(4,"Achat")+'<div class="form">'+sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+inp("vendeur","Vendeur","text",{ph:"Nom / téléphone"})+inp("couleur","Couleur")+inp("vin","N° de châssis (VIN)","text",{ph:"facultatif",full:true})+'</div></div>';
   h+='<div class="card"><h2>Vente</h2><div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+inp("acheteur","Acheteur","text",{ph:"Nom / ville"})+'</div>'+
      (v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+'</div>';
   h+='<div class="card"><h2>Dossier</h2><div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
@@ -1497,6 +1513,7 @@ const PROBLEMES=[
 const PB_INDEX={};PROBLEMES.forEach(([g,items])=>items.forEach(([k,l,c,cat])=>PB_INDEX[k]={l,c,cat,g}));
 function fraisSim(s){return Object.values(s.frais||{}).reduce((a,b)=>a+num(b),0)+num(s.reparations)}
 function simDefaults(){const y=new Date().getFullYear();return{brand:"",model:"",moteur:"",prixNeuf:"",anneeMin:y-10,anneeMax:y-8,km:110000,kmMin:80000,kmMax:140000,vendeur:"pro",carburant:"Essence",coef:1,boite:"Manuelle",etat:"bon",options:[],entretien:true,proprios:2,frais:{ct:60,carpass:10,nettoyage:80},reparations:"",result:null,open:{}}}
+function vfSummary(v){const l=(v.frais||[]).filter(f=>f.pb);return l.length?l.length+" élément"+(l.length>1?"s":"")+" · "+eur(l.reduce((a,f)=>a+num(f.montant),0)):"Aucun frais coché"}
 function eqSummary(list){const n=list.length;return n?n+" équipement"+(n>1?"s":"")+" coché"+(n>1?"s":""):"Aucun équipement coché"}
 function eqDropdown(list,attr,open,sumId,dd){return'<div class="f full" style="margin-top:12px;font-size:13px;color:var(--muted);font-weight:500">Équipements</div><details class="dd" data-dd="'+dd+'"'+(open?" open":"")+' style="margin-top:4px"><summary><span id="'+sumId+'">'+eqSummary(list)+'</span></summary><div class="ddlist">'+
   '<div class="ddsearch"><input type="search" data-eqsearch placeholder="Rechercher un équipement…" aria-label="Rechercher un équipement"></div>'+EQUIPEMENTS.map(([g,items])=>'<div class="ddg" data-grp>'+esc(g)+'</div>'+items.map(([o])=>'<label class="ck" data-eq="'+esc(o.toLowerCase())+'"><input type="checkbox" data-'+attr+'="'+esc(o)+'"'+(list.includes(o)?" checked":"")+'><span>'+esc(o)+'</span></label>').join("")).join("")+'</div></details>'}
@@ -1677,7 +1694,7 @@ document.addEventListener("click",async e=>{
   else if(act==="simsave"&&S.sim&&S.sim.result){const s=S.sim,r=s.result,fr=fraisSim(s);const autre=s.brand==="Autre";
     addVehicle({marque:autre?(s.libre||"").split(" ")[0]:s.brand,modele:autre?(s.libre||"").split(" ").slice(1).join(" "):s.model,moteur:s.moteur||"",etat:s.etat,entretien:s.entretien,proprios:s.proprios,options:[...s.options],annee:s.anneeMin===s.anneeMax?s.anneeMin:"",km:s.kmMin===s.kmMax?s.kmMin:"",carburant:s.carburant,boite:s.boite,prixAchat:"",estim:{bas:r.bas,median:r.median,haut:r.haut,delai:r.delai,date:today()},
       notes:"Simulation ("+(s.anneeMin===s.anneeMax?s.anneeMin:s.anneeMin+" à "+s.anneeMax)+", "+kmLab(s)+") : revente "+eur(r.bas)+" – "+eur(r.haut)+" (médian "+eur(r.median)+"), achat max "+eur(prixAchatMax(r.median,fr,num(S.settings.margeVisee),S.settings.tva))+", frais prévus "+eur(fr)+".",
-      frais:[...Object.entries(s.frais).map(([k,m])=>({id:newId(),cat:PB_INDEX[k]?PB_INDEX[k].cat:"Autre",libelle:PB_INDEX[k]?PB_INDEX[k].l:"",montant:num(m)})),...(num(s.reparations)?[{id:newId(),cat:"Autre",libelle:"Autres frais",montant:num(s.reparations)}]:[])]})}
+      frais:[...Object.entries(s.frais).map(([k,m])=>({id:newId(),pb:PB_INDEX[k]?k:undefined,cat:PB_INDEX[k]?PB_INDEX[k].cat:"Autre",libelle:PB_INDEX[k]?PB_INDEX[k].l:"",montant:num(m)})),...(num(s.reparations)?[{id:newId(),cat:"Autre",libelle:"Autres frais",montant:num(s.reparations)}]:[])]})}
   else if(act==="export"){const txt=JSON.stringify({app:"negoce-auto",version:1,date:today(),settings:S.settings,vehicles:S.vehicles},null,1);const ta=$("#backup");ta.value=txt;
     try{await navigator.clipboard.writeText(txt);toast("Données copiées. Colle-les dans une note ou un e-mail pour les garder.")}catch(err){ta.select();toast("Sélectionne le texte et copie-le.")}}
   else if(act==="import"){let d;try{d=JSON.parse($("#backup").value)}catch(err){toast("Sauvegarde illisible : colle le texte complet.");return}
@@ -1699,11 +1716,14 @@ document.addEventListener("input",e=>{
   if(t.dataset.simtxt&&S.sim){S.sim[t.dataset.simtxt]=t.value;simRefresh();if(t.dataset.simtxt==="prixNeuf"){const b=$('[data-act="simuler"]');if(b){b.disabled=!simReady(S.sim);b.textContent=simReady(S.sim)?"Simuler":"Choisis la marque et le modèle"}}return}
   if(t.dataset.set){S.settings[t.dataset.set]=num(t.value);persistSettings();return}
   if(r.view!=="fiche")return;const v=curVeh(r.id);if(!v||v.demo)return;
+  if(t.dataset.vfra){const f=v.frais.find(x=>x.pb===t.dataset.vfra);if(f){f.montant=numOrNull(t.value)??"";persistVehicle(v);const sm=$("#dd-vfrais");if(sm)sm.textContent=vfSummary(v);const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v));updateCalc()}return}
+  if(t.hasAttribute("data-vkm")){v.km=+t.value;const n=document.querySelector('[data-field="km"]');if(n)n.value=v.km;persistVehicle(v);updateCalc();return}
+  if(t.dataset.field==='km'){const sl=document.querySelector('[data-vkm]');if(sl)sl.value=num(t.value)}
   if(t.dataset.field){const k=t.dataset.field,numeric=["annee","km","prixAchat","prixAffiche","prixVente"].includes(k);v[k]=numeric?(numOrNull(t.value)??""):t.value;
     if(k==="dateVente"&&t.value&&v.statut!=="vendu"){v.statut="vendu";render()}
     if(k==="dateAchat"&&t.value&&v.statut==="reperage"){v.statut="achete";render()}
     persistVehicle(v);updateCalc();return}
-  if(t.dataset.frais){const f=v.frais.find(x=>x.id===t.dataset.frais);if(f){f[t.dataset.k]=t.dataset.k==="montant"?(numOrNull(t.value)??""):t.value;persistVehicle(v);updateCalc()}return}
+  if(t.dataset.frais){const f=v.frais.find(x=>x.id===t.dataset.frais);if(f){f[t.dataset.k]=t.dataset.k==="montant"?(numOrNull(t.value)??""):t.value;persistVehicle(v);updateCalc();const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v))}return}
   if(t.dataset.estim){v.estim=v.estim||{};v.estim[t.dataset.estim]=numOrNull(t.value)??"";persistVehicle(v);updateCalc();return}
   if(t.dataset.check){v.check=v.check||{};if(t.checked)v.check[t.dataset.check]=1;else delete v.check[t.dataset.check];persistVehicle(v,true);return}
 });
@@ -1723,6 +1743,10 @@ document.addEventListener("change",e=>{
     if(k==="entretien")v.entretien=val==="1";
     if(k==="proprios")v.proprios=+val;
     persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
+  if(t.dataset.vfr&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo)return;const k=t.dataset.vfr,p=PB_INDEX[k],amt=document.querySelector('[data-vfra="'+k+'"]');
+    if(t.checked){if(!v.frais.some(f=>f.pb===k))v.frais.push({id:newId(),pb:k,cat:p.cat,libelle:p.l,montant:num(amt&&amt.value)||p.c});if(amt)amt.disabled=false}
+    else{v.frais=v.frais.filter(f=>f.pb!==k);if(amt){amt.disabled=true;amt.value=p.c}}
+    persistVehicle(v,true);const sm=$("#dd-vfrais");if(sm)sm.textContent=vfSummary(v);const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v));updateCalc();return}
   if(t.dataset.vopt!==undefined&&t.type==="checkbox"&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo)return;const o=t.dataset.vopt;v.options=v.options||[];v.options=t.checked?[...new Set([...v.options,o])]:v.options.filter(x=>x!==o);persistVehicle(v,true);const sm=$("#dd-vopt");if(sm)sm.textContent=eqSummary(v.options);return}
   if(t.hasAttribute&&t.hasAttribute("data-addpb")&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo||!t.value)return;const p=PB_INDEX[t.value];v.frais.push({id:newId(),cat:p.cat,libelle:p.l,montant:p.c});persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast("Frais ajouté : "+p.l);return}
   if(t.dataset.simyear&&S.sim){const s=S.sim,k=t.dataset.simyear,yN=new Date().getFullYear();let y=parseInt(t.value,10);if(isNaN(y))y=s[k];y=Math.min(yN,Math.max(1990,y));s[k]=y;if(s.anneeMin>s.anneeMax){if(k==="anneeMin")s.anneeMax=y;else s.anneeMin=y}if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
@@ -1737,7 +1761,7 @@ document.addEventListener("change",e=>{
 document.addEventListener("focusout",()=>{setTimeout(()=>{if(!editing()&&route().view!=="fiche"&&route().view!=="simulateur"&&route().view!=="reglages")render()},50)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#overlay").innerHTML=""});
 
-document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
+document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd==="vfrais"){S.vfOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{}));
