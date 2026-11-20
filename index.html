@@ -453,7 +453,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="7.6";
+const APP_VERSION="7.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -2364,15 +2364,23 @@ document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.
 document.addEventListener("click",e=>{const t=e.target.closest("[data-dthumb]");if(!t)return;const tr=$("#dtrack");if(tr)tr.scrollTo({left:+t.dataset.dthumb*tr.clientWidth,behavior:"smooth"})});
 document.addEventListener("scroll",e=>{const t=e.target;if(t&&t.classList&&t.classList.contains("ctrack")){clearTimeout(t._t);t._t=setTimeout(()=>{const n=Math.round(t.scrollLeft/Math.max(1,t.clientWidth)),c=t.parentNode.querySelector(".dcount");if(c)c.textContent=(n+1)+" / "+t.children.length},60)}},true);
 document.addEventListener("scroll",e=>{const tr=e.target;if(!tr||tr.id!=="dtrack")return;clearTimeout(tr._t);tr._t=setTimeout(()=>{const n=Math.round(tr.scrollLeft/Math.max(1,tr.clientWidth)),c=$("#dcount");if(c)c.textContent=(n+1)+" / "+tr.children.length;document.querySelectorAll("[data-dthumb]").forEach(b=>b.classList.toggle("on",+b.dataset.dthumb===n))},60)},true);
-document.addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset.rfait===undefined)return;const v=S.vehicles.find(x=>x.id===t.dataset.v);if(!v||v.demo)return;const r=(v.journal||[]).find(x=>x.id===t.dataset.rfait);if(!r)return;r.fait=t.checked;persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);if(t.checked)toast("Rappel marqué comme fait.",()=>{r.fait=false;persistVehicle(v,true);const y1=window.scrollY;render();window.scrollTo(0,y1)})});
+document.addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset.rfait===undefined)return;const v=S.vehicles.find(x=>x.id===t.dataset.v);if(!v||v.demo)return;const r=(v.journal||[]).find(x=>x.id===t.dataset.rfait);if(!r)return;r.fait=t.checked;persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);
+  if(t.checked){const undo=()=>{r.fait=false;persistVehicle(v,true);const y1=window.scrollY;render();window.scrollTo(0,y1)};
+    if(route().view==="tableau")faitModal(v,r,undo);else toast("Rappel marqué comme fait.",undo)}});
+function pickFacture(v,jId){let inp=$("#jfactinput");if(!inp){inp=document.createElement("input");inp.type="file";inp.id="jfactinput";inp.accept="image/*,application/pdf";inp.multiple=true;inp.hidden=true;document.body.appendChild(inp);
+    inp.addEventListener("change",()=>{const vv=S.vehicles.find(x=>x.id===inp.dataset.v);if(vv&&!vv.demo&&inp.files.length)addFactures(vv,[...inp.files],inp.dataset.j);inp.value=""})}
+  inp.dataset.j=jId;inp.dataset.v=v.id;inp.click()}
+function faitModal(v,r,undo){const ov=$("#overlay");
+  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="fmt"><div class="card"><h2 id="fmt">C\'est fait ✓</h2><p><b>'+esc(r.type)+'</b>'+(r.texte?' : '+esc(r.texte):'')+'<br><span class="note">'+esc(v.marque+" "+v.modele)+'</span></p><p class="note">Tu veux ajouter la facture du garage maintenant ?</p>'+
+    '<div class="acts" style="flex-wrap:wrap"><button class="btn" data-fm="undo">Annuler « fait »</button><button class="btn" data-fm="later">Plus tard</button><button class="btn primary" data-fm="add">Ajouter une facture</button></div></div></div>';
+  ov.onclick=e=>{const b=e.target.closest("[data-fm]");if(!b&&!e.target.classList.contains("modal"))return;const a=b?b.dataset.fm:"later";ov.innerHTML="";
+    if(a==="undo")undo();else if(a==="add")pickFacture(v,r.id)}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-rtog]");if(!b)return;e.preventDefault();e.stopPropagation();const v=S.vehicles.find(x=>x.id===b.dataset.v);if(!v||v.demo)return;const r=(v.journal||[]).find(x=>x.id===b.dataset.rtog);if(!r)return;r.fait=!r.fait;persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast(r.fait?"Marqué comme fait.":"Rappel remis à faire.")},true);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-fold],[data-foldall]");if(!b)return;e.preventDefault();
   if(b.dataset.foldall){const all=[...document.querySelectorAll("[data-fold]")].map(x=>+x.dataset.fold);foldSet(foldGet().length>=all.length?[]:all)}
   else{const n=+b.dataset.fold,f=foldGet();foldSet(f.includes(n)?f.filter(x=>x!==n):[...f,n]);}
   foldApply();if(!b.dataset.foldall){const c=b.closest(".card");if(c&&c.getBoundingClientRect().top<70)c.scrollIntoView({block:"start"})}});
-document.addEventListener("click",e=>{const b=e.target.closest("[data-jfact]");if(!b)return;e.preventDefault();let inp=$("#jfactinput");if(!inp){inp=document.createElement("input");inp.type="file";inp.id="jfactinput";inp.accept="image/*,application/pdf";inp.multiple=true;inp.hidden=true;document.body.appendChild(inp);
-  inp.addEventListener("change",()=>{const v=curVeh(route().id);if(v&&!v.demo&&inp.files.length)addFactures(v,[...inp.files],inp.dataset.j);inp.value=""})}
-  inp.dataset.j=b.dataset.jfact;inp.click()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-jfact]");if(!b)return;e.preventDefault();const v=curVeh(route().id);if(v)pickFacture(v,b.dataset.jfact)});
 document.addEventListener("change",e=>{const t=e.target;if(t.id!=="factinput"||!t.files||!t.files.length)return;const v=curVeh(route().id);if(v&&!v.demo)addFactures(v,[...t.files]);t.value=""});
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-factopen],[data-factdel]");if(!o)return;const v=curVeh(route().id);if(!v)return;const L=factCache[v.id]||[];
   if(o.dataset.factopen){const f=L.find(x=>x.id===o.dataset.factopen);if(f)openFacture(f);return}
