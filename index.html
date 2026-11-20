@@ -390,7 +390,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="4.6";
+const APP_VERSION="4.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -453,8 +453,8 @@ function demoData(){
     {id:"demo3",demo:true,marque:"Volkswagen",modele:"Polo 1.0 MPI",annee:2015,km:128000,carburant:"Essence",boite:"Manuelle",statut:"vendu",prixAchat:5000,dateAchat:addDays(-62),dateVente:addDays(-34),prixVente:6900,acheteur:"Particulier, Namur",frais:fr([["Réparation",300],["Garantie externe",300],["Contrôle technique",60],["Nettoyage",60]]),check:Object.fromEntries(CHECK.flatMap(g=>g.items.map(([k])=>[k,1])))},
     {id:"demo4",demo:true,marque:"Kia",modele:"Picanto 1.0",annee:2013,km:141000,carburant:"Essence",boite:"Manuelle",statut:"reperage",prixAchat:3200,source:"AutoScout24",notes:"Vendeur pressé, rayures pare-chocs AR. Rappeler samedi.",frais:[],check:{}}];
 }
-function list(){return S.vehicles.length?S.vehicles:(S.loaded?demoData():[])}
-const showingDemo=()=>S.loaded&&!S.vehicles.length;
+function list(){if(S.vehicles.length)return S.vehicles;if(!S.loaded)return[];const hid=S.settings.hiddenDemos||[];return demoData().filter(d=>!hid.includes(d.id))}
+const showingDemo=()=>S.loaded&&!S.vehicles.length&&list().length>0;
 
 /* ---------- stockage ---------- */
 const LS="negoce-auto-v1";
@@ -730,7 +730,7 @@ function carCard(v){
   return'<div class="car" role="link" tabindex="0" data-open="'+v.id+'"><div class="cover">'+(v.cover?'<img src="'+v.cover+'" alt="" loading="lazy">':carIco)+'</div><div class="hd"><div><div class="name">'+esc(v.marque)+' '+esc(v.modele)+'</div><div class="meta num">'+esc(v.annee||"—")+' · '+kmFmt(v.km)+' · '+esc(v.carburant||"")+'</div></div>'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+'</div>'+
   (v.demo?'<span class="demo-tag">Exemple</span>':"")+
   '<div class="figs num"><div>'+(v.statut==="reperage"?"Prix demandé":"Achat + frais")+'<b>'+eur(v.statut==="reperage"?c.achat:c.cout)+'</b></div><div>'+third[0]+'<b>'+third[1]+'</b></div><div>Marge nette<b class="'+(c.net==null?"":c.net<0?"neg":"pos")+'">'+(c.net==null?"—":eur(c.net))+'</b></div></div>'+
-  '<div class="meta" style="display:flex;justify-content:space-between"><span>'+(j!=null?(v.statut==="vendu"?"Vendue en "+j+" j":"En stock depuis "+j+" j"):"Pas encore achetée")+'</span><span>Dossier '+p+' %</span></div><div class="bar"><i style="width:'+p+'%"></i></div>'+'<div class="cacts"><a class="btn small" href="#d-'+v.id+'">Détails du véhicule</a>'+(v.demo?"":'<a class="btn small" href="#v-'+v.id+'">Modifier</a>')+'</div></div>';
+  '<div class="meta" style="display:flex;justify-content:space-between"><span>'+(j!=null?(v.statut==="vendu"?"Vendue en "+j+" j":"En stock depuis "+j+" j"):"Pas encore achetée")+'</span><span>Dossier '+p+' %</span></div><div class="bar"><i style="width:'+p+'%"></i></div>'+'<div class="cacts"><a class="btn small" href="#d-'+v.id+'">Détails du véhicule</a>'+(v.demo?'<button class="btn small danger" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<a class="btn small" href="#v-'+v.id+'">Modifier</a>')+'</div></div>';
 }
 
 /* ---------- fiche ---------- */
@@ -741,7 +741,7 @@ function vFiche(r){
   const dis=v.demo?" disabled":"";
   const fb={vendeurNom:v.vendeur,clientNom:v.acheteur};const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(v[k]??fb[k]??"")+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
   const sel=(k,l,opts)=>'<label class="f">'+l+'<select id="f-'+k+'" data-field="'+k+'"'+dis+'>'+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(v[k])===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
-  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
+  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
   h+='<div class="ficheone">';
   const vb=CATALOGUE[v.marque]?v.marque:((v.marque||v.autreMarque)?"__autre":"");
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
@@ -994,7 +994,7 @@ function vDetails(r){
   const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
   let h='<div class="top"><div><a href="#garage" class="note">← Garage</a><h1>'+esc(v.marque||"Voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+[v.annee,v.km?kmFmt(v.km):"",v.moteur||v.carburant].filter(Boolean).map(esc).join(" · ")+'</p></div>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+
-    (v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button>':'<a class="btn primary small" href="#v-'+v.id+'">Modifier</a>')+'<button class="btn small" data-act="pdf">Fiche PDF client</button><button class="btn small" data-act="bdc">Bon de commande</button></div></div>';
+    (v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<a class="btn primary small" href="#v-'+v.id+'">Modifier</a>')+'<button class="btn small" data-act="pdf">Fiche PDF client</button><button class="btn small" data-act="bdc">Bon de commande</button></div></div>';
   h+='<div class="ficheone">';
   // photos
   h+='<div class="card dphotos" id="dphotos">'+detPhotos(v)+'</div>';
@@ -1982,6 +1982,7 @@ function vReglages(){
   h+='<div class="card"><h2>Calculs</h2><div class="form">'+i("tva","Taux de TVA (%)","21 % en Belgique, appliqué au régime de la marge")+i("margeVisee","Marge nette visée par voiture (€)","Utilisée pour le prix d'achat maximum")+i("provGarantie","Provision garantie par voiture (€)","Mise de côté pendant la garantie")+i("dureeGarantie","Durée de garantie (mois)","12 mois minimum pour un pro en occasion")+i("seuilJours","Alerte stock après (jours)")+'</div></div>';
   h+='<div class="card"><h2>Sauvegarde</h2><p class="note">Copie tes données pour les garder ailleurs, ou colle une sauvegarde pour la restaurer.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn small" data-act="export">Copier mes données</button><button class="btn small" data-act="import">Restaurer depuis une sauvegarde</button></div><label class="f full"><span>Zone de sauvegarde</span><textarea id="backup" placeholder="La sauvegarde apparaît ici, ou colle-la ici pour restaurer."></textarea></label></div>';
   h+='<p class="note" style="text-align:center">GC Motors · version '+APP_VERSION+'</p>';
+  if((s.hiddenDemos||[]).length)h+='<div class="card"><h2>Voitures d\'exemple</h2><p class="note">Tu as supprimé '+s.hiddenDemos.length+' voiture(s) d\'exemple.</p><button class="btn small" style="margin-top:8px" data-act="showdemos">Réafficher les exemples</button></div>';
   h+='<div class="card"><h2>Rappels</h2><p class="note">TVA sur la marge = marge × 21/121. Facture avec la mention « régime de la marge – biens d\'occasion ». Garantie d\'au moins un an pour un vendeur professionnel. Ces calculs ne remplacent pas ton comptable.</p></div>';
   return h;
 }
@@ -2021,7 +2022,7 @@ document.addEventListener("click",async e=>{
     const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   const mo=e.target.closest("[data-month]");if(mo){const i=mo.dataset.month;S.period.m=String(S.period.m)===i?"":i;render();return}
   const oc=e.target.closest("[data-open]");
-  if(oc&&!e.target.closest(".stwrap")&&!e.target.closest("a")){location.hash="d-"+oc.dataset.open;return}
+  if(oc&&!e.target.closest(".stwrap")&&!e.target.closest("a")&&!e.target.closest("button")){location.hash="d-"+oc.dataset.open;return}
   const fb=e.target.closest("[data-filter]");
   if(fb){S.garageFilter=fb.dataset.filter;if(location.hash!=="#garage"){e.preventDefault();location.hash="garage"}else render();return}
   const b=e.target.closest("[data-act]");if(!b)return;
@@ -2033,8 +2034,10 @@ document.addEventListener("click",async e=>{
   if(act==="logout"){await auth.signOut();toast("Déconnecté.");return}
   if(act==="install"&&installEvt){installEvt.prompt();installEvt=null;return}
   if(act==="resetpw"){const em=($("#l-email")||{}).value;if(!em){$("#l-err").textContent="Entre ton e-mail d'abord.";return}try{await auth.sendPasswordResetEmail(em.trim());$("#l-err").textContent="E-mail de réinitialisation envoyé."}catch(x){$("#l-err").textContent=AUTH_ERR[x.code]||"Envoi impossible."}return}
+  if(act==="deldemo"){const id=b.dataset.id;modal("Supprimer cet exemple ?","Cette voiture d'exemple disparaîtra de ton garage et de tes statistiques.","Supprimer",()=>{S.settings.hiddenDemos=[...new Set([...(S.settings.hiddenDemos||[]),id])];persistSettings();toast("Exemple supprimé.");location.hash="garage";render()});return}
+  if(act==="showdemos"){S.settings.hiddenDemos=[];persistSettings();toast("Les exemples sont de nouveau affichés (si ton garage est vide).");render();return}
   if(act==="demoimport"){const cur=b.dataset.id;let target=null;
-    for(const d of demoData()){const nv=JSON.parse(JSON.stringify(d));delete nv.demo;const oid=nv.id;nv.id=newId();nv.createdAt=Date.now();nv.options=nv.options||[];nv.journal=[];S.vehicles.push(nv);persistVehicle(nv,true);if(oid===cur)target=nv.id}
+    for(const d of demoData().filter(x=>!(S.settings.hiddenDemos||[]).includes(x.id))){const nv=JSON.parse(JSON.stringify(d));delete nv.demo;const oid=nv.id;nv.id=newId();nv.createdAt=Date.now();nv.options=nv.options||[];nv.journal=[];S.vehicles.push(nv);persistVehicle(nv,true);if(oid===cur)target=nv.id}
     toast("Les exemples sont maintenant dans ton garage : tu peux les modifier ou les supprimer.");location.hash="v-"+(target||S.vehicles[S.vehicles.length-1].id);return}
   if(act==="add")addVehicle();
   else if(act==="del")modal("Supprimer cette voiture ?","Elle sera retirée de ton garage et de tes statistiques. Cette action est définitive.","Supprimer",()=>{removeVehicle(b.dataset.id);location.hash="garage"});
