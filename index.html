@@ -67,6 +67,9 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .ck .amt{width:80px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);text-align:right;font-size:14px}
 .ck .amt:disabled{opacity:.45}
 .ck .eu{color:var(--muted);font-size:13px}
+.yr{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
+.yrrow{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:15px}
+.yrrow input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:center}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.hide-m{display:none}}
@@ -291,7 +294,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="1.8";
+const APP_VERSION="1.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -927,8 +930,8 @@ function vSim(){
       sel("model","Modèle",s.brand?Object.keys(CATALOGUE[s.brand].m):[],s.brand?"Choisir le modèle":"Choisis d'abord la marque")+
       sel("moteur","Motorisation",mot?mot.e.map(([l,f])=>[l,l+" · "+FUEL[f]]):[],s.model?"Choisir la motorisation":"Choisis d'abord le modèle"))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
-     sel("anneeMin","Année de",ans)+sel("anneeMax","Année à",ans)+
-     sel("km","Kilométrage",Array.from({length:61},(_,i)=>{const k=i*5000;return[k,new Intl.NumberFormat("fr-BE").format(k)+" km"]}))+
+     '<div class="f full yr"><span>Année</span><div class="yrrow"><span>de</span><input data-simyear="anneeMin" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMin+'" aria-label="Année de"><span>à</span><input data-simyear="anneeMax" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMax+'" aria-label="Année à"></div></div>'+
+     '<label class="f full">Kilométrage <b class="num" id="kmval" style="color:var(--ink);font-size:16px">'+new Intl.NumberFormat("fr-BE").format(s.km)+' km</b><input type="range" min="0" max="300000" step="5000" value="'+s.km+'" data-simrange="km" aria-label="Kilométrage"></label>'+
      '</div><p class="note" style="margin-top:8px">'+(mot?"Modèle produit de "+mot.y[0]+(mot.y[1]?" à "+mot.y[1]:" à aujourd'hui")+". ":"")+'Kilométrage moyen attendu : '+new Intl.NumberFormat("fr-BE").format(Math.max(1,yNow-Math.round((s.anneeMin+s.anneeMax)/2))*15000)+' km</p></div>';
   // 3 état
   h+='<div class="card">'+step(2,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
@@ -1099,6 +1102,7 @@ document.addEventListener("change",e=>{
     if(k==="anneeMin"&&s.anneeMin>s.anneeMax)s.anneeMax=s.anneeMin;
     if(k==="anneeMax"&&s.anneeMax<s.anneeMin)s.anneeMin=s.anneeMax;
     if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
+  if(t.dataset.simyear&&S.sim){const s=S.sim,k=t.dataset.simyear,yN=new Date().getFullYear();let y=parseInt(t.value,10);if(isNaN(y))y=s[k];y=Math.min(yN,Math.max(1990,y));s[k]=y;if(s.anneeMin>s.anneeMax){if(k==="anneeMin")s.anneeMax=y;else s.anneeMin=y}if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   if(t.dataset.simck&&S.sim){const s=S.sim,o=t.dataset.simck;s.options=t.checked?[...new Set([...s.options,o])]:s.options.filter(x=>x!==o);simRefresh();return}
   if(t.dataset.simfr&&S.sim){const s=S.sim,k=t.dataset.simfr,amt=document.querySelector('[data-simfra="'+k+'"]');if(t.checked){s.frais[k]=num(amt&&amt.value)||PB_INDEX[k].c;if(amt)amt.disabled=false}else{delete s.frais[k];if(amt){amt.disabled=true;amt.value=PB_INDEX[k].c}}simRefresh();return}
   if(t.dataset.period){S.period[t.dataset.period]=t.dataset.period==="y"?+t.value:t.value;render();return}
