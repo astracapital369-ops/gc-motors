@@ -390,7 +390,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="4.5";
+const APP_VERSION="4.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -1833,6 +1833,12 @@ function numeroClient(v,c){if(v.clientNum)return v.clientNum;
   const maxUsed=S.vehicles.reduce((m,o)=>Math.max(m,parseInt(o.clientNum,10)||0),0);
   S.settings.clientSeq=Math.max(num(S.settings.clientSeq)||0,maxUsed)+1;persistSettings();
   return String(S.settings.clientSeq).padStart(6,"0")}
+function euroNormeAuto(annee,carb){if(carb==="Électrique")return"Électrique";const y=num(annee);if(!y)return"";if(y>=2020)return"Euro 6d";if(y>=2015)return"Euro 6";if(y>=2011)return"Euro 5";if(y>=2006)return"Euro 4";if(y>=2001)return"Euro 3";if(y>=1997)return"Euro 2";return"Euro 1"}
+function autoSpecs(v,force){const lab=v.moteur||"";v.auto=v.auto||{};const set=(k,val)=>{if(val===""||val==null)return;if(force||!v[k]||v.auto[k]){v[k]=val;v.auto[k]=true}};
+  const ch=lab.match(/(\d{2,4})\s*(?:[-/]\s*\d{2,4}\s*)*ch\b/i);if(ch)set("puissance",Math.round(num(ch[1])/1.35962));
+  if(v.carburant!=="Électrique"){const l=lab.match(/(?:^|\s)(\d\.\d{1,2})(?=\s|$|\s*\/)/);if(l){const lit=parseFloat(l[1]);set("cylindree",Math.round(lit*1000)-(lit>=1?2:0))}}
+  else if(force||v.auto.cylindree){v.cylindree="";}
+  set("euronorm",euroNormeAuto(v.annee,v.carburant))}
 function applyStatut(v,nv,extra){v.statut=nv;if(extra)Object.assign(v,extra);
   if(nv==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(nv)&&!v.dateAchat)v.dateAchat=today();
   v.journal=v.journal||[];v.journal.push({id:newId(),t:Date.now(),date:today(),type:"Statut",texte:"Passage en « "+stLabel(nv)+" »"+(nv==="vendu"&&v.prixVente?" · vendue "+eur(num(v.prixVente)):"")});
@@ -2092,6 +2098,8 @@ document.addEventListener("input",e=>{
   if(t.dataset.bdoc!==undefined&&t.type==="checkbox"){const def=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass"];let l=v.bdcDocs||def.slice();l=t.checked?[...new Set([...l,t.dataset.bdoc])]:l.filter(x=>x!==t.dataset.bdoc);v.bdcDocs=BDC_DOCS.filter(x=>l.includes(x));persistVehicle(v,true);return}
   if(t.dataset.vfra){const f=v.frais.find(x=>x.pb===t.dataset.vfra);if(f){f.montant=numOrNull(t.value)??"";persistVehicle(v);const sm=$("#dd-vfrais");if(sm)sm.textContent=vfSummary(v);const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v));updateCalc()}return}
   if(t.hasAttribute("data-vkm")){v.km=+t.value;const n=document.querySelector('[data-field="km"]');if(n)n.value=v.km;persistVehicle(v);updateCalc();return}
+  if(t.dataset.field&&v.auto&&["puissance","cylindree","euronorm"].includes(t.dataset.field))delete v.auto[t.dataset.field];
+  if((t.dataset.field==="annee"||t.dataset.field==="carburant")&&v.auto&&v.auto.euronorm){setTimeout(()=>{v.euronorm=euroNormeAuto(v.annee,v.carburant);const e=document.querySelector('[data-field="euronorm"]');if(e)e.value=v.euronorm;persistVehicle(v)},0)}
   if(t.dataset.field==='km'){const sl=document.querySelector('[data-vkm]');if(sl)sl.value=num(t.value)}
   if(t.dataset.field==="statut")return;
   if(t.dataset.field){const k=t.dataset.field,numeric=["annee","km","prixAchat","prixAffiche","prixVente"].includes(k);v[k]=numeric?(numOrNull(t.value)??""):t.value;
@@ -2115,7 +2123,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.vsel&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo)return;const k=t.dataset.vsel,val=t.value;
     if(k==="marque"){if(val==="__autre"){v.autreMarque=true;if(CATALOGUE[v.marque])v.marque=""}else{v.autreMarque=false;v.marque=val}v.modele="";v.moteur=""}
     if(k==="modele"){v.modele=val;v.moteur=""}
-    if(k==="moteur"){v.moteur=val;const m=moteursDe(v.marque,v.modele),e=m&&m.e.find(x=>x[0]===val);if(e)v.carburant=FUEL[e[1]]}
+    if(k==="moteur"){v.moteur=val;const m=moteursDe(v.marque,v.modele),e=m&&m.e.find(x=>x[0]===val);if(e)v.carburant=FUEL[e[1]];if(val){v.auto={};autoSpecs(v,true);toast("Puissance, cylindrée et norme Euro remplies automatiquement (vérifie-les).")}}
     if(k==="entretien")v.entretien=val==="1";
     if(k==="proprios")v.proprios=+val;
     persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
