@@ -237,6 +237,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
+const APP_VERSION="1.2 (photos)";
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
   tableau:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
@@ -670,6 +671,7 @@ function vReglages(){
   else if(fbReady())h+='<div class="card"><h2>Compte</h2><p class="note">Tu utilises l\'app sans compte : tes données restent sur cet appareil.</p><button class="btn small" data-act="gologin">Se connecter / créer un compte</button></div>';
   h+='<div class="card"><h2>Calculs</h2><div class="form">'+i("tva","Taux de TVA (%)","21 % en Belgique, appliqué au régime de la marge")+i("margeVisee","Marge nette visée par voiture (€)","Utilisée pour le prix d'achat maximum")+i("provGarantie","Provision garantie par voiture (€)","Mise de côté pendant la garantie")+i("dureeGarantie","Durée de garantie (mois)","12 mois minimum pour un pro en occasion")+i("seuilJours","Alerte stock après (jours)")+'</div></div>';
   h+='<div class="card"><h2>Sauvegarde</h2><p class="note">Copie tes données pour les garder ailleurs, ou colle une sauvegarde pour la restaurer.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn small" data-act="export">Copier mes données</button><button class="btn small" data-act="import">Restaurer depuis une sauvegarde</button></div><label class="f full"><span>Zone de sauvegarde</span><textarea id="backup" placeholder="La sauvegarde apparaît ici, ou colle-la ici pour restaurer."></textarea></label></div>';
+  h+='<p class="note" style="text-align:center">GC Motors · version '+APP_VERSION+'</p>';
   h+='<div class="card"><h2>Rappels</h2><p class="note">TVA sur la marge = marge × 21/121. Facture avec la mention « régime de la marge – biens d\'occasion ». Garantie d\'au moins un an pour un vendeur professionnel. Ces calculs ne remplacent pas ton comptable.</p></div>';
   return h;
 }
@@ -760,7 +762,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#overlay").innerH
 
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{}));
 boot();
 })();
 </script>
