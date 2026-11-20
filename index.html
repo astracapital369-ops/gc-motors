@@ -179,15 +179,17 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .bbar{height:6px;border-radius:3px;margin:12px 6px 0;background:linear-gradient(90deg,var(--line),var(--accent),var(--line))}
 .estlinks{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:12px;font-size:14px}
 .estlinks a{color:var(--accent);font-weight:600;text-decoration:none}
-.liq{display:flex;flex-direction:column;gap:12px;border-left:4px solid var(--accent)}
-.liqmain{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-end}
-.liq .lbl{font-size:13px;color:var(--muted);font-weight:600}
-.liqval{font-family:var(--display);font-size:40px;font-weight:600;line-height:1.05;color:var(--accent)}
+.card.liq{padding:12px 16px;border-left:4px solid var(--accent)}
+.liq summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;cursor:pointer}
+.liq summary::-webkit-details-marker{display:none}
+.liq .lbl{font-size:14px;color:var(--muted);font-weight:600}
+.liq .lbl::after{content:" ›";color:var(--muted)}
+.liq[open] .lbl::after{content:" ⌄"}
+.liqval{font-family:var(--display);font-size:26px;font-weight:600;line-height:1;color:var(--accent)}
 .liqval.neg{color:var(--bad)}
-.liq .sub{font-size:12.5px;color:var(--muted)}
-.liqcap{max-width:200px}
-.liqrows{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
-.liqrows b{color:var(--ink);font-weight:600;margin-left:4px}
+.liqrows{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;margin-top:10px}
+.liqrows b{color:var(--ink);font-weight:600;margin-left:3px}
+.liqrows a{color:var(--accent);font-weight:600;text-decoration:none}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -412,7 +414,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.2";
+const APP_VERSION="5.3";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -678,9 +680,8 @@ function vTableau(){
   const achats=acq.reduce((a,v)=>a+num(v.prixAchat),0),fraisTot=acq.reduce((a,v)=>a+fraisTotal(v),0);
   const capDep=num(S.settings.capitalDepart),ajust=num(S.settings.ajustTreso);
   const liq=capDep+ajust+encaisse-achats-fraisTot;
-  h+='<div class="card liq"><div class="liqmain"><div><div class="lbl">Liquidités restantes</div><div class="liqval num '+(liq<0?"neg":"")+'">'+eur(liq)+'</div><div class="sub">Argent disponible aujourd\'hui pour acheter</div></div>'+
-     '<label class="f liqcap">Capital de départ (€)<input data-set="capitalDepart" type="number" inputmode="decimal" value="'+esc(S.settings.capitalDepart||"")+'" placeholder="ex. 10000"></label></div>'+
-     '<div class="liqrows num"><span>Capital de départ <b>'+eur(capDep)+'</b></span><span>+ Ventes encaissées <b class="pos">'+eur(encaisse)+'</b></span><span>− Achats de voitures <b class="neg">'+eur(achats)+'</b></span><span>− Frais payés <b class="neg">'+eur(fraisTot)+'</b></span>'+(ajust?'<span>± Apports / retraits <b>'+eur(ajust)+'</b></span>':'')+'</div></div>';
+  h+='<details class="card liq"><summary><span class="lbl">Liquidités restantes</span><span class="liqval num '+(liq<0?"neg":"")+'">'+eur(liq)+'</span></summary>'+
+     '<div class="liqrows num"><span>Capital de départ <b>'+eur(capDep)+'</b></span><span>+ Ventes <b>'+eur(encaisse)+'</b></span><span>− Achats <b>'+eur(achats)+'</b></span><span>− Frais <b>'+eur(fraisTot)+'</b></span>'+(ajust?'<span>± Apports / retraits <b>'+eur(ajust)+'</b></span>':'')+'<a href="#reglages">'+(capDep?"Modifier le capital":"Définir le capital de départ")+'</a></div></details>';
   h+='<div class="grid kpis">'+
     kpi("Chiffre d'affaires",eur(ca),vendusAn.length+" voiture"+(vendusAn.length>1?"s":"")+" vendue"+(vendusAn.length>1?"s":"")+" · "+per)+
     kpi("Bénéfice net",'<span class="'+(benef<0?"neg":"pos")+'">'+eur(benef)+'</span>',per+" · TVA marge à reverser : "+eur(tvaAn))+
