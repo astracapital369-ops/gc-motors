@@ -414,7 +414,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.4";
+const APP_VERSION="5.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -670,7 +670,7 @@ function vTableau(){
   const gar=vendus.filter(v=>{const f=finGarantie(v);return f&&f>=today()});
   const prov=gar.length*S.settings.provGarantie;
 
-  let h='<div class="top"><div><h1>Tableau de bord</h1><p>'+new Date().toLocaleDateString("fr-BE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+'</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
+  let h='<div class="top"><div><h1>Tableau de bord</h1><p>'+new Date().toLocaleDateString("fr-BE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+'</p></div></div>';
   h+='<div class="toolbar"><div class="chips" role="group" aria-label="Période"><label class="f" style="flex-direction:row;align-items:center;gap:8px">Période'+
     '<select id="p-m" data-period="m" style="width:auto">'+'<option value="">Toute l\'année</option>'+MOIS.map((n,i)=>'<option value="'+i+'"'+(String(pm)===String(i)?" selected":"")+'>'+n+'</option>').join("")+'</select>'+
     '<select id="p-y" data-period="y" style="width:auto">'+years.map(a=>'<option'+(a===y?" selected":"")+'>'+a+'</option>').join("")+'</select></label></div>'+
