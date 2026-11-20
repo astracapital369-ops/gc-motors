@@ -100,6 +100,7 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .kmrow{display:flex;align-items:center;gap:12px}
 .kmrow input[type=range]{flex:1;margin:0}
 .kmrow input[type=number]{width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
+.ficheone{max-width:760px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -324,7 +325,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="2.9";
+const APP_VERSION="3.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
@@ -668,55 +669,50 @@ function vFiche(r){
   const v=curVeh(r.id);
   if(!v)return'<div class="card empty">Cette voiture n\'existe plus. <a href="#garage">Retour au garage</a></div>';
   const dis=v.demo?" disabled":"";
-  const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(v[k]??"")+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
+  const fb={vendeurNom:v.vendeur,clientNom:v.acheteur};const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(v[k]??fb[k]??"")+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
   const sel=(k,l,opts)=>'<label class="f">'+l+'<select id="f-'+k+'" data-field="'+k+'"'+dis+'>'+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(v[k])===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
   let h='<div class="top"><div><a href="#garage" class="note">← Garage</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>'+(v.demo?'<span class="demo-tag">Exemple · lecture seule</span>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
-  h+='<div class="fiche"><div class="stack">';
+  h+='<div class="ficheone">';
   const vb=CATALOGUE[v.marque]?v.marque:((v.marque||v.autreMarque)?"__autre":"");
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
   const vMot=vb&&vb!=="__autre"&&vModels.includes(v.modele)?moteursDe(vb,v.modele):null;
   const vsel=(k,l,opts,ph,cur)=>'<label class="f">'+l+'<select data-vsel="'+k+'"'+dis+'>'+(ph!=null?'<option value="">'+esc(ph)+'</option>':"")+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(cur)===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
   const step=(n,t)=>'<div class="sstep"><span class="sn">'+n+'</span><h2>'+t+'</h2></div>';
   const yNow=new Date().getFullYear();
+  h+='<div class="card">'+step(1,"Photos")+'<div class="photos" id="photogrid">'+(v.demo?'<p class="note">Les photos s\'ajoutent sur tes propres voitures.</p>':photoGrid(v))+'</div>'+(v.demo?"":'<input id="phinput" type="file" accept="image/*" multiple hidden>')+'<p class="note" style="margin-top:8px">Touche une photo pour l\'agrandir, la mettre en couverture ou la supprimer.</p></div>';
   // 1 véhicule
-  h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
+  h+='<div class="card">'+step(2,"Véhicule")+'<div class="form">'+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
      (vb==="__autre"?inp("marque","Marque (texte)")+inp("modele","Modèle","text",{ph:"ex. Ypsilon"}):
        vsel("modele","Modèle",(v.modele&&!vModels.includes(v.modele)?[[v.modele,v.modele]]:[]).concat(vModels),vb?"Choisir le modèle":"Choisis d'abord la marque",v.modele)+
        vsel("moteur","Motorisation",vMot?vMot.e.map(([l,f])=>[l,vMot.gen?l:l+" · "+FUEL[f]]):[],vMot?"Non précisée (facultatif)":"Choisis d'abord le modèle",v.moteur||""))+
      (v.moteur&&vb!=="__autre"?"":sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<div class="f full yr"><span>Année</span><div class="yrrow"><input data-field="annee" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+esc(v.annee??"")+'" placeholder="ex. 2015" aria-label="Année"'+dis+'></div></div>'+
-     '<div class="f full yr"><span>Kilométrage</span><div class="kmrow"><input type="range" min="0" max="300000" step="1000" value="'+(num(v.km)||0)+'" data-vkm aria-label="Kilométrage"'+dis+'><input class="num" data-field="km" type="number" inputmode="numeric" value="'+esc(v.km??"")+'" placeholder="km" aria-label="Kilométrage exact"'+dis+'></div></div>'+
+     '<div class="f full yr"><span>Kilométrage</span><div class="kmrow"><input type="range" min="0" max="300000" step="1000" value="'+(num(v.km)||0)+'" data-vkm aria-label="Kilométrage"'+dis+'><input class="num" data-field="km" type="number" inputmode="numeric" value="'+esc(v.km??"")+'" placeholder="km" aria-label="Kilométrage exact"'+dis+'></div></div>'+inp("couleur","Couleur")+inp("vin","N° de châssis (VIN)","text",{ph:"facultatif"})+
      '</div>'+(v.demo?"":eqDropdown(v.options||[],"vopt",S.vOpen,"dd-vopt","vopt"))+'</div>';
   // 2 état
-  h+='<div class="card">'+step(2,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
+  h+='<div class="card">'+step(3,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
      vsel("entretien","Carnet d'entretien",[["1","Complet"],["0","Incomplet ou absent"]],null,v.entretien===false?"0":"1")+
      vsel("proprios","Propriétaires",[["1","1 propriétaire"],["2","2 propriétaires"],["3","3 propriétaires et plus"]],null,v.proprios||2)+'</div></div>';
   // 3 frais
   const pbOn={};(v.frais||[]).forEach(f=>{if(f.pb)pbOn[f.pb]=f});
   const libres=(v.frais||[]).filter(f=>!f.pb);
-  h+='<div class="card">'+step(3,"Frais prévus et problèmes constatés")+(v.demo?"":'<details class="dd" data-dd="vfrais"'+(S.vfOpen?" open":"")+'><summary><span id="dd-vfrais">'+vfSummary(v)+'</span></summary><div class="ddlist">'+
+  h+='<div class="card">'+step(4,"Frais à faire sur le véhicule")+(v.demo?"":'<details class="dd" data-dd="vfrais"'+(S.vfOpen?" open":"")+'><summary><span id="dd-vfrais">'+vfSummary(v)+'</span></summary><div class="ddlist">'+
      PROBLEMES.map(([g,items])=>'<div class="ddg">'+esc(g)+'</div>'+items.map(([k,l,c])=>{const on=pbOn[k];return'<div class="ck fr"><label><input type="checkbox" data-vfr="'+k+'"'+(on?" checked":"")+'><span>'+esc(l)+'</span></label><input class="num amt" type="number" inputmode="decimal" data-vfra="'+k+'" value="'+esc(on?on.montant:c)+'"'+(on?"":" disabled")+' aria-label="Coût '+esc(l)+'"><span class="eu">€</span></div>'}).join("")).join("")+
      '</div></details><p class="note" style="margin-top:8px">Coûts moyens dans un garage indépendant, modifiables. Remplace-les par le montant réel quand tu as la facture.</p>')+
      '<div class="f full" style="margin-top:12px;font-size:13px;color:var(--muted);font-weight:500">Autres frais</div>'+
      (libres.length?'<table class="frais"><tbody>'+libres.map(f=>'<tr><td style="width:34%"><select data-frais="'+f.id+'" data-k="cat"'+dis+'>'+CATS.map(c=>'<option'+(c===f.cat?" selected":"")+'>'+c+'</option>').join("")+'</select></td><td><input data-frais="'+f.id+'" data-k="libelle" value="'+esc(f.libelle)+'" placeholder="Détail"'+dis+'></td><td style="width:24%"><input class="num" data-frais="'+f.id+'" data-k="montant" type="number" inputmode="decimal" value="'+esc(f.montant)+'"'+dis+'></td><td>'+(v.demo?"":'<button class="x" data-act="delfrais" data-id="'+f.id+'" aria-label="Supprimer ce frais">×</button>')+'</td></tr>').join("")+'</tbody></table>':'')+
      (v.demo?"":'<div style="margin-top:8px"><button class="btn small" data-act="addfrais">+ Ajouter un autre frais</button></div>')+
      '<div class="row total" style="display:flex;justify-content:space-between;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-weight:600"><span>Total des frais</span><span class="num" id="vfraistotal">'+eur(fraisTotal(v))+'</span></div></div>';
-  // 4 achat
-  h+='<div class="card">'+step(4,"Achat")+'<div class="form">'+sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+inp("vendeur","Vendeur","text",{ph:"Nom / téléphone"})+inp("couleur","Couleur")+inp("vin","N° de châssis (VIN)","text",{ph:"facultatif",full:true})+'</div></div>';
-  h+='<div class="card"><h2>Vente</h2><div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+inp("acheteur","Acheteur","text",{ph:"Nom / ville"})+'</div>'+
-     (v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+'</div>';
-  h+='<div class="card"><h2>Dossier</h2><div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
-  h+='<div class="card"><h2>Notes</h2><label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
-  h+='</div><div class="stack sticky">';
-  h+='<div class="card"><h2>Photos</h2><div class="photos" id="photogrid">'+(v.demo?'<p class="note">Les photos s\'ajoutent sur tes propres voitures.</p>':photoGrid(v))+'</div>'+(v.demo?"":'<input id="phinput" type="file" accept="image/*" multiple hidden>')+'<p class="note" style="margin-top:8px">Touche une photo pour l\'agrandir, la mettre en couverture ou la supprimer.</p></div>';
-  h+='<div class="card"><h2>Marge</h2><div id="calcbox"></div></div>';
-  h+='<div class="card"><h2>Prix du marché</h2>'+(v.demo?estBlock(v.estim):'<div class="est num">'+[["bas","Bas"],["median","Médian"],["haut","Haut"]].map(([k,l])=>'<label class="f" style="text-align:left">'+l+' (€)<input data-estim="'+k+'" type="number" inputmode="decimal" value="'+esc(v.estim&&v.estim[k]||"")+'"></label>').join("")+'</div>')+
+  h+='<div class="card">'+step(5,"Prix de vente conseillé")+''+(v.demo?estBlock(v.estim):'<div class="est num">'+[["bas","Bas"],["median","Médian"],["haut","Haut"]].map(([k,l])=>'<label class="f" style="text-align:left">'+l+' (€)<input data-estim="'+k+'" type="number" inputmode="decimal" value="'+esc(v.estim&&v.estim[k]||"")+'"></label>').join("")+'</div>')+
      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+(sample&&!v.demo?'<button class="btn primary small" data-act="estimer"'+(S.estBusy?" disabled":"")+'>'+(S.estBusy?"Estimation en cours…":(v.estim?"Réestimer avec Claude":"Estimer avec Claude"))+'</button>':"")+
      (!v.demo&&catMatch(v.marque,v.modele)&&catMatch(v.marque,v.modele).model?'<button class="btn primary small" data-act="autoest">Estimer automatiquement</button>':"")+'<a class="btn small" href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a class="btn small" href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
-     '<p class="note" style="margin-top:10px">'+(v.estim&&v.estim.commentaire?esc(v.estim.commentaire)+" ":"")+'Compare le même modèle, la même année et un kilométrage proche, puis note le prix médian.</p></div>';
-  h+='<div class="card"><h2>Prix d\'achat maximum</h2><div id="maxbox"></div></div>';
-  h+='</div></div>';
+     '<p class="note" style="margin-top:10px">'+(v.estim&&v.estim.commentaire?esc(v.estim.commentaire)+" ":"")+'Compare le même modèle, la même année et un kilométrage proche, puis note le prix médian.</p><div class="buybox" style="margin-top:14px"><small>Prix d\'achat maximum</small><div id="maxbox"></div></div></div>';
+  h+='<div class="card">'+step(6,"Achat")+'<div class="form">'+sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Vendeur</div>'+inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div></div>';
+  h+='<div class="card">'+step(7,"Vente")+'<div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+'<div class="f full"><div id="calcbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Client</div>'+inp("clientPrenom","Prénom")+inp("clientNom","Nom")+inp("clientTel","Téléphone","tel",{ph:"+32 …"})+inp("clientEmail","E-mail","email")+inp("clientAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+(v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+'</div>';
+  h+='<div class="card">'+step(8,"Dossier")+'<div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
+  h+='<div class="card">'+step(9,"Notes")+'<label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
+  h+='</div>';
   return h;
 }
 function estBlock(e){if(!e||!e.median)return'<p class="note">Aucune estimation pour l\'instant.</p>';return'<div class="est num"><div><small>Bas</small><b>'+eur(e.bas)+'</b></div><div><small>Médian</small><b>'+eur(e.median)+'</b></div><div><small>Haut</small><b>'+eur(e.haut)+'</b></div></div>'+(e.delai?'<p class="note" style="margin-top:8px">Délai de vente estimé : '+esc(e.delai)+' jours.</p>':"")}
@@ -725,6 +721,7 @@ function asUrl(v){const y=num(v.annee);let u="https://www.autoscout24.be/fr/lst/
 function dmUrl(v){return"https://www.2ememain.be/q/"+encodeURIComponent((v.marque+" "+v.modele).trim())+"/"}
 function updateCalc(){
   const id=route().id,v=curVeh(id),box=$("#calcbox");if(!v||!box)return;
+  const ab=$("#achatbox");if(ab)ab.innerHTML=row("Prix d'achat",eur(num(v.prixAchat)))+row("Total des frais",eur(fraisTotal(v)))+'<div class="row total"><span>Coût total du véhicule</span><span class="num">'+eur(num(v.prixAchat)+fraisTotal(v))+'</span></div>';
   const c=calc(v);
   let h='<div class="calc">';
   if(c.ref==null){h+='<p class="note">Indique un prix affiché ou lance une estimation pour voir la marge.</p>'+row("Coût total (achat + frais)",eur(c.cout))}
