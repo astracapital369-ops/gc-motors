@@ -414,7 +414,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.5";
+const APP_VERSION="5.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -983,7 +983,7 @@ async function bonCommandePdf(v){
   doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.text("Sous-total",tx+2,ty);doc.text("€ "+fmtNum(tot),R-2,ty,{align:"right"});ty+=3;
   const box=(lab,val,bold,shade)=>{if(shade){doc.setFillColor(...grey);doc.rect(tx,ty,tw,7,"F")}doc.setDrawColor(...ink);doc.rect(tx,ty,tw,7);doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(bold?9:7.5);doc.text(T(lab),tx+2,ty+4.7);doc.text(T(val),R-2,ty+4.7,{align:"right"});ty+=7};
   box("Total","€ "+fmtNum(tot),true,false);
-  acomptes.forEach(a=>box((a.mode||"Acompte")+(a.date?" ("+fdNum(a.date)+")":""),"€ -"+fmtNum(num(a.montant)),false,false));
+  acomptes.forEach(a=>box("Acompte"+(a.mode&&a.mode!=="Acompte"?" "+a.mode.replace(" bancaire","").toLowerCase():"")+(a.date?" ("+fdNum(a.date)+")":""),"€ -"+fmtNum(num(a.montant)),false,false));
   box("Montant à payer","€ "+fmtNum(reste),true,true);
   // signatures
   doc.setFont("helvetica","bold");doc.setFontSize(8);doc.text("Signature du client pour approbation",M,by+8);doc.text("Signature du vendeur",M+52,by+8);
@@ -1897,12 +1897,19 @@ function changerStatut(v,nv){
 function clientsConnus(){const m={};S.vehicles.forEach(o=>{if(o.clientNum&&!m[o.clientNum])m[o.clientNum]={num:o.clientNum,prenom:o.clientPrenom||"",nom:o.clientNom||"",tel:o.clientTel||"",email:o.clientEmail||"",adr:o.clientAdresse||""}});return Object.values(m).sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom))}
 function demanderBdc(v){
   const cl=clientsConnus();const ov=$("#overlay");
+  const bA=(v.acomptes||[]).find(a=>a.bdc),autres=(v.acomptes||[]).filter(a=>!a.bdc&&num(a.montant));
   ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="btitle"><div class="card"><h2 id="btitle">Bon de commande</h2><p class="note">'+esc((v.marque||"")+" "+(v.modele||""))+(v.bdcNum?' · bon n° '+esc(v.bdcNum):'')+'</p>'+
     '<div class="form" style="margin-top:12px">'+(cl.length?'<label class="f full">Client existant<select id="bc-exist"><option value="">Nouveau client</option>'+cl.map(c=>'<option value="'+esc(c.num)+'"'+(c.num===v.clientNum?" selected":"")+'>'+esc([c.prenom,c.nom].filter(Boolean).join(" ")||"Client")+' · n° '+esc(c.num)+'</option>').join("")+'</select></label>':'')+
     '<label class="f">Prénom<input id="bc-prenom" autocomplete="off" value="'+esc(v.clientPrenom||"")+'"></label><label class="f">Nom<input id="bc-nom" autocomplete="off" value="'+esc(v.clientNom||v.acheteur||"")+'"></label>'+
     '<label class="f">Téléphone<input id="bc-tel" type="tel" autocomplete="off" value="'+esc(v.clientTel||"")+'" placeholder="+32 …"></label><label class="f">E-mail<input id="bc-email" type="email" autocomplete="off" value="'+esc(v.clientEmail||"")+'"></label>'+
     '<label class="f full">Adresse<input id="bc-adr" autocomplete="off" value="'+esc(v.clientAdresse||"")+'" placeholder="Rue, numéro, code postal, ville"></label>'+
-    '<label class="f">Prix de vente (€)<input id="bc-prix" type="number" inputmode="decimal" value="'+esc(num(v.prixVente)||num(v.prixAffiche)||"")+'"></label><label class="f">Payer avant le<input id="bc-avant" type="date" value="'+esc(v.payerAvant||"")+'"></label></div>'+
+    '<label class="f">Prix de vente (€)<input id="bc-prix" type="number" inputmode="decimal" value="'+esc(num(v.prixVente)||num(v.prixAffiche)||"")+'"></label><label class="f">Payer avant le<input id="bc-avant" type="date" value="'+esc(v.payerAvant||"")+'"></label>'+
+    '<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Acompte</div>'+
+    '<label class="f">Montant de l\'acompte (€)<input id="bc-acpt" type="number" inputmode="decimal" placeholder="0" value="'+esc(bA?(bA.montant??""):"")+'"></label>'+
+    '<label class="f">Mode de paiement<select id="bc-acmode">'+["Virement bancaire","Espèces","Bancontact"].map(m=>'<option'+(bA&&bA.mode===m?" selected":"")+'>'+m+'</option>').join("")+'</select></label>'+
+    '<label class="f">Date de l\'acompte<input id="bc-acdate" type="date" value="'+esc(bA&&bA.date?bA.date:today())+'"></label>'+
+    (autres.length?'<p class="note full" style="margin:0">Déjà reçu : '+eur(autres.reduce((a,x)=>a+num(x.montant),0))+' ('+autres.length+' acompte'+(autres.length>1?'s':'')+' dans la fiche)</p>':'')+
+    '</div>'+
     '<p class="note" id="bc-info" style="margin-top:8px">'+(v.clientNum?'Client n° '+esc(v.clientNum):'Un numéro client sera créé si ce client est nouveau.')+'</p>'+
     '<div class="acts"><button class="btn" data-bc="no">Annuler</button><button class="btn primary" data-bc="ok">Créer le bon de commande</button></div></div></div>';
   const ex=$("#bc-exist");if(ex)ex.addEventListener("change",()=>{const c=cl.find(x=>x.num===ex.value);const set=(id,val)=>{$("#"+id).value=val};if(c){set("bc-prenom",c.prenom);set("bc-nom",c.nom);set("bc-tel",c.tel);set("bc-email",c.email);set("bc-adr",c.adr);$("#bc-info").textContent="Client n° "+c.num}else{["bc-prenom","bc-nom","bc-tel","bc-email","bc-adr"].forEach(id=>set(id,""));$("#bc-info").textContent="Un numéro client sera créé si ce client est nouveau."}});
@@ -1915,7 +1922,11 @@ function demanderBdc(v){
       if(exv)v.clientNum=exv;else if(!meme)v.clientNum="";
       Object.assign(v,c);if(!v.clientNum)v.clientNum=numeroClient(v,c);
       const p=numOrNull(g("bc-prix"));if(p!=null){if(v.statut==="vendu")v.prixVente=p;else v.prixAffiche=v.prixAffiche||p;v.bdcPrix=p}
-      v.payerAvant=g("bc-avant")||v.payerAvant;persistVehicle(v,true);ov.innerHTML="";apercuPdf(v,"bdc")}};
+      v.payerAvant=g("bc-avant")||v.payerAvant;
+      const am=numOrNull(g("bc-acpt"));v.acomptes=v.acomptes||[];const ia=v.acomptes.findIndex(a=>a.bdc);
+      if(am!=null&&am>0){const a={id:ia>=0?v.acomptes[ia].id:newId(),bdc:true,montant:am,mode:$("#bc-acmode").value,date:g("bc-acdate")||today()};if(ia>=0)v.acomptes[ia]=a;else v.acomptes.push(a)}
+      else if(ia>=0)v.acomptes.splice(ia,1);
+      persistVehicle(v,true);ov.innerHTML="";apercuPdf(v,"bdc")}};
 }
 function stSelect(v){return'<span class="stwrap st-'+v.statut+'"><select class="stsel" data-cstat="'+v.id+'" aria-label="Changer le statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select><svg class="stico" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'}
 function vfSummary(v){const l=(v.frais||[]).filter(f=>f.pb);return l.length?l.length+" élément"+(l.length>1?"s":"")+" · "+eur(l.reduce((a,f)=>a+num(f.montant),0)):"Aucun frais coché"}
