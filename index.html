@@ -416,7 +416,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="6.1";
+const APP_VERSION="6.2";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -617,6 +617,8 @@ async function boot(){
       const remote=snap.docs.map(d=>({...d.data(),id:d.id}));
       const merged=remote.filter(r=>!PEND.del[r.id]).map(r=>{const p=PEND.veh[r.id];if(p&&(p.updatedAt||0)>=(r.updatedAt||0)){const loc=S.vehicles.find(x=>x.id===r.id);return loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id:r.id}}return r});
       Object.entries(PEND.veh).forEach(([id,p])=>{if(!merged.some(x=>x.id===id)&&!PEND.del[id]){const loc=S.vehicles.find(x=>x.id===id);merged.push(loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id})}});
+      const nochange=S.loaded&&merged.length===S.vehicles.length&&merged.every(m=>{const o=S.vehicles.find(x=>x.id===m.id);return o&&(o===m||o.updatedAt===m.updatedAt)});
+      if(nochange)return;
       S.vehicles=merged;
       S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={};if(v.statut==='reperage'||!STATUTS.some(x=>x.k===v.statut))v.statut='achete'});
       S.loaded=true;if(!editing())render();
@@ -664,7 +666,10 @@ function render(){
   if(S.mode==="local")h+='<div class="banner info"><span>Tes données sont enregistrées sur cet appareil seulement.'+(fbReady()?' Connecte-toi pour les synchroniser entre ton téléphone et ton PC.</span><button class="btn small" data-act="gologin">Se connecter</button>':'</span>')+'</div>';
   if(S.mode==="db-error")h+='<div class="banner"><span>'+modeText()+'</span></div>';
   h+=({tableau:vTableau,garage:vGarage,fiche:vFiche,details:vDetails,simulateur:vSim,ventes:vVentes,reglages:vReglages}[r.view])(r);
-  app.innerHTML=h;
+  const keep={},same=render._last===location.hash,wy=window.scrollY;
+  if(same)app.querySelectorAll("details[data-dd] .ddlist").forEach(l=>{keep[l.closest("details").dataset.dd]=l.scrollTop});
+  app.innerHTML=h;render._last=location.hash;
+  if(same){app.querySelectorAll("details[data-dd] .ddlist").forEach(l=>{const k=keep[l.closest("details").dataset.dd];if(k)l.scrollTop=k});if(Math.abs(window.scrollY-wy)>2)window.scrollTo(0,wy)}
   if(r.view==="fiche"){updateCalc();const fv=curVeh(r.id);if(fv)ensurePhotos(fv)}
   if(r.view==="details"){const dv=curVeh(r.id);if(dv)ensurePhotos(dv)}
   if(r.view==="simulateur")updateSim();
