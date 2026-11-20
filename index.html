@@ -113,6 +113,11 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .tlbody{flex:1;min-width:0;font-size:14.5px;background:var(--surface-2);border-radius:10px;padding:10px 12px}
 .tl.fut .tlbody{box-shadow:inset 3px 0 0 var(--accent)}.tl.done .tlbody{opacity:.7}.tl.st .tlbody{background:none;padding:2px 0}
 .tlmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:13px;color:var(--muted)}.tlmeta .avenir{margin-left:0}
+.jfs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.jfs:empty{display:none}
+.jf{display:inline-flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 4px 3px 3px}
+.jfo{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:inherit;font:inherit;font-size:12.5px;cursor:pointer;padding:0}
+.jfo img,.fico.s{width:26px;height:26px;border-radius:5px;object-fit:cover;font-size:9px}.jf .x{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 3px}
+.jfadd{background:none;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}
 .tlbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.tlbadges .avenir{margin-left:0;padding:4px 10px;font-size:12px}
 .tltxt{margin-top:6px;color:var(--ink);line-height:1.35}
 .tlamt{margin-left:auto;font-weight:700;white-space:nowrap}
@@ -448,7 +453,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="7.5";
+const APP_VERSION="7.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -497,7 +502,7 @@ function tlItem(e,v,edit){const fut=e.date&&e.date>=today()&&e.type!=="Statut"&&
   return'<div class="tl'+(fut?" fut":"")+(e.fait?" done":"")+(e.type==="Statut"?" st":"")+'"><div class="tldot"></div><div class="tlbody">'+
     '<div class="tlhd"><b>'+esc(e.type)+'</b>'+(e.montant?'<span class="tlamt num">'+eur(num(e.montant))+'</span>':'')+(edit?'<button class="x" data-act="jdel" data-id="'+e.id+'" aria-label="Supprimer cette entrée">×</button>':'')+'</div>'+
     '<div class="tlmeta"><span class="tldate">'+fdate(e.date)+'</span></div>'+(()=>{const a=aVenir(e,v);return a?'<div class="tlbadges">'+a+'</div>':''})()+
-    (e.texte?'<div class="tltxt">'+esc(e.texte)+'</div>':'')+'</div></div>'}
+    (e.texte?'<div class="tltxt">'+esc(e.texte)+'</div>':'')+(e.type==="Statut"?'':'<div class="jfs" data-jf="'+e.id+'" data-edit="'+(edit?1:0)+'">'+jFacts(v,e,edit)+'</div>')+'</div></div>'}
 const moisAn=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})/);return m?m[2]+"/"+m[1]:""};
 const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
 const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -573,23 +578,28 @@ const factCache={};
 async function photosFor(vid){const all=await allFilesFor(vid);factCache[vid]=all.filter(x=>x.kind==="facture");return all.filter(x=>x.kind!=="facture")}
 function factList(v){
   if(v.demo)return'<p class="note">Les factures s\'ajoutent sur tes propres voitures.</p>';
-  const L=factCache[v.id];if(!L)return'<p class="note">Chargement…</p>';
+  const L0=factCache[v.id];if(!L0)return'<p class="note">Chargement…</p>';const L=L0.filter(f=>!f.jId);
   if(!L.length)return'<p class="note">Aucune facture ajoutée.</p>';
   return'<div class="factl">'+L.map(f=>'<div class="fact"><button type="button" class="factopen" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>'+esc(f.name||"Facture")+'<small>'+fdate(new Date(f.createdAt).toISOString().slice(0,10))+'</small></span></button><button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button></div>').join("")+'</div>';
 }
 function fileData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(file)})}
-async function addFactures(v,files){
+async function addFactures(v,files,jId){
   let ok=0;
   for(const f of files){
     try{let p;
       if(f.type==="application/pdf"){if(f.size>700000){toast("PDF trop lourd (max 700 Ko). Prends plutôt une photo de la facture.");continue}
-        p={id:newId(),vehicleId:v.id,kind:"facture",mime:"application/pdf",name:f.name,full:await fileData(f),createdAt:Date.now()}}
-      else{const img=await loadImg(f);p={id:newId(),vehicleId:v.id,kind:"facture",mime:"image/jpeg",name:f.name||"Facture",full:shrink(img,2200,0.85),thumb:shrink(img,200,0.7),createdAt:Date.now()}}
+        p={id:newId(),vehicleId:v.id,kind:"facture",mime:"application/pdf",name:f.name,full:await fileData(f),createdAt:Date.now(),...(jId?{jId}:{})}}
+      else{const img=await loadImg(f);p={id:newId(),vehicleId:v.id,kind:"facture",mime:"image/jpeg",name:f.name||"Facture",full:shrink(img,2200,0.85),thumb:shrink(img,200,0.7),createdAt:Date.now(),...(jId?{jId}:{})}}
       await savePhoto(p);(factCache[v.id]=factCache[v.id]||[]).push(p);ok++;
     }catch(e){toast("La facture n'a pas pu être ajoutée.")}
   }
-  const el=$("#factlist");if(el)el.innerHTML=factList(v);if(ok)toast(ok>1?ok+" factures ajoutées.":"Facture ajoutée.");
+  refreshFacts(v);if(ok)toast(ok>1?ok+" factures ajoutées.":"Facture ajoutée.");
 }
+function jFacts(v,e,edit){const L=(factCache[v.id]||[]).filter(f=>f.jId===e.id);const can=edit&&e.type!=="Statut"&&(e.fait||(e.date&&e.date<today()));
+  if(!L.length&&!can)return"";
+  return L.map(f=>'<span class="jf"><button type="button" class="jfo" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico s">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>Facture</span></button>'+(edit?'<button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button>':'')+'</span>').join("")+
+    (can?'<button type="button" class="jfadd" data-jfact="'+e.id+'">+ Facture du garage</button>':'')}
+function refreshFacts(v){const el=$("#factlist");if(el)el.innerHTML=factList(v);document.querySelectorAll("[data-jf]").forEach(c=>{const e=(v.journal||[]).find(x=>x.id===c.dataset.jf);if(e)c.innerHTML=jFacts(v,e,c.dataset.edit==="1")})}
 function openFacture(f){
   if(f.mime==="application/pdf"){try{const b=atob(f.full.split(",")[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);const u=URL.createObjectURL(new Blob([a],{type:"application/pdf"}));window.open(u,"_blank")||(location.href=u)}catch(e){toast("Impossible d'ouvrir ce PDF.")}return}
   const ov=$("#overlay");ov.innerHTML='<div class="lb" role="dialog" aria-modal="true" aria-label="Facture"><div class="lbbar"><span>'+esc(f.name||"Facture")+'</span><div class="acts"><button data-fclose="1" aria-label="Fermer">✕</button></div></div><div class="lbtrack"><div class="lbslide" style="overflow:auto;align-items:flex-start"><img src="'+f.full+'" alt="Facture" style="max-height:none"></div></div></div>';
@@ -628,8 +638,8 @@ async function ensurePhotos(v){
   photoCache[v.id]=[];
   try{photoCache[v.id]=await photosFor(v.id)}catch(e){}
   upgradeCover(v);
-  if(route().view==="fiche"&&route().id===v.id){const g=$("#photogrid");if(g)g.innerHTML=photoGrid(v);const fl=$("#factlist");if(fl)fl.innerHTML=factList(v)}
-  if(route().view==="details"&&route().id===v.id){const g=$("#dphotos");if(g)g.innerHTML=detPhotos(v)}
+  if(route().view==="fiche"&&route().id===v.id){const g=$("#photogrid");if(g)g.innerHTML=photoGrid(v);refreshFacts(v)}
+  if(route().view==="details"&&route().id===v.id){const g=$("#dphotos");if(g)g.innerHTML=detPhotos(v);refreshFacts(v)}
 }
 function photoGrid(v){
   const list=photoCache[v.id]||[];
@@ -2255,7 +2265,7 @@ document.addEventListener("click",async e=>{
     if(!texte&&m==null){toast("Écris ce qui s'est passé ou un montant.");return}
     v.journal=v.journal||[];const e={id:newId(),t:Date.now(),date,type,texte,montant:m??""};v.journal.push(e);
     persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast("Ajouté au suivi.")}
-  else if(act==="jdel"&&v&&!v.demo){const id=b.dataset.id;v.journal=(v.journal||[]).filter(e=>e.id!==id);v.frais=v.frais.filter(f=>f.j!==id);persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0)}
+  else if(act==="jdel"&&v&&!v.demo){const id=b.dataset.id;(factCache[v.id]||[]).filter(f=>f.jId===id).forEach(f=>deletePhoto(f.id).catch(()=>{}));if(factCache[v.id])factCache[v.id]=factCache[v.id].filter(f=>f.jId!==id);v.journal=(v.journal||[]).filter(e=>e.id!==id);v.frais=v.frais.filter(f=>f.j!==id);persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0)}
   else if(act==="addacpt"&&v&&!v.demo){v.acomptes=v.acomptes||[];v.acomptes.push({id:newId(),date:today(),mode:"Virement bancaire",montant:""});persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0)}
   else if(act==="delacpt"&&v&&!v.demo){v.acomptes=(v.acomptes||[]).filter(a=>a.id!==b.dataset.id);persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0)}
   else if(act==="delfrais"&&v&&!v.demo){v.frais=v.frais.filter(f=>f.id!==b.dataset.id);persistVehicle(v,true);render()}
@@ -2360,10 +2370,13 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fold],[dat
   if(b.dataset.foldall){const all=[...document.querySelectorAll("[data-fold]")].map(x=>+x.dataset.fold);foldSet(foldGet().length>=all.length?[]:all)}
   else{const n=+b.dataset.fold,f=foldGet();foldSet(f.includes(n)?f.filter(x=>x!==n):[...f,n]);}
   foldApply();if(!b.dataset.foldall){const c=b.closest(".card");if(c&&c.getBoundingClientRect().top<70)c.scrollIntoView({block:"start"})}});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-jfact]");if(!b)return;e.preventDefault();let inp=$("#jfactinput");if(!inp){inp=document.createElement("input");inp.type="file";inp.id="jfactinput";inp.accept="image/*,application/pdf";inp.multiple=true;inp.hidden=true;document.body.appendChild(inp);
+  inp.addEventListener("change",()=>{const v=curVeh(route().id);if(v&&!v.demo&&inp.files.length)addFactures(v,[...inp.files],inp.dataset.j);inp.value=""})}
+  inp.dataset.j=b.dataset.jfact;inp.click()});
 document.addEventListener("change",e=>{const t=e.target;if(t.id!=="factinput"||!t.files||!t.files.length)return;const v=curVeh(route().id);if(v&&!v.demo)addFactures(v,[...t.files]);t.value=""});
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-factopen],[data-factdel]");if(!o)return;const v=curVeh(route().id);if(!v)return;const L=factCache[v.id]||[];
   if(o.dataset.factopen){const f=L.find(x=>x.id===o.dataset.factopen);if(f)openFacture(f);return}
-  const id=o.dataset.factdel;if(!window.confirm("Supprimer cette facture ?"))return;try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}factCache[v.id]=L.filter(x=>x.id!==id);const el=$("#factlist");if(el)el.innerHTML=factList(v)});
+  const id=o.dataset.factdel;if(!window.confirm("Supprimer cette facture ?"))return;try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}factCache[v.id]=L.filter(x=>x.id!==id);refreshFacts(v)});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd==="vfrais"){S.vfOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
 let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
