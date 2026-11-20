@@ -114,12 +114,15 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .tlhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tlhd .x{margin-left:auto}
 .car{cursor:pointer}
-.stsel{appearance:none;-webkit-appearance:none;border:none;border-radius:999px;padding:4px 26px 4px 11px;font-size:13px!important;font-weight:600;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 13px) 55%,calc(100% - 9px) 55%;background-size:4px 4px;background-repeat:no-repeat;flex:none}
-.stsel.st-reperage{background-color:var(--surface-2);color:var(--muted)}
-.stsel.st-achete{background-color:var(--accent-soft);color:var(--accent)}
-.stsel.st-preparation{background-color:var(--warn-soft);color:var(--warn)}
-.stsel.st-en_vente{background-color:var(--good-soft);color:var(--good)}
-.stsel.st-vendu{background-color:var(--surface-2);color:var(--ink)}
+.stwrap{position:relative;display:inline-flex;align-items:center;height:30px;border-radius:999px;flex:none;cursor:pointer}
+.stwrap .stsel{appearance:none;-webkit-appearance:none;background:transparent;border:none;color:inherit;height:30px;line-height:30px;padding:0 30px 0 13px;font-size:13px!important;font-weight:600;cursor:pointer;text-align:center;text-align-last:center;margin:0}
+.stwrap .stico{position:absolute;right:10px;top:50%;width:12px;height:12px;transform:translateY(-50%);pointer-events:none}
+.stwrap.st-reperage{background:var(--surface-2);color:var(--muted)}
+.stwrap.st-achete{background:var(--accent-soft);color:var(--accent)}
+.stwrap.st-preparation{background:var(--warn-soft);color:var(--warn)}
+.stwrap.st-en_vente{background:var(--good-soft);color:var(--good)}
+.stwrap.st-vendu{background:var(--surface-2);color:var(--ink)}
+.stwrap:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .cacts{display:flex;gap:8px}
 .cacts .btn{flex:1;justify-content:center}
 .kvs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px}
@@ -138,6 +141,13 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .ckro.ok{color:var(--good)}
 .dk .kpi .val{font-size:24px}
 @media (max-width:760px){.kvs{grid-template-columns:1fr 1fr}}
+.pdfov{position:fixed;inset:0;z-index:80;background:#0b1120;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
+.pdfbar{display:flex;justify-content:space-between;align-items:center;color:#fff;padding-bottom:10px;font-size:16px}
+.pdfpages{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:12px;-webkit-overflow-scrolling:touch}
+.pdfpage{width:100%;max-width:800px;height:auto;background:#fff;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+.pdfframe{width:100%;max-width:800px;height:100%;border:none;background:#fff}
+.pdfacts{display:flex;gap:8px;padding-top:10px}
+.pdfacts .btn{flex:1}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -362,7 +372,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="3.7";
+const APP_VERSION="3.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
@@ -697,7 +707,7 @@ function carCard(v){
   const c=calc(v),j=joursStock(v),p=progress(v);
   const third=v.statut==="vendu"?["Vendu",eur(v.prixVente)]:["Prix affiché",v.prixAffiche?eur(v.prixAffiche):(v.estim&&v.estim.median?"≈ "+eur(v.estim.median):"—")];
   const carIco='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16v-3l2-5h14l2 5v3M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6.5 13h.01M17.5 13h.01M5 8l1.5-3h11L19 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  return'<div class="car" role="link" tabindex="0" data-open="'+v.id+'"><div class="cover">'+(v.cover?'<img src="'+v.cover+'" alt="" loading="lazy">':carIco)+'</div><div class="hd"><div><div class="name">'+esc(v.marque)+' '+esc(v.modele)+'</div><div class="meta num">'+esc(v.annee||"—")+' · '+kmFmt(v.km)+' · '+esc(v.carburant||"")+'</div></div>'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':'<select class="stsel st-'+v.statut+'" data-cstat="'+v.id+'" aria-label="Statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select>')+'</div>'+
+  return'<div class="car" role="link" tabindex="0" data-open="'+v.id+'"><div class="cover">'+(v.cover?'<img src="'+v.cover+'" alt="" loading="lazy">':carIco)+'</div><div class="hd"><div><div class="name">'+esc(v.marque)+' '+esc(v.modele)+'</div><div class="meta num">'+esc(v.annee||"—")+' · '+kmFmt(v.km)+' · '+esc(v.carburant||"")+'</div></div>'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+'</div>'+
   (v.demo?'<span class="demo-tag">Exemple</span>':"")+
   '<div class="figs num"><div>'+(v.statut==="reperage"?"Prix demandé":"Achat + frais")+'<b>'+eur(v.statut==="reperage"?c.achat:c.cout)+'</b></div><div>'+third[0]+'<b>'+third[1]+'</b></div><div>Marge nette<b class="'+(c.net==null?"":c.net<0?"neg":"pos")+'">'+(c.net==null?"—":eur(c.net))+'</b></div></div>'+
   '<div class="meta" style="display:flex;justify-content:space-between"><span>'+(j!=null?(v.statut==="vendu"?"Vendue en "+j+" j":"En stock depuis "+j+" j"):"Pas encore achetée")+'</span><span>Dossier '+p+' %</span></div><div class="bar"><i style="width:'+p+'%"></i></div>'+'<div class="cacts"><a class="btn small" href="#d-'+v.id+'">Détails du véhicule</a>'+(v.demo?"":'<a class="btn small" href="#v-'+v.id+'">Modifier</a>')+'</div></div>';
@@ -818,9 +828,25 @@ async function fichePdf(v){
   const foot=["Prix TTC, régime particulier de la marge (TVA non récupérable). Sous réserve de vente.",T(ent)+(st.entTva?" · TVA "+T(st.entTva):"")+" · Fiche du "+T(new Date().toLocaleDateString("fr-BE"))];
   doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(...muted);doc.text(foot[0],W/2,288,{align:"center"});doc.text(foot[1],W/2,292,{align:"center"});
   const name=("Fiche "+(v.marque||"")+" "+(v.modele||"")+" "+(v.annee||"")).trim().replace(/[^\w\-. àâäéèêëîïôöùûüç]/gi,"").replace(/\s+/g,"-")+".pdf";
-  const blob=doc.output("blob");const file=new File([blob],name,{type:"application/pdf"});
-  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:titre});return}}catch(e){if(e&&e.name==="AbortError")return}
-  doc.save(name);toast("PDF téléchargé.");
+  return{blob:doc.output("blob"),name,titre,doc};
+}
+let pdfjsP=null;
+function loadPdfJs(){if(window.pdfjsLib)return Promise.resolve();if(pdfjsP)return pdfjsP;pdfjsP=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";sc.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";res()};sc.onerror=()=>{pdfjsP=null;rej(new Error("pdfjs"))};document.head.appendChild(sc)});return pdfjsP}
+let lastPdf=null;
+async function apercuPdf(v){
+  const r=await fichePdf(v);if(!r)return;lastPdf=r;
+  const ov=$("#overlay");
+  ov.innerHTML='<div class="pdfov" role="dialog" aria-modal="true" aria-label="Aperçu de la fiche PDF"><div class="pdfbar"><b>Aperçu de la fiche</b><button class="btn small" data-pdf="close">Fermer</button></div><div class="pdfpages" id="pdfpages"><p class="note" style="color:#cfd6e6">Préparation de l\'aperçu…</p></div><div class="pdfacts"><button class="btn big" data-pdf="edit">Modifier la fiche</button><button class="btn primary big" data-pdf="send">Télécharger / envoyer</button></div></div>';
+  ov.onclick=async e=>{const b=e.target.closest("[data-pdf]");if(!b)return;
+    if(b.dataset.pdf==="close"){ov.innerHTML="";return}
+    if(b.dataset.pdf==="edit"){ov.innerHTML="";location.hash="v-"+v.id;return}
+    if(b.dataset.pdf==="send"){const file=new File([r.blob],r.name,{type:"application/pdf"});
+      try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:r.titre});return}}catch(err){if(err&&err.name==="AbortError")return}
+      r.doc.save(r.name);toast("PDF téléchargé.")}};
+  try{await loadPdfJs();const pdf=await window.pdfjsLib.getDocument({data:await r.blob.arrayBuffer()}).promise;const box=$("#pdfpages");if(!box)return;box.innerHTML="";
+    for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp0=page.getViewport({scale:1});const scale=Math.min(2.5,(Math.min(box.clientWidth,800)*(window.devicePixelRatio||1))/vp0.width);const vp=page.getViewport({scale});
+      const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";box.appendChild(c);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}}
+  catch(e){const box=$("#pdfpages");if(box)box.innerHTML='<iframe class="pdfframe" src="'+URL.createObjectURL(r.blob)+'" title="Aperçu PDF"></iframe>'}
 }
 
 /* ---------- fiche détails (lecture) ---------- */
@@ -834,7 +860,7 @@ function vDetails(r){
     return'<div class="contact"><b>'+esc(n||"—")+'</b>'+(tel?'<a href="tel:'+esc(tel.replace(/\s/g,""))+'">'+esc(tel)+'</a>':"")+(em?'<a href="mailto:'+esc(em)+'">'+esc(em)+'</a>':"")+(ad?'<span>'+esc(ad)+'</span>':"")+'</div>'};
   const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
   let h='<div class="top"><div><a href="#garage" class="note">← Garage</a><h1>'+esc(v.marque||"Voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+[v.annee,v.km?kmFmt(v.km):"",v.moteur||v.carburant].filter(Boolean).map(esc).join(" · ")+'</p></div>'+
-    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':'<select class="stsel st-'+v.statut+'" data-cstat="'+v.id+'" aria-label="Statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select>')+
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+
     (v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button>':'<a class="btn primary small" href="#v-'+v.id+'">Modifier</a>')+'<button class="btn small" data-act="pdf">Fiche PDF client</button></div></div>';
   h+='<div class="ficheone">';
   // photos
@@ -1666,6 +1692,7 @@ const PROBLEMES=[
 const PB_INDEX={};PROBLEMES.forEach(([g,items])=>items.forEach(([k,l,c,cat])=>PB_INDEX[k]={l,c,cat,g}));
 function fraisSim(s){return Object.values(s.frais||{}).reduce((a,b)=>a+num(b),0)+num(s.reparations)}
 function simDefaults(){const y=new Date().getFullYear();return{brand:"",model:"",moteur:"",prixNeuf:"",anneeMin:y-10,anneeMax:y-8,km:110000,kmMin:80000,kmMax:140000,vendeur:"pro",carburant:"Essence",coef:1,boite:"Manuelle",etat:"bon",options:[],entretien:true,proprios:2,frais:{ct:60,carpass:10,nettoyage:80},reparations:"",result:null,open:{}}}
+function stSelect(v){return'<span class="stwrap st-'+v.statut+'"><select class="stsel" data-cstat="'+v.id+'" aria-label="Changer le statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select><svg class="stico" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'}
 function vfSummary(v){const l=(v.frais||[]).filter(f=>f.pb);return l.length?l.length+" élément"+(l.length>1?"s":"")+" · "+eur(l.reduce((a,f)=>a+num(f.montant),0)):"Aucun frais coché"}
 function eqSummary(list){const n=list.length;return n?n+" équipement"+(n>1?"s":"")+" coché"+(n>1?"s":""):"Aucun équipement coché"}
 function eqDropdown(list,attr,open,sumId,dd){return'<div class="f full" style="margin-top:12px;font-size:13px;color:var(--muted);font-weight:500">Équipements</div><details class="dd" data-dd="'+dd+'"'+(open?" open":"")+' style="margin-top:4px"><summary><span id="'+sumId+'">'+eqSummary(list)+'</span></summary><div class="ddlist">'+
@@ -1815,7 +1842,7 @@ document.addEventListener("click",async e=>{
     const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   const mo=e.target.closest("[data-month]");if(mo){const i=mo.dataset.month;S.period.m=String(S.period.m)===i?"":i;render();return}
   const oc=e.target.closest("[data-open]");
-  if(oc&&!e.target.closest("[data-cstat]")&&!e.target.closest("a")){location.hash="d-"+oc.dataset.open;return}
+  if(oc&&!e.target.closest(".stwrap")&&!e.target.closest("a")){location.hash="d-"+oc.dataset.open;return}
   const fb=e.target.closest("[data-filter]");
   if(fb){S.garageFilter=fb.dataset.filter;if(location.hash!=="#garage"){e.preventDefault();location.hash="garage"}else render();return}
   const b=e.target.closest("[data-act]");if(!b)return;
@@ -1834,7 +1861,7 @@ document.addEventListener("click",async e=>{
   else if(act==="del")modal("Supprimer cette voiture ?","Elle sera retirée de ton garage et de tes statistiques. Cette action est définitive.","Supprimer",()=>{removeVehicle(b.dataset.id);location.hash="garage"});
   else if(act==="addfrais"&&v&&!v.demo){v.frais.push({id:newId(),cat:"Réparation",libelle:"",montant:""});persistVehicle(v,true);render();const ins=document.querySelectorAll('[data-k="montant"]');ins.length&&ins[ins.length-1].focus()}
   else if(act==="viewph"&&v){openLb(v,+b.dataset.i)}
-  else if(act==="pdf"&&v){fichePdf(v)}
+  else if(act==="pdf"&&v){apercuPdf(v)}
   else if(act==="jadd"&&v&&!v.demo){const texte=$("#j-texte").value.trim(),type=$("#j-type").value,date=$("#j-date").value||today(),m=numOrNull($("#j-montant").value);
     if(!texte&&m==null){toast("Écris ce qui s'est passé ou un montant.");return}
     v.journal=v.journal||[];const e={id:newId(),t:Date.now(),date,type,texte,montant:m??""};v.journal.push(e);
