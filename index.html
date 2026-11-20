@@ -423,7 +423,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="6.6";
+const APP_VERSION="6.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -464,6 +464,7 @@ const numOrNull=v=>{if(v===""||v==null)return null;const n=parseFloat(String(v).
 const today=()=>new Date().toISOString().slice(0,10);
 const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const moisAn=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})/);return m?m[2]+"/"+m[1]:""};
 const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
 const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const stLabel=k=>(STATUTS.find(s=>s.k===k)||{}).l||k;
@@ -829,7 +830,7 @@ function vFiche(r){
   const v=curVeh(r.id);
   if(!v)return'<div class="card empty">Cette voiture n\'existe plus. <a href="#garage">Retour au garage</a></div>';
   const dis=v.demo?" disabled":"";
-  const fb={vendeurNom:v.vendeur,clientNom:v.acheteur};const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(v[k]??fb[k]??"")+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
+  const fb={vendeurNom:v.vendeur,clientNom:v.acheteur};const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(t==="month"?String(v[k]||"").slice(0,7):(v[k]??fb[k]??""))+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
   const sel=(k,l,opts)=>'<label class="f">'+l+'<select id="f-'+k+'" data-field="'+k+'"'+dis+'>'+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(v[k])===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
   let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
   h+='<div class="ficheone">';
@@ -848,7 +849,7 @@ function vFiche(r){
      (v.moteur&&vb!=="__autre"?"":sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<div class="f full yr"><span>Année</span><div class="yrrow"><input data-field="annee" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+esc(v.annee??"")+'" placeholder="ex. 2015" aria-label="Année"'+dis+'></div></div>'+
-     '<div class="f full yr"><span>Kilométrage</span><div class="kmrow"><input type="range" min="0" max="300000" step="1000" value="'+(num(v.km)||0)+'" data-vkm aria-label="Kilométrage"'+dis+'><input class="num" data-field="km" type="number" inputmode="numeric" value="'+esc(v.km??"")+'" placeholder="km" aria-label="Kilométrage exact"'+dis+'></div></div>'+inp("couleur","Couleur")+inp("vin","N° de châssis (VIN)","text",{ph:"facultatif"})+inp("premiereImmat","1re immatriculation","date")+sel("euronorm","Norme Euro",["","Euro 1","Euro 2","Euro 3","Euro 4","Euro 5","Euro 6","Euro 6d","Électrique"])+inp("cylindree","Cylindrée (cm³)","number")+inp("puissance","Puissance (kW)","number")+
+     '<div class="f full yr"><span>Kilométrage</span><div class="kmrow"><input type="range" min="0" max="300000" step="1000" value="'+(num(v.km)||0)+'" data-vkm aria-label="Kilométrage"'+dis+'><input class="num" data-field="km" type="number" inputmode="numeric" value="'+esc(v.km??"")+'" placeholder="km" aria-label="Kilométrage exact"'+dis+'></div></div>'+inp("couleur","Couleur")+inp("vin","N° de châssis (VIN)","text",{ph:"facultatif"})+inp("premiereImmat","1re immatriculation (mois / année)","month",{ph:"AAAA-MM"})+sel("euronorm","Norme Euro",["","Euro 1","Euro 2","Euro 3","Euro 4","Euro 5","Euro 6","Euro 6d","Électrique"])+inp("cylindree","Cylindrée (cm³)","number")+inp("puissance","Puissance (kW)","number")+
      '</div>'+(v.demo?"":eqDropdown(v.options||[],"vopt",S.vOpen,"dd-vopt","vopt"))+'</div>';
   // 2 état
   h+='<div class="card">'+step(3,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
@@ -912,7 +913,7 @@ async function fichePdf(v){
   // caractéristiques (mêmes champs que le bon de commande + état)
   sec("Caractéristiques du véhicule");
   const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
-  const left=[["Marque",v.marque],["Modèle",v.modele],["Motorisation",v.moteur],["N° de châssis",v.vin],["1re inscription",fdNum(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
+  const left=[["Marque",v.marque],["Modèle",v.modele],["Motorisation",v.moteur],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
   const right=[["Capacité cyl.",v.cylindree?fmtNum(num(v.cylindree)).replace(",00","")+" cm3":""],["Puissance",v.puissance?v.puissance+" kW ("+Math.round(num(v.puissance)*1.35962)+" ch)":""],["Carburant",v.carburant],["Boîte",v.boite],["Euronorm",v.euronorm],["État général",etat],["Carnet d'entretien",v.entretien===false?"Incomplet":"Complet"],["Propriétaires",v.proprios?(v.proprios>=3?"3 et plus":String(v.proprios)):""]];
   const rows=Math.max(left.length,right.length);need(rows*5.6+4);
   doc.setFontSize(9.5);const colW=pw/2;
@@ -1019,7 +1020,7 @@ async function bonCommandePdf(v){
   if(v.clientNum){row2("Numéro client",v.clientNum,M,y);y+=4.5}row2("Portable",v.clientTel,M,y);y+=4.5;row2("Email",v.clientEmail,M,y);y+=8;
   // véhicule
   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("Voiture d'occasion",M,y);doc.line(M,y+2,R,y+2);y+=8;
-  const left=[["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",fdNum(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
+  const left=[["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
   const right=[["Capacité cyl.",v.cylindree?fmtNum(num(v.cylindree)).replace(",00","")+" cm3":""],["Puissance (kW)",v.puissance],["Carburant",v.carburant],["Boîte",v.boite],["Euronorm",v.euronorm]];
   const y0=y;left.forEach((p,i)=>{row2(p[0],doc.splitTextToSize(T(p[1]||""),62)[0],M,y0+i*4.8)});right.forEach((p,i)=>row2(p[0],p[1],118,y0+i*4.8,27));
   y=y0+left.length*4.8+5;
@@ -1095,7 +1096,7 @@ function vDetails(r){
      kpi("Marge nette",c.net==null?"—":'<span class="'+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</span>',"après TVA sur la marge et frais")+kpi(v.statut==="vendu"?"Vendue en":"En stock depuis",j==null?"—":j+" j","Dossier "+p+" %")+'</div>';
   // véhicule
   h+='<div class="card"><h2>Véhicule</h2><div class="kvs">'+kv("Statut",stLabel(v.statut))+kv("Marque",esc(v.marque))+kv("Modèle",esc(v.modele))+kv("Motorisation",esc(v.moteur||""))+kv("Carburant",esc(v.carburant))+kv("Boîte de vitesses",esc(v.boite))+
-     kv("Année",esc(v.annee))+kv("1re immatriculation",v.premiereImmat?fdate(v.premiereImmat):"")+kv("Kilométrage",v.km?kmFmt(v.km):"")+kv("Cylindrée",v.cylindree?new Intl.NumberFormat("fr-BE").format(num(v.cylindree))+" cm³":"")+
+     kv("Année",esc(v.annee))+kv("1re immatriculation",v.premiereImmat?moisAn(v.premiereImmat):"")+kv("Kilométrage",v.km?kmFmt(v.km):"")+kv("Cylindrée",v.cylindree?new Intl.NumberFormat("fr-BE").format(num(v.cylindree))+" cm³":"")+
      kv("Puissance",v.puissance?esc(v.puissance)+" kW ("+Math.round(num(v.puissance)*1.35962)+" ch)":"")+kv("Norme Euro",esc(v.euronorm||""))+kv("Couleur",esc(v.couleur||""))+kv("N° de châssis",esc(v.vin||""))+
      kv("État général",esc(etat||""))+kv("Carnet d'entretien",v.entretien===false?"Incomplet ou absent":"Complet")+kv("Propriétaires",v.proprios?(v.proprios>=3?"3 et plus":v.proprios):"")+'</div>'+
      '<div class="note" style="margin:14px 0 6px;font-weight:600;color:var(--ink)">Équipements et options</div>'+((v.options||[]).length?(()=>{const opts=v.options,used=new Set();
