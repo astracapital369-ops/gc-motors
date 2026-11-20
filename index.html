@@ -237,7 +237,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="1.2 (photos)";
+const APP_VERSION="1.3";
 const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
 const ICONS={
   tableau:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
@@ -471,6 +471,10 @@ function vTableau(){
   const vendusAn=vendus.filter(v=>v.dateVente&&v.dateVente.startsWith(String(y)));
   const capital=stock.reduce((s,v)=>s+calc(v).cout,0);
   const netAn=vendusAn.reduce((s,v)=>s+(calc(v).net||0),0);
+  const ca=vendusAn.reduce((s,v)=>s+num(v.prixVente),0);
+  const benef=vendusAn.reduce((s,v)=>s+num(v.prixVente)-num(v.prixAchat)-fraisTotal(v),0);
+  const tvaAn=vendusAn.reduce((s,v)=>s+(calc(v).tva||0),0);
+  const moyB=vendusAn.length?benef/vendusAn.length:null;
   const moy=vendusAn.length?netAn/vendusAn.length:null;
   const js=vendus.map(joursStock).filter(x=>x!=null);
   const jm=js.length?Math.round(js.reduce((a,b)=>a+b,0)/js.length):null;
@@ -482,11 +486,11 @@ function vTableau(){
 
   let h='<div class="top"><div><h1>Tableau de bord</h1><p>'+new Date().toLocaleDateString("fr-BE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+'</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
   h+='<div class="grid kpis">'+
-    kpi("En stock",stock.length+" voiture"+(stock.length>1?"s":""),"Capital immobilisé : "+eur(capital))+
-    kpi("Bénéfice net "+y,'<span class="'+(netAn<0?"neg":"")+'">'+eur(netAn)+'</span>',vendusAn.length+" vente"+(vendusAn.length>1?"s":"")+" · après TVA sur la marge")+
-    kpi("Marge nette moyenne",moy==null?"—":eur(moy),"par voiture vendue en "+y)+
-    kpi("Durée moyenne en stock",jm==null?"—":jm+" j","de l'achat à la vente")+'</div>';
-  h+='<div class="grid two"><div class="card chart"><h2>Bénéfice net par mois</h2>'+chartMois(vendus)+'<p class="note">Calculé sur la date de vente. TVA sur la marge et frais déduits, avant impôt et cotisations.</p></div>';
+    kpi("Chiffre d'affaires "+y,eur(ca),vendusAn.length+" voiture"+(vendusAn.length>1?"s":"")+" vendue"+(vendusAn.length>1?"s":""))+
+    kpi("Bénéfice net "+y,'<span class="'+(benef<0?"neg":"pos")+'">'+eur(benef)+'</span>',"vente − achat − frais · TVA marge à reverser : "+eur(tvaAn))+
+    kpi("Véhicules en stock",String(stock.length),"Capital immobilisé : "+eur(capital))+
+    kpi("Bénéfice moyen / voiture",moyB==null?"—":'<span class="'+(moyB<0?"neg":"pos")+'">'+eur(moyB)+'</span>',"sur les ventes de "+y)+'</div>';
+  h+='<div class="grid two"><div class="card chart"><h2>Bénéfice net par mois</h2>'+chartMois(vendus)+'<p class="note">Prix de vente moins achat et frais, par mois de vente. Avant TVA sur la marge, impôt et cotisations.</p></div>';
   h+='<div class="card"><h2>À surveiller</h2><div class="alerts">'+alertes(L).join("")+'</div></div></div>';
   h+='<div class="grid two"><div class="card"><h2>Pipeline</h2><div class="pipeline">'+STATUTS.map(s=>'<a class="pipe" href="#garage" data-filter="'+s.k+'"><b class="num">'+L.filter(v=>v.statut===s.k).length+'</b><span>'+s.l+'</span></a>').join("")+'</div>'+
     '<p class="note" style="margin-top:12px">Marge nette potentielle du stock actuel : <b class="num">'+eur(potentiel)+'</b> (sur prix affiché ou estimation).</p></div>';
@@ -518,7 +522,7 @@ function alertes(L){
 function chartMois(vendus){
   const now=new Date(),months=[];
   for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({k:d.toISOString().slice(0,7),l:d.toLocaleDateString("fr-BE",{month:"short"}).replace(".",""),v:0})}
-  vendus.forEach(v=>{if(!v.dateVente)return;const m=months.find(x=>x.k===v.dateVente.slice(0,7));if(m)m.v+=calc(v).net||0});
+  vendus.forEach(v=>{if(!v.dateVente)return;const m=months.find(x=>x.k===v.dateVente.slice(0,7));if(m)m.v+=num(v.prixVente)-num(v.prixAchat)-fraisTotal(v)});
   const W=560,H=210,pl=46,pr=8,pt=12,pb=26,cw=(W-pl-pr)/12;
   let max=Math.max(0,...months.map(m=>m.v)),min=Math.min(0,...months.map(m=>m.v));
   if(max===0&&min===0)max=1000;
