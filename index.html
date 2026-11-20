@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GC Motors</title>
+<meta name="theme-color" content="#0f1d3d">
+<meta name="apple-mobile-web-app-title" content="GC Motors">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="icon" type="image/png" href="favicon-64.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* GC Motors : marine profond + bleu signal + chrome. Barre latérale sur PC, barre de marque + onglets en bas sur téléphone. */
+:root{
+  --bg:#f3f4f6; --surface:#ffffff; --surface-2:#eceef2; --line:#d9dce3;
+  --ink:#141a28; --muted:#5a6377; --accent:#2a5ff0; --brand:#0f1d3d; --brand-ink:#eef2fa; --accent-ink:#ffffff; --accent-soft:#e4ebfd;
+  --good:#1d7a46; --good-soft:#e1f2e8; --warn:#9a5b00; --warn-soft:#fbefd9; --bad:#b42318; --bad-soft:#fbe4e2;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --r:10px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1115; --surface:#171a20; --surface-2:#1f232b; --line:#2c313b;
+  --ink:#eceef2; --muted:#9aa1ad; --accent:#6f97ff; --accent-ink:#0b1020; --brand:#0b1430; --brand-ink:#eef2fa; --accent-soft:#1c2744;
+  --good:#4cc283; --good-soft:#15291e; --warn:#e8a83a; --warn-soft:#2c2212; --bad:#ff7b6e; --bad-soft:#331a18; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1115; --surface:#171a20; --surface-2:#1f232b; --line:#2c313b;
+  --ink:#eceef2; --muted:#9aa1ad; --accent:#6f97ff; --accent-ink:#0b1020; --brand:#0b1430; --brand-ink:#eef2fa; --accent-soft:#1c2744;
+  --good:#4cc283; --good-soft:#15291e; --warn:#e8a83a; --warn-soft:#2c2212; --bad:#ff7b6e; --bad-soft:#331a18; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1{font-size:30px;line-height:1.1} h2{font-size:21px} h3{font-size:17px}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100%}
+nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px 16px}
+.brand svg{width:42px;height:42px;flex:none;border-radius:10px}
+.brand .wm{font-family:var(--display);font-weight:700;font-size:23px;line-height:1;letter-spacing:.02em;white-space:nowrap}
+.brand .wm em{font-style:normal;color:var(--accent)}
+.brand .wm span{display:block;font:600 9.5px var(--body);letter-spacing:.22em;color:var(--muted);margin-top:3px}
+.mbar{display:none}
+.login{max-width:420px;margin:6vh auto 0;display:flex;flex-direction:column;gap:16px}
+.login .logo-big svg{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto}
+.login h1{text-align:center}
+.login p{text-align:center;color:var(--muted);margin:0}
+.login form{display:flex;flex-direction:column;gap:12px}
+.login .err{color:var(--bad);font-size:14px;min-height:1em;text-align:center}
+.linkbtn{background:none;border:none;color:var(--accent);cursor:pointer;padding:4px;font-weight:500}
+.install{display:grid;grid-template-columns:120px 1fr;gap:18px;align-items:start}
+.install svg{width:120px;height:120px;border-radius:26px;box-shadow:0 6px 18px rgba(10,18,38,.25)}
+.install ol{margin:6px 0 12px;padding-left:20px}
+.install li{margin:3px 0}
+.navlink{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-weight:500}
+.navlink svg{width:18px;height:18px;flex:none}
+.navlink:hover{background:var(--surface-2)}
+.navlink.on{background:var(--accent-soft);color:var(--accent)}
+.side .status{margin-top:auto;font-size:12px;color:var(--muted);padding:10px}
+main{padding:24px 28px 40px;max-width:1180px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top p{margin:4px 0 0;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card > h2{margin-bottom:12px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kpi .lbl{font-size:13px;color:var(--muted)}
+.kpi .val{font-family:var(--display);font-size:32px;font-weight:600;line-height:1.1;margin-top:4px}
+.kpi .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.two{grid-template-columns:1.4fr 1fr}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-reperage{background:var(--surface-2);color:var(--muted)}
+.st-achete{background:var(--accent-soft);color:var(--accent)}
+.st-preparation{background:var(--warn-soft);color:var(--warn)}
+.st-en_vente{background:var(--good-soft);color:var(--good)}
+.st-vendu{background:var(--surface-2);color:var(--ink)}
+.demo-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--warn)}
+.banner{border:1px dashed var(--warn);background:var(--warn-soft);color:var(--ink);border-radius:var(--r);padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.banner.info{border-color:var(--line);background:var(--surface-2)}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;border-left:3px solid var(--warn);background:var(--warn-soft);text-decoration:none;color:var(--ink)}
+.alert.bad{border-color:var(--bad);background:var(--bad-soft)}
+.alert.ok{border-color:var(--good);background:var(--good-soft)}
+.alert small{color:var(--muted);display:block}
+.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pipe{background:var(--surface-2);border-radius:8px;padding:10px;text-decoration:none;color:var(--ink)}
+.pipe b{font-family:var(--display);font-size:26px;display:block;line-height:1}
+.pipe span{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.search{flex:1;min-width:180px;max-width:320px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.car{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:var(--ink);transition:border-color .15s}
+.car:hover{border-color:var(--accent)}
+.car .hd{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.car .name{font-family:var(--display);font-size:21px;font-weight:600;line-height:1.1}
+.car .meta{font-size:13px;color:var(--muted)}
+.car .figs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.car .figs div{font-size:12px;color:var(--muted)}
+.car .figs b{display:block;font-size:15px;color:var(--ink);font-weight:600}
+.bar{height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.plate{font-family:var(--mono);font-size:11px;letter-spacing:.08em;border:1.5px solid var(--bad);color:var(--bad);border-radius:3px;padding:0 4px;background:var(--surface)}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
+label.f input,label.f select,label.f textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:15px;width:100%}
+label.f textarea{min-height:80px;resize:vertical}
+input:disabled,select:disabled,textarea:disabled{opacity:.7}
+.calc{display:flex;flex-direction:column;gap:6px}
+.calc .row{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.calc .row span:first-child{color:var(--muted)}
+.calc .total{border-top:1px solid var(--line);padding-top:8px;margin-top:4px;font-weight:600;font-size:16px}
+.calc .big{font-family:var(--display);font-size:36px;font-weight:600;line-height:1}
+.frais{width:100%;border-collapse:collapse;font-size:14px}
+.frais td,.frais th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+.frais th{font-size:12px;color:var(--muted);font-weight:500}
+.frais input,.frais select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.x{border:none;background:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px 6px}
+.x:hover{color:var(--bad)}
+.check{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}
+.check label{display:flex;gap:8px;align-items:center;font-size:14px;padding:4px 0;cursor:pointer}
+.check input{width:17px;height:17px;accent-color:var(--accent)}
+.check h3{grid-column:1/-1;font-size:14px;color:var(--muted);font-family:var(--body);font-weight:600;margin-top:8px;text-transform:uppercase;letter-spacing:.05em}
+.fiche{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:16px}
+.sticky{position:sticky;top:16px}
+.est{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.est div{background:var(--surface-2);border-radius:8px;padding:8px}
+.est small{display:block;color:var(--muted);font-size:12px}
+.est b{font-family:var(--display);font-size:22px}
+.note{font-size:12.5px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table.data{width:100%;border-collapse:collapse;font-size:14px;min-width:720px}
+table.data th,table.data td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.data th:first-child,table.data td:first-child{text-align:left}
+table.data th{font-size:12px;color:var(--muted);font-weight:500}
+table.data tfoot td{font-weight:600;border-top:2px solid var(--line)}
+table.data a{color:var(--ink);font-weight:500}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:11px var(--body)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal .card{max-width:420px;width:100%}
+.modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:60;max-width:90vw}
+nav.tabs{display:none}
+@media (max-width:760px){.install{grid-template-columns:1fr}}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+@media (max-width:980px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two,.fiche{grid-template-columns:1fr}.sticky{position:static}.fiche .sticky{order:-1}}
+@media (max-width:760px){
+  .shell{grid-template-columns:1fr}
+  nav.side{display:none}
+  .mbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:30;background:var(--brand);color:var(--brand-ink);padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top))}
+  .mbar svg{width:32px;height:32px;border-radius:8px}
+  .mbar .wm{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:.02em;line-height:1}
+  .mbar .wm em{font-style:normal;color:#8fb0ff}
+  .mbar .wm span{font:600 10px var(--body);letter-spacing:.28em;opacity:.7;margin-left:6px}
+  main{padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+  nav.tabs{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:40}
+  nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);text-decoration:none;padding:4px 0}
+  nav.tabs a svg{width:22px;height:22px}
+  nav.tabs a.on{color:var(--accent)}
+  .form,.check{grid-template-columns:1fr}
+  .pipeline{grid-template-columns:repeat(3,1fr)}
+  h1{font-size:26px}
+  .kpi .val{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<header class="mbar" id="mbar"></header>
+<div class="shell">
+  <nav class="side" id="side"></nav>
+  <main id="app"><p class="note">Chargement…</p></main>
+</div>
+<nav class="tabs" id="tabs"></nav>
+<div id="overlay"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- constantes ---------- */
+const STATUTS=[
+  {k:"reperage",l:"Repérage"},{k:"achete",l:"Acheté"},{k:"preparation",l:"En préparation"},
+  {k:"en_vente",l:"En vente"},{k:"vendu",l:"Vendu"}];
+const EN_STOCK=["achete","preparation","en_vente"];
+const CATS=["Réparation","Entretien","Pneus","Contrôle technique","Car-Pass","Nettoyage","Garantie externe","Transport / plateau","Annonce","Autre"];
+const CHECK=[
+  {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
+  {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
+  {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
+const DEF_SETTINGS={tva:21,margeVisee:1000,provGarantie:250,seuilJours:45,dureeGarantie:12};
+const ICONS={
+  tableau:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+  garage:'<path d="M3 21V9l9-6 9 6v12M7 21v-7h10v7M7 17h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+  simulateur:'<rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M16 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  ventes:'<path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+  reglages:'<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'};
+const LOGO_SRC=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16274f"/><stop offset="1" stop-color="#0a1226"/></linearGradient><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d5dcea"/><stop offset="1" stop-color="#9aa6bd"/></linearGradient><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f97ff"/><stop offset="1" stop-color="#2a5ff0"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#bg)"/><rect x="10" y="10" width="492" height="492" rx="103" fill="none" stroke="#2a3d6e" stroke-width="4"/><path d="M362.07 149.93 A150 150 0 1 0 396.95 307.3 V256 H318" fill="none" stroke="url(#chrome)" stroke-width="46" stroke-linejoin="round"/><path d="M307.4 194.7 A80 80 0 1 0 307.4 317.3" fill="none" stroke="url(#blue)" stroke-width="38" stroke-linecap="round"/><path d="M150 452 H362" stroke="#2a5ff0" stroke-width="6" stroke-linecap="round" opacity=".9"/></svg>`;
+let logoN=0;
+function logo(){const n="g"+(logoN++);return LOGO_SRC.replace(/id="(bg|chrome|blue)"/g,(m,a)=>'id="'+a+n+'"').replace(/url\(#(bg|chrome|blue)\)/g,(m,a)=>"url(#"+a+n+")").replace("<svg ",'<svg aria-hidden="true" ')}
+const WORDMARK='<div class="wm"><em>GC</em> Motors<span>ACHAT · REVENTE</span></div>';
+const NAV=[["tableau","Tableau de bord"],["garage","Garage"],["simulateur","Simulateur"],["ventes","Ventes"],["reglages","Réglages"]];
+
+/* ---------- état ---------- */
+const S={vehicles:[],settings:{...DEF_SETTINGS},mode:"loading",loaded:false,garageFilter:"stock",search:"",sim:{marque:"",modele:"",annee:"",km:"",carburant:"Essence",boite:"Manuelle",revente:"",frais:600,marge:null,achat:""},simEst:null,simBusy:false,estBusy:false};
+let db=null,uid=null,vehCol=null,setRef=null,sample=null;
+const chains={},timers={};
+
+/* ---------- utilitaires ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtE=new Intl.NumberFormat("fr-BE",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+const eur=n=>(n==null||isNaN(n))?"—":fmtE.format(Math.round(n));
+const num=v=>{const n=parseFloat(String(v??"").replace(",","."));return isNaN(n)?0:n};
+const numOrNull=v=>{if(v===""||v==null)return null;const n=parseFloat(String(v).replace(",","."));return isNaN(n)?null:n};
+const today=()=>new Date().toISOString().slice(0,10);
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
+const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const stLabel=k=>(STATUTS.find(s=>s.k===k)||{}).l||k;
+const kmFmt=n=>n?new Intl.NumberFormat("fr-BE").format(n)+" km":"— km";
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2800)}
+function icon(k){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[k]+'</svg>'}
+
+/* ---------- calculs ---------- */
+function fraisTotal(v){return (v.frais||[]).reduce((s,f)=>s+num(f.montant),0)}
+function prixRef(v){if(v.statut==="vendu"&&v.prixVente)return num(v.prixVente);if(v.prixAffiche)return num(v.prixAffiche);if(v.estim&&v.estim.median)return num(v.estim.median);return null}
+function calc(v,taux){
+  taux=taux??S.settings.tva;
+  const achat=num(v.prixAchat),fr=fraisTotal(v),ref=prixRef(v);
+  if(ref==null)return{achat,frais:fr,ref:null,brute:null,tva:null,net:null,cout:achat+fr};
+  const brute=ref-achat,tva=brute>0?brute*taux/(100+taux):0,net=brute-tva-fr;
+  return{achat,frais:fr,ref,brute,tva,net,cout:achat+fr,pct:achat?net/(achat+fr)*100:null};
+}
+function joursStock(v){if(!v.dateAchat)return null;return daysBetween(v.dateAchat,v.statut==="vendu"&&v.dateVente?v.dateVente:today())}
+function finGarantie(v){if(!v.dateVente)return null;const d=new Date(v.dateVente+"T12:00:00");d.setMonth(d.getMonth()+(S.settings.dureeGarantie||12));return d.toISOString().slice(0,10)}
+function progress(v){let t=0,d=0;CHECK.forEach(g=>g.items.forEach(([k])=>{t++;if(v.check&&v.check[k])d++}));return Math.round(d/t*100)}
+function prixAchatMax(revente,frais,marge,taux){const M=(marge+frais)*(100+taux)/100;return revente-M}
+
+/* ---------- exemples (non enregistrés) ---------- */
+function demoData(){
+  const fr=(a)=>a.map(([c,m,l])=>({id:newId(),cat:c,montant:m,libelle:l||""}));
+  return[
+    {id:"demo1",demo:true,marque:"Toyota",modele:"Yaris 1.33 VVT-i",annee:2014,km:112000,carburant:"Essence",boite:"Manuelle",statut:"en_vente",prixAchat:6200,dateAchat:addDays(-18),source:"2ememain",prixAffiche:7900,estim:{bas:7300,median:7800,haut:8400},frais:fr([["Réparation",220,"Plaquettes + disques AV"],["Contrôle technique",60],["Nettoyage",60],["Car-Pass",10]]),check:{carpassAchat:1,obd:1,essai:1,bordereau:1,docsAchat:1,registre:1,repar:1,nettoyage:1,ct:1,carpassVente:1,photos:1,annonce:1}},
+    {id:"demo2",demo:true,marque:"Hyundai",modele:"i10 1.0",annee:2016,km:96000,carburant:"Essence",boite:"Manuelle",statut:"preparation",prixAchat:4300,dateAchat:addDays(-6),source:"Facebook Marketplace",prixAffiche:"",estim:{bas:5200,median:5600,haut:6000},frais:fr([["Entretien",150,"Vidange + filtres"]]),check:{carpassAchat:1,obd:1,essai:1,bordereau:1,docsAchat:1,registre:1}},
+    {id:"demo3",demo:true,marque:"Volkswagen",modele:"Polo 1.0 MPI",annee:2015,km:128000,carburant:"Essence",boite:"Manuelle",statut:"vendu",prixAchat:5000,dateAchat:addDays(-62),dateVente:addDays(-34),prixVente:6900,acheteur:"Particulier, Namur",frais:fr([["Réparation",300],["Garantie externe",300],["Contrôle technique",60],["Nettoyage",60]]),check:Object.fromEntries(CHECK.flatMap(g=>g.items.map(([k])=>[k,1])))},
+    {id:"demo4",demo:true,marque:"Kia",modele:"Picanto 1.0",annee:2013,km:141000,carburant:"Essence",boite:"Manuelle",statut:"reperage",prixAchat:3200,source:"AutoScout24",notes:"Vendeur pressé, rayures pare-chocs AR. Rappeler samedi.",frais:[],check:{}}];
+}
+function list(){return S.vehicles.length?S.vehicles:(S.loaded?demoData():[])}
+const showingDemo=()=>S.loaded&&!S.vehicles.length;
+
+/* ---------- stockage ---------- */
+const LS="negoce-auto-v1";
+function lsLoad(){try{const d=JSON.parse(localStorage.getItem(LS)||"{}");S.vehicles=d.vehicles||[];S.settings={...DEF_SETTINGS,...(d.settings||{})}}catch(e){}}
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify({vehicles:S.vehicles,settings:S.settings}))}catch(e){}}
+function clean(o){return JSON.parse(JSON.stringify(o))}
+function persistVehicle(v,now){
+  if(v.demo)return;
+  v.updatedAt=Date.now();
+  clearTimeout(timers[v.id]);
+  const go=()=>{
+    if(S.mode==="db"){const data=clean(v);delete data.id;
+      chains[v.id]=(chains[v.id]||Promise.resolve()).then(()=>vehCol.doc(v.id).set(data)).catch(e=>{toast(e&&e.code==="quota_exceeded"?"Stockage plein : supprime d'anciens véhicules.":"Enregistrement impossible pour le moment.")});
+    }else lsSave();
+  };
+  if(now)go();else timers[v.id]=setTimeout(go,700);
+}
+function removeVehicle(id){
+  S.vehicles=S.vehicles.filter(v=>v.id!==id);
+  if(S.mode==="db"){chains[id]=(chains[id]||Promise.resolve()).then(()=>vehCol.doc(id).delete()).catch(()=>toast("Suppression impossible pour le moment."))}else lsSave();
+}
+let setTimer=null;
+function persistSettings(){clearTimeout(setTimer);setTimer=setTimeout(()=>{
+  if(S.mode==="db"){chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(clean(S.settings))).catch(()=>toast("Réglages non enregistrés."))}else lsSave();},600)}
+function editing(){const a=document.activeElement;return a&&$("#app").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)}
+
+let auth=null,unsubs=[];
+function fbReady(){const c=window.FIREBASE_CONFIG;return !!(window.firebase&&c&&c.apiKey&&!/COLLE/i.test(c.apiKey))}
+async function boot(){
+  render();
+  if(!fbReady()){S.mode="local";lsLoad();S.loaded=true;render();return}
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  auth=firebase.auth();db=firebase.firestore();
+  try{await db.enablePersistence({synchronizeTabs:true})}catch(e){}
+  auth.onAuthStateChanged(u=>{
+    unsubs.forEach(f=>f());unsubs=[];
+    if(!u){
+      if(localStorage.getItem("gc-local")==="1"){S.mode="local";lsLoad();S.loaded=true;render();return}
+      S.mode="login";S.loaded=true;S.vehicles=[];render();return}
+    uid=u.uid;S.email=u.email;S.mode="db";S.loaded=false;render();
+    const base=db.collection("users").doc(uid);
+    vehCol=base.collection("vehicles");setRef=base.collection("meta").doc("settings");
+    let gotV=false;
+    const timer=setTimeout(()=>{if(!gotV){S.loaded=true;S.mode="db-slow";render()}},10000);
+    unsubs.push(vehCol.onSnapshot(snap=>{
+      const remote=snap.docs.map(d=>({...d.data(),id:d.id}));
+      S.vehicles=remote.map(r=>{const loc=S.vehicles.find(x=>x.id===r.id);return(loc&&timers[r.id]&&loc.updatedAt>(r.updatedAt||0))?loc:r});
+      S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={}});
+      if(!snap.metadata.fromCache){gotV=true;clearTimeout(timer);if(S.mode==="db-slow")S.mode="db"}
+      S.loaded=true;if(!editing())render();
+    },e=>{clearTimeout(timer);S.loaded=true;S.mode="db-error";render()}));
+    unsubs.push(setRef.onSnapshot(d=>{if(d.exists){S.settings={...DEF_SETTINGS,...d.data()};if(!editing())render()}},()=>{}));
+  });
+}
+const AUTH_ERR={"auth/invalid-email":"Adresse e-mail invalide.","auth/missing-password":"Entre un mot de passe.","auth/weak-password":"Mot de passe trop court : 6 caractères minimum.","auth/email-already-in-use":"Un compte existe déjà avec cet e-mail : connecte-toi.","auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/wrong-password":"E-mail ou mot de passe incorrect.","auth/user-not-found":"Aucun compte avec cet e-mail : crée-le.","auth/too-many-requests":"Trop d'essais. Réessaie dans quelques minutes.","auth/network-request-failed":"Pas de connexion internet."};
+function vLogin(){
+  const c=S.signup;
+  return'<div class="login"><div class="logo-big">'+logo()+'</div><h1>'+(c?"Créer ton compte":"Connexion")+'</h1><p>'+(c?"Un seul compte pour retrouver tes voitures sur ton téléphone et ton PC.":"Connecte-toi pour retrouver ton garage.")+'</p>'+
+  '<div class="card"><form id="loginform"><label class="f">E-mail<input id="l-email" type="email" autocomplete="email" required value="'+esc(S.lastEmail||"")+'"></label>'+
+  '<label class="f">Mot de passe<input id="l-pass" type="password" autocomplete="'+(c?"new-password":"current-password")+'" required minlength="6"></label>'+
+  '<div class="err" id="l-err"></div><button class="btn primary" type="submit" style="justify-content:center">'+(c?"Créer mon compte":"Se connecter")+'</button></form></div>'+
+  '<p><button class="linkbtn" data-act="toggleSignup">'+(c?"J'ai déjà un compte : me connecter":"Première fois ? Créer un compte")+'</button></p>'+
+  (c?"":'<p><button class="linkbtn" data-act="resetpw">Mot de passe oublié</button></p>')+
+  '<p><button class="linkbtn" data-act="localmode" style="color:var(--muted)">Continuer sans compte (données sur cet appareil)</button></p></div>';
+}
+document.addEventListener("submit",async e=>{
+  if(e.target.id!=="loginform")return;e.preventDefault();
+  const em=$("#l-email").value.trim(),pw=$("#l-pass").value,err=$("#l-err");S.lastEmail=em;err.textContent="";
+  try{if(S.signup)await auth.createUserWithEmailAndPassword(em,pw);else await auth.signInWithEmailAndPassword(em,pw)}
+  catch(x){err.textContent=AUTH_ERR[x.code]||"Connexion impossible ("+(x.code||"erreur")+")."}
+});
+/* ---------- routage ---------- */
+function route(){const h=(location.hash||"").slice(1);if(h.startsWith("v-"))return{view:"fiche",id:h.slice(2)};return{view:NAV.some(n=>n[0]===h)?h:"tableau"}}
+window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
+
+function renderNav(view){
+  const cur=view==="fiche"?"garage":view;
+  if(!renderNav.done){$("#mbar").innerHTML=logo()+WORDMARK;renderNav.done=1}
+  $("#side").innerHTML='<div class="brand">'+logo()+WORDMARK+'</div>'+
+    NAV.map(([k,l])=>'<a class="navlink'+(k===cur?" on":"")+'" href="#'+k+'">'+icon(k)+l+'</a>').join("")+
+    '<div class="status">'+modeText()+'</div>';
+  $("#tabs").innerHTML=NAV.map(([k,l])=>'<a class="'+(k===cur?"on":"")+'" href="#'+k+'">'+icon(k)+'<span>'+(k==="tableau"?"Accueil":l)+'</span></a>').join("");
+}
+function modeText(){return{login:"Non connecté",loading:"Connexion…",db:"Synchronisé"+(S.email?" · "+S.email:""),local:"Données sur cet appareil uniquement","db-slow":"Synchronisation lente : données peut-être pas à jour","db-error":"Synchronisation interrompue : recharge la page"}[S.mode]||""}
+
+function render(){
+  const r=route();renderNav(r.view);
+  const app=$("#app");
+  if(!S.loaded){app.innerHTML='<p class="note">Chargement de ton garage…</p>';return}
+  if(S.mode==="login"){app.innerHTML=vLogin();return}
+  let h="";
+  if(S.mode==="local")h+='<div class="banner info"><span>Tes données sont enregistrées sur cet appareil seulement.'+(fbReady()?' Connecte-toi pour les synchroniser entre ton téléphone et ton PC.</span><button class="btn small" data-act="gologin">Se connecter</button>':'</span>')+'</div>';
+  if(S.mode==="db-error"||S.mode==="db-slow")h+='<div class="banner"><span>'+modeText()+'</span></div>';
+  if(showingDemo()&&r.view!=="reglages")h+='<div class="banner"><span><b>Exemples affichés.</b> Ces 4 voitures montrent comment l\'app fonctionne. Elles disparaissent dès que tu ajoutes ta première voiture.</span><button class="btn primary small" data-act="add">Ajouter ma première voiture</button></div>';
+  h+=({tableau:vTableau,garage:vGarage,fiche:vFiche,simulateur:vSim,ventes:vVentes,reglages:vReglages}[r.view])(r);
+  app.innerHTML=h;
+  if(r.view==="fiche")updateCalc();
+  if(r.view==="simulateur")updateSim();
+}
+
+/* ---------- tableau de bord ---------- */
+function vTableau(){
+  const L=list(),stock=L.filter(v=>EN_STOCK.includes(v.statut)),vendus=L.filter(v=>v.statut==="vendu");
+  const y=new Date().getFullYear();
+  const vendusAn=vendus.filter(v=>v.dateVente&&v.dateVente.startsWith(String(y)));
+  const capital=stock.reduce((s,v)=>s+calc(v).cout,0);
+  const netAn=vendusAn.reduce((s,v)=>s+(calc(v).net||0),0);
+  const moy=vendusAn.length?netAn/vendusAn.length:null;
+  const js=vendus.map(joursStock).filter(x=>x!=null);
+  const jm=js.length?Math.round(js.reduce((a,b)=>a+b,0)/js.length):null;
+  const potentiel=stock.reduce((s,v)=>{const c=calc(v);return s+(c.net||0)},0);
+  const q=Math.floor(new Date().getMonth()/3),qStart=new Date(y,q*3,1).toISOString().slice(0,10);
+  const tvaQ=vendus.filter(v=>v.dateVente&&v.dateVente>=qStart).reduce((s,v)=>s+(calc(v).tva||0),0);
+  const gar=vendus.filter(v=>{const f=finGarantie(v);return f&&f>=today()});
+  const prov=gar.length*S.settings.provGarantie;
+
+  let h='<div class="top"><div><h1>Tableau de bord</h1><p>'+new Date().toLocaleDateString("fr-BE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+'</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
+  h+='<div class="grid kpis">'+
+    kpi("En stock",stock.length+" voiture"+(stock.length>1?"s":""),"Capital immobilisé : "+eur(capital))+
+    kpi("Bénéfice net "+y,'<span class="'+(netAn<0?"neg":"")+'">'+eur(netAn)+'</span>',vendusAn.length+" vente"+(vendusAn.length>1?"s":"")+" · après TVA sur la marge")+
+    kpi("Marge nette moyenne",moy==null?"—":eur(moy),"par voiture vendue en "+y)+
+    kpi("Durée moyenne en stock",jm==null?"—":jm+" j","de l'achat à la vente")+'</div>';
+  h+='<div class="grid two"><div class="card chart"><h2>Bénéfice net par mois</h2>'+chartMois(vendus)+'<p class="note">Calculé sur la date de vente. TVA sur la marge et frais déduits, avant impôt et cotisations.</p></div>';
+  h+='<div class="card"><h2>À surveiller</h2><div class="alerts">'+alertes(L).join("")+'</div></div></div>';
+  h+='<div class="grid two"><div class="card"><h2>Pipeline</h2><div class="pipeline">'+STATUTS.map(s=>'<a class="pipe" href="#garage" data-filter="'+s.k+'"><b class="num">'+L.filter(v=>v.statut===s.k).length+'</b><span>'+s.l+'</span></a>').join("")+'</div>'+
+    '<p class="note" style="margin-top:12px">Marge nette potentielle du stock actuel : <b class="num">'+eur(potentiel)+'</b> (sur prix affiché ou estimation).</p></div>';
+  h+='<div class="card"><h2>À mettre de côté</h2><div class="calc">'+
+    row("TVA sur la marge, trimestre en cours",eur(tvaQ))+
+    row("Provision garantie ("+gar.length+" voiture"+(gar.length>1?"s":"")+" sous garantie)",eur(prov))+
+    '<div class="row total"><span>Total à réserver</span><span class="num">'+eur(tvaQ+prov)+'</span></div></div>'+
+    '<p class="note">Plus une part pour l\'impôt et les cotisations, à voir avec ton comptable.</p></div></div>';
+  return h;
+}
+function kpi(l,v,s){return'<div class="card kpi"><div class="lbl">'+l+'</div><div class="val num">'+v+'</div><div class="sub">'+s+'</div></div>'}
+function row(a,b,cls){return'<div class="row"><span>'+a+'</span><span class="num '+(cls||"")+'">'+b+'</span></div>'}
+function alertes(L){
+  const out=[];const seuil=S.settings.seuilJours;
+  L.forEach(v=>{
+    const n=esc(v.marque+" "+v.modele),j=joursStock(v),link='href="#v-'+v.id+'"';
+    if(EN_STOCK.includes(v.statut)&&j!=null&&j>seuil)out.push('<a class="alert bad" '+link+'><div><b>'+n+'</b> en stock depuis '+j+' jours<small>Revois le prix ou la présentation de l\'annonce.</small></div></a>');
+    if(v.statut==="en_vente"&&!(v.check&&v.check.ct))out.push('<a class="alert" '+link+'><div><b>'+n+'</b> en vente sans CT coché<small>L\'acheteur en aura besoin pour immatriculer.</small></div></a>');
+    if(v.statut==="en_vente"&&!v.prixAffiche)out.push('<a class="alert" '+link+'><div><b>'+n+'</b> sans prix affiché</div></a>');
+    if(v.statut==="vendu"&&!(v.check&&v.check.facture))out.push('<a class="alert bad" '+link+'><div><b>'+n+'</b> vendue sans facture cochée<small>Facture au régime de la marge obligatoire.</small></div></a>');
+    if(v.statut==="vendu"&&v.check&&v.check.facture&&!v.check.compta)out.push('<a class="alert" '+link+'><div><b>'+n+'</b> : facture à transmettre au comptable</div></a>');
+    const f=finGarantie(v);if(f&&f>=today()&&daysBetween(today(),f)<=30)out.push('<a class="alert ok" '+link+'><div><b>'+n+'</b> : garantie terminée le '+fdate(f)+'</div></a>');
+    const c=calc(v);if(EN_STOCK.includes(v.statut)&&c.net!=null&&c.net<0)out.push('<a class="alert bad" '+link+'><div><b>'+n+'</b> : marge nette prévue négative ('+eur(c.net)+')</div></a>');
+  });
+  const m=new Date().getMonth(),d=new Date().getDate();
+  if([0,3,6,9].includes(m)&&d<=20)out.push('<div class="alert"><div><b>Déclaration TVA trimestrielle</b><small>Mois de déclaration : vérifie l\'échéance avec ton comptable.</small></div></div>');
+  return out.length?out:['<div class="alert ok"><div>Rien à signaler.</div></div>'];
+}
+function chartMois(vendus){
+  const now=new Date(),months=[];
+  for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({k:d.toISOString().slice(0,7),l:d.toLocaleDateString("fr-BE",{month:"short"}).replace(".",""),v:0})}
+  vendus.forEach(v=>{if(!v.dateVente)return;const m=months.find(x=>x.k===v.dateVente.slice(0,7));if(m)m.v+=calc(v).net||0});
+  const W=560,H=210,pl=46,pr=8,pt=12,pb=26,cw=(W-pl-pr)/12;
+  let max=Math.max(0,...months.map(m=>m.v)),min=Math.min(0,...months.map(m=>m.v));
+  if(max===0&&min===0)max=1000;
+  const step=niceStep((max-min)/4);max=Math.ceil(max/step)*step;min=Math.floor(min/step)*step;
+  const y=v=>pt+(max-v)/(max-min)*(H-pt-pb);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bénéfice net par mois sur 12 mois">';
+  for(let t=min;t<=max+1e-6;t+=step){s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(t)+'" y2="'+y(t)+'" stroke="var(--line)" stroke-width="'+(t===0?1.4:.7)+'"/><text x="'+(pl-6)+'" y="'+(y(t)+4)+'" text-anchor="end">'+shortE(t)+'</text>'}
+  months.forEach((m,i)=>{const x=pl+i*cw+cw*.18,w=cw*.64,y0=y(0),y1=y(m.v);
+    if(m.v!==0)s+='<rect x="'+x+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(1.5,Math.abs(y1-y0))+'" rx="2.5" fill="'+(m.v<0?"var(--bad)":(i===11?"var(--accent)":"var(--accent)"))+'" opacity="'+(i===11?1:.72)+'"><title>'+m.l+" : "+eur(m.v)+'</title></rect>';
+    s+='<text x="'+(pl+i*cw+cw/2)+'" y="'+(H-8)+'" text-anchor="middle">'+m.l+'</text>'});
+  return s+'</svg>';
+}
+function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r||1)));const n=r/p;return(n<=1?1:n<=2?2:n<=5?5:10)*p}
+function shortE(n){return Math.abs(n)>=1000?(n/1000).toLocaleString("fr-BE",{maximumFractionDigits:1})+" k€":Math.round(n)+" €"}
+
+/* ---------- garage ---------- */
+function vGarage(){
+  const L=list(),f=S.garageFilter,q=S.search.toLowerCase();
+  let items=L.filter(v=>f==="tous"||(f==="stock"?EN_STOCK.includes(v.statut):v.statut===f));
+  if(q)items=items.filter(v=>(v.marque+" "+v.modele+" "+(v.annee||"")).toLowerCase().includes(q));
+  const order={en_vente:0,preparation:1,achete:2,reperage:3,vendu:4};
+  items.sort((a,b)=>(order[a.statut]-order[b.statut])||((b.dateAchat||"").localeCompare(a.dateAchat||"")));
+  const chips=[["stock","En stock"],["reperage","Repérage"],["achete","Achetés"],["preparation","En préparation"],["en_vente","En vente"],["vendu","Vendus"],["tous","Tous"]];
+  let h='<div class="top"><div><h1>Garage</h1><p>'+L.filter(v=>EN_STOCK.includes(v.statut)).length+' voiture(s) à ta disposition · '+L.filter(v=>v.statut==="reperage").length+' en repérage</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
+  h+='<div class="toolbar"><div class="chips">'+chips.map(([k,l])=>'<button class="chip'+(f===k?" on":"")+'" data-filter="'+k+'">'+l+'</button>').join("")+'</div><input class="search" id="search" type="search" placeholder="Rechercher une marque, un modèle…" value="'+esc(S.search)+'"></div>';
+  if(!items.length)return h+'<div class="card empty">Aucune voiture dans cette catégorie.</div>';
+  h+='<div class="cars">'+items.map(carCard).join("")+'</div>';
+  return h;
+}
+function carCard(v){
+  const c=calc(v),j=joursStock(v),p=progress(v);
+  const third=v.statut==="vendu"?["Vendu",eur(v.prixVente)]:["Prix affiché",v.prixAffiche?eur(v.prixAffiche):(v.estim&&v.estim.median?"≈ "+eur(v.estim.median):"—")];
+  return'<a class="car" href="#v-'+v.id+'"><div class="hd"><div><div class="name">'+esc(v.marque)+' '+esc(v.modele)+'</div><div class="meta num">'+esc(v.annee||"—")+' · '+kmFmt(v.km)+' · '+esc(v.carburant||"")+'</div></div><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span></div>'+
+  (v.demo?'<span class="demo-tag">Exemple</span>':"")+
+  '<div class="figs num"><div>'+(v.statut==="reperage"?"Prix demandé":"Achat + frais")+'<b>'+eur(v.statut==="reperage"?c.achat:c.cout)+'</b></div><div>'+third[0]+'<b>'+third[1]+'</b></div><div>Marge nette<b class="'+(c.net==null?"":c.net<0?"neg":"pos")+'">'+(c.net==null?"—":eur(c.net))+'</b></div></div>'+
+  '<div class="meta" style="display:flex;justify-content:space-between"><span>'+(j!=null?(v.statut==="vendu"?"Vendue en "+j+" j":"En stock depuis "+j+" j"):"Pas encore achetée")+'</span><span>Dossier '+p+' %</span></div><div class="bar"><i style="width:'+p+'%"></i></div></a>';
+}
+
+/* ---------- fiche ---------- */
+function curVeh(id){return list().find(v=>v.id===id)}
+function vFiche(r){
+  const v=curVeh(r.id);
+  if(!v)return'<div class="card empty">Cette voiture n\'existe plus. <a href="#garage">Retour au garage</a></div>';
+  const dis=v.demo?" disabled":"";
+  const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(v[k]??"")+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
+  const sel=(k,l,opts)=>'<label class="f">'+l+'<select id="f-'+k+'" data-field="'+k+'"'+dis+'>'+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(v[k])===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
+  let h='<div class="top"><div><a href="#garage" class="note">← Garage</a><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>'+(v.demo?'<span class="demo-tag">Exemple · lecture seule</span>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
+  h+='<div class="fiche"><div class="stack">';
+  h+='<div class="card"><h2>Véhicule</h2><div class="form">'+inp("marque","Marque")+inp("modele","Modèle / moteur","text",{ph:"ex. Yaris 1.33 VVT-i"})+inp("annee","Année","number")+inp("km","Kilométrage","number")+
+     sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"])+sel("boite","Boîte",["Manuelle","Automatique"])+inp("vin","N° de châssis (VIN)","text",{ph:"facultatif"})+inp("couleur","Couleur")+
+     sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+'</div></div>';
+  h+='<div class="card"><h2>Achat</h2><div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+inp("vendeur","Vendeur","text",{ph:"Nom / téléphone"})+'</div></div>';
+  h+='<div class="card"><h2>Frais</h2><table class="frais"><thead><tr><th style="width:34%">Catégorie</th><th>Détail</th><th style="width:22%">Montant (€)</th><th></th></tr></thead><tbody>'+
+     (v.frais||[]).map(f=>'<tr><td><select data-frais="'+f.id+'" data-k="cat"'+dis+'>'+CATS.map(c=>'<option'+(c===f.cat?" selected":"")+'>'+c+'</option>').join("")+'</select></td><td><input data-frais="'+f.id+'" data-k="libelle" value="'+esc(f.libelle)+'"'+dis+'></td><td><input class="num" data-frais="'+f.id+'" data-k="montant" type="number" inputmode="decimal" value="'+esc(f.montant)+'"'+dis+'></td><td>'+(v.demo?"":'<button class="x" data-act="delfrais" data-id="'+f.id+'" aria-label="Supprimer ce frais">×</button>')+'</td></tr>').join("")+
+     '</tbody></table>'+(v.demo?"":'<div style="margin-top:10px"><button class="btn small" data-act="addfrais">+ Ajouter un frais</button></div>')+'</div>';
+  h+='<div class="card"><h2>Vente</h2><div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+inp("prixVente","Prix de vente final (€)","number")+inp("dateVente","Date de vente","date")+inp("acheteur","Acheteur","text",{ph:"Nom / ville"})+'</div>'+
+     (v.dateVente?'<p class="note" style="margin-top:10px">Garantie légale jusqu\'au <b>'+fdate(finGarantie(v))+'</b>.</p>':"")+'</div>';
+  h+='<div class="card"><h2>Dossier</h2><div class="check">'+CHECK.map(g=>'<h3>'+g.g+'</h3>'+g.items.map(([k,l])=>'<label><input type="checkbox" data-check="'+k+'"'+(v.check&&v.check[k]?" checked":"")+dis+'>'+l+'</label>').join("")).join("")+'</div></div>';
+  h+='<div class="card"><h2>Notes</h2><label class="f full"><textarea id="f-notes" data-field="notes"'+dis+' placeholder="Défauts constatés, historique, rendez-vous…">'+esc(v.notes||"")+'</textarea></label></div>';
+  h+='</div><div class="stack sticky">';
+  h+='<div class="card"><h2>Marge</h2><div id="calcbox"></div></div>';
+  h+='<div class="card"><h2>Prix du marché</h2>'+(v.demo?estBlock(v.estim):'<div class="est num">'+[["bas","Bas"],["median","Médian"],["haut","Haut"]].map(([k,l])=>'<label class="f" style="text-align:left">'+l+' (€)<input data-estim="'+k+'" type="number" inputmode="decimal" value="'+esc(v.estim&&v.estim[k]||"")+'"></label>').join("")+'</div>')+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+(sample&&!v.demo?'<button class="btn primary small" data-act="estimer"'+(S.estBusy?" disabled":"")+'>'+(S.estBusy?"Estimation en cours…":(v.estim?"Réestimer avec Claude":"Estimer avec Claude"))+'</button>':"")+
+     '<a class="btn small" href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a class="btn small" href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
+     '<p class="note" style="margin-top:10px">'+(v.estim&&v.estim.commentaire?esc(v.estim.commentaire)+" ":"")+'Compare le même modèle, la même année et un kilométrage proche, puis note le prix médian.</p></div>';
+  h+='<div class="card"><h2>Prix d\'achat maximum</h2><div id="maxbox"></div></div>';
+  h+='</div></div>';
+  return h;
+}
+function estBlock(e){if(!e||!e.median)return'<p class="note">Aucune estimation pour l\'instant.</p>';return'<div class="est num"><div><small>Bas</small><b>'+eur(e.bas)+'</b></div><div><small>Médian</small><b>'+eur(e.median)+'</b></div><div><small>Haut</small><b>'+eur(e.haut)+'</b></div></div>'+(e.delai?'<p class="note" style="margin-top:8px">Délai de vente estimé : '+esc(e.delai)+' jours.</p>':"")}
+function slug(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim().split(/\s+/)[0].replace(/[^a-z0-9-]/g,"")}
+function asUrl(v){const y=num(v.annee);let u="https://www.autoscout24.be/fr/lst/"+encodeURIComponent(slug(v.marque))+"/"+encodeURIComponent(slug(v.modele));if(y)u+="?fregfrom="+(y-1)+"&fregto="+(y+1);return u}
+function dmUrl(v){return"https://www.2ememain.be/q/"+encodeURIComponent((v.marque+" "+v.modele).trim())+"/"}
+function updateCalc(){
+  const id=route().id,v=curVeh(id),box=$("#calcbox");if(!v||!box)return;
+  const c=calc(v);
+  let h='<div class="calc">';
+  if(c.ref==null){h+='<p class="note">Indique un prix affiché ou lance une estimation pour voir la marge.</p>'+row("Coût total (achat + frais)",eur(c.cout))}
+  else{
+    h+='<div class="big num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</div><div class="note">marge nette '+(v.statut==="vendu"?"réalisée":"prévue")+(c.pct!=null?" · "+c.pct.toFixed(1).replace(".",",")+" % du coût":"")+'</div>'+
+    row(v.statut==="vendu"?"Prix de vente":(v.prixAffiche?"Prix affiché":"Estimation médiane"),eur(c.ref))+row("Prix d'achat","− "+eur(c.achat))+row("Marge brute",eur(c.brute))+
+    row("TVA sur la marge ("+S.settings.tva+"/"+(100+S.settings.tva)+")","− "+eur(c.tva))+row("Frais","− "+eur(c.frais))+
+    '<div class="row total"><span>Reste avant impôt</span><span class="num">'+eur(c.net)+'</span></div>';
+  }
+  const j=joursStock(v);if(j!=null)h+=row(v.statut==="vendu"?"Durée en stock":"En stock depuis",j+" jours");
+  box.innerHTML=h+'</div>';
+  const mb=$("#maxbox");if(mb){const rev=num(v.prixAffiche)||(v.estim&&num(v.estim.median))||0;
+    if(!rev)mb.innerHTML='<p class="note">Besoin d\'un prix de revente (affiché ou estimé).</p>';
+    else{const fr=Math.max(fraisTotal(v),0),mx=prixAchatMax(rev,fr,S.settings.margeVisee,S.settings.tva);
+      mb.innerHTML='<div class="calc"><div class="big num">'+eur(mx)+'</div><div class="note">pour revendre à '+eur(rev)+' avec '+eur(fr)+' de frais et '+eur(S.settings.margeVisee)+' de marge nette visée.</div>'+(num(v.prixAchat)?row(v.statut==="reperage"?"Prix demandé":"Payé",eur(v.prixAchat),num(v.prixAchat)>mx?"neg":"pos"):"")+'</div>'}}
+}
+
+/* ---------- simulateur ---------- */
+function vSim(){
+  const s=S.sim;if(s.marge==null)s.marge=S.settings.margeVisee;
+  const i=(k,l,t,ph)=>'<label class="f">'+l+'<input id="s-'+k+'" data-sim="'+k+'" type="'+(t||"text")+'"'+(t==="number"?' inputmode="decimal"':"")+' value="'+esc(s[k]??"")+'"'+(ph?' placeholder="'+esc(ph)+'"':"")+'></label>';
+  let h='<div class="top"><div><h1>Simulateur d\'achat</h1><p>Avant d\'appeler un vendeur : combien payer au maximum pour garder ta marge.</p></div></div>';
+  h+='<div class="fiche"><div class="stack"><div class="card"><h2>La voiture repérée</h2><div class="form">'+i("marque","Marque","text","Toyota")+i("modele","Modèle / moteur","text","Yaris 1.33")+i("annee","Année","number")+i("km","Kilométrage","number")+
+    '<label class="f">Carburant<select data-sim="carburant">'+["Essence","Diesel","Hybride","Électrique","GPL"].map(o=>'<option'+(s.carburant===o?" selected":"")+'>'+o+'</option>').join("")+'</select></label>'+
+    '<label class="f">Boîte<select data-sim="boite">'+["Manuelle","Automatique"].map(o=>'<option'+(s.boite===o?" selected":"")+'>'+o+'</option>').join("")+'</select></label></div></div>';
+  h+='<div class="card"><h2>Tes hypothèses</h2><div class="form">'+i("revente","Prix de revente réaliste (€)","number")+i("frais","Frais prévus (€)","number")+i("marge","Marge nette visée (€)","number")+i("achat","Prix demandé par le vendeur (€)","number","facultatif")+'</div>'+
+    '<p class="note" style="margin-top:10px">Frais typiques : CT ~60 €, nettoyage ~60 €, réparations, garantie externe 200 à 300 €.</p></div>';
+  h+='<div class="card"><h2>Prix du marché</h2>'+estBlock(S.simEst)+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+(sample?'<button class="btn primary small" data-act="simest"'+(S.simBusy?" disabled":"")+'>'+(S.simBusy?"Estimation en cours…":"Estimer avec Claude")+'</button>':"")+
+    '<a class="btn small" href="'+asUrl(s)+'" target="_blank" rel="noopener">AutoScout24</a><a class="btn small" href="'+dmUrl(s)+'" target="_blank" rel="noopener">2ememain</a></div>'+
+    (S.simEst&&S.simEst.commentaire?'<p class="note" style="margin-top:10px">'+esc(S.simEst.commentaire)+'</p>':"")+'<p class="note">Note le prix médian des annonces comparables.</p></div></div>';
+  h+='<div class="stack sticky"><div class="card"><h2>Résultat</h2><div id="simbox"></div></div></div></div>';
+  return h;
+}
+function updateSim(){
+  const s=S.sim,box=$("#simbox");if(!box)return;
+  const rev=num(s.revente),fr=num(s.frais),mg=num(s.marge),t=S.settings.tva;
+  if(!rev){box.innerHTML='<p class="note">Indique un prix de revente (ou lance une estimation) pour calculer ton prix d\'achat maximum.</p>';return}
+  const mx=prixAchatMax(rev,fr,mg,t);
+  let h='<div class="calc"><div class="note">Prix d\'achat maximum</div><div class="big num">'+eur(mx)+'</div>';
+  const a=num(s.achat);
+  if(a){const v={prixAchat:a,prixAffiche:rev,frais:[{montant:fr}],statut:"en_vente"},c=calc(v);
+    h+=row("Prix demandé",eur(a))+row("Marge brute",eur(c.brute))+row("TVA sur la marge","− "+eur(c.tva))+row("Frais","− "+eur(fr))+'<div class="row total"><span>Marge nette à ce prix</span><span class="num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</span></div>';
+    h+='<p class="note">'+(a<=mx?"Bonne affaire : tu es sous ton prix maximum de "+eur(mx-a)+".":"Trop cher de "+eur(a-mx)+" : négocie ou passe ton tour.")+'</p>';}
+  h+='</div><button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-act="simsave">Ajouter au garage en repérage</button>';
+  box.innerHTML=h;
+}
+
+/* ---------- ventes ---------- */
+function vVentes(){
+  const L=list(),vendus=L.filter(v=>v.statut==="vendu").sort((a,b)=>(b.dateVente||"").localeCompare(a.dateVente||""));
+  let h='<div class="top"><div><h1>Ventes</h1><p>'+vendus.length+' voiture(s) vendue(s)</p></div></div>';
+  if(!vendus.length)return h+'<div class="card empty">Aucune vente pour l\'instant.</div>';
+  const T={achat:0,frais:0,vente:0,tva:0,net:0};
+  const rows=vendus.map(v=>{const c=calc(v);T.achat+=c.achat;T.frais+=c.frais;T.vente+=c.ref||0;T.tva+=c.tva||0;T.net+=c.net||0;
+    return'<tr><td><a href="#v-'+v.id+'">'+esc(v.marque+" "+v.modele)+'</a>'+(v.demo?' <span class="demo-tag">Exemple</span>':"")+'</td><td>'+fdate(v.dateVente)+'</td><td class="num">'+eur(c.achat)+'</td><td class="num">'+eur(c.frais)+'</td><td class="num">'+eur(c.ref)+'</td><td class="num">'+eur(c.tva)+'</td><td class="num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</td><td class="num">'+(joursStock(v)??"—")+' j</td></tr>'}).join("");
+  h+='<div class="card"><div class="tablewrap"><table class="data"><thead><tr><th>Voiture</th><th>Vendue le</th><th>Achat</th><th>Frais</th><th>Vente</th><th>TVA marge</th><th>Net</th><th>Stock</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>Total</td><td></td><td class="num">'+eur(T.achat)+'</td><td class="num">'+eur(T.frais)+'</td><td class="num">'+eur(T.vente)+'</td><td class="num">'+eur(T.tva)+'</td><td class="num">'+eur(T.net)+'</td><td></td></tr></tfoot></table></div></div>';
+  const gar=vendus.filter(v=>{const f=finGarantie(v);return f&&f>=today()});
+  h+='<div class="card"><h2>Garanties en cours</h2>'+(gar.length?'<div class="tablewrap"><table class="data" style="min-width:480px"><thead><tr><th>Voiture</th><th>Acheteur</th><th>Vendue le</th><th>Fin de garantie</th><th>Jours restants</th></tr></thead><tbody>'+
+    gar.map(v=>{const f=finGarantie(v);return'<tr><td><a href="#v-'+v.id+'">'+esc(v.marque+" "+v.modele)+'</a></td><td>'+esc(v.acheteur||"—")+'</td><td>'+fdate(v.dateVente)+'</td><td>'+fdate(f)+'</td><td class="num">'+daysBetween(today(),f)+'</td></tr>'}).join("")+'</tbody></table></div>':'<p class="note">Aucune garantie en cours.</p>')+'</div>';
+  return h;
+}
+
+/* ---------- réglages ---------- */
+function vReglages(){
+  const s=S.settings,i=(k,l,hint)=>'<label class="f">'+l+'<input id="r-'+k+'" data-set="'+k+'" type="number" inputmode="decimal" value="'+esc(s[k])+'">'+(hint?'<span class="note">'+hint+'</span>':"")+'</label>';
+  let h='<div class="top"><div><h1>Réglages</h1><p>'+modeText()+'</p></div></div>';
+  h+='<div class="card"><h2>Installer GC Motors</h2><div class="install">'+logo()+'<div>'+
+    (installEvt?'<p><button class="btn primary" data-act="install">Installer l\'application</button></p>':'')+
+    '<b>iPhone</b><ol><li>Ouvre cette page dans <b>Safari</b>.</li><li>Touche le bouton Partager (carré avec une flèche vers le haut).</li><li>Choisis « Sur l\'écran d\'accueil », puis « Ajouter ».</li></ol>'+
+    '<b>Android</b><ol><li>Ouvre cette page dans <b>Chrome</b>.</li><li>Menu ⋮, puis « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».</li></ol>'+
+    '<b>PC</b><ol><li>Dans Chrome ou Edge, clique sur l\'icône d\'installation à droite de la barre d\'adresse.</li></ol></div></div></div>';
+  if(S.mode!=="local"&&auth&&auth.currentUser)h+='<div class="card"><h2>Compte</h2><p class="note">Connecté avec '+esc(S.email||"")+'.</p><button class="btn small" data-act="logout">Se déconnecter</button></div>';
+  else if(fbReady())h+='<div class="card"><h2>Compte</h2><p class="note">Tu utilises l\'app sans compte : tes données restent sur cet appareil.</p><button class="btn small" data-act="gologin">Se connecter / créer un compte</button></div>';
+  h+='<div class="card"><h2>Calculs</h2><div class="form">'+i("tva","Taux de TVA (%)","21 % en Belgique, appliqué au régime de la marge")+i("margeVisee","Marge nette visée par voiture (€)","Utilisée pour le prix d'achat maximum")+i("provGarantie","Provision garantie par voiture (€)","Mise de côté pendant la garantie")+i("dureeGarantie","Durée de garantie (mois)","12 mois minimum pour un pro en occasion")+i("seuilJours","Alerte stock après (jours)")+'</div></div>';
+  h+='<div class="card"><h2>Sauvegarde</h2><p class="note">Copie tes données pour les garder ailleurs, ou colle une sauvegarde pour la restaurer.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn small" data-act="export">Copier mes données</button><button class="btn small" data-act="import">Restaurer depuis une sauvegarde</button></div><label class="f full"><span>Zone de sauvegarde</span><textarea id="backup" placeholder="La sauvegarde apparaît ici, ou colle-la ici pour restaurer."></textarea></label></div>';
+  h+='<div class="card"><h2>Rappels</h2><p class="note">TVA sur la marge = marge × 21/121. Facture avec la mention « régime de la marge – biens d\'occasion ». Garantie d\'au moins un an pour un vendeur professionnel. Ces calculs ne remplacent pas ton comptable.</p></div>';
+  return h;
+}
+
+/* ---------- actions ---------- */
+function addVehicle(pre){
+  const v={id:newId(),marque:"",modele:"",annee:"",km:"",carburant:"Essence",boite:"Manuelle",statut:"reperage",prixAchat:"",dateAchat:"",frais:[],check:{},createdAt:Date.now(),...(pre||{})};
+  S.vehicles.push(v);persistVehicle(v,true);location.hash="v-"+v.id;
+}
+function modal(title,text,okLabel,onOk){
+  $("#overlay").innerHTML='<div class="modal" role="dialog" aria-modal="true"><div class="card"><h2>'+esc(title)+'</h2><p>'+esc(text)+'</p><div class="acts"><button class="btn" data-m="no">Annuler</button><button class="btn danger" data-m="ok">'+esc(okLabel)+'</button></div></div></div>';
+  $("#overlay").onclick=e=>{const b=e.target.closest("[data-m]");if(e.target.classList.contains("modal")||b){if(b&&b.dataset.m==="ok")onOk();$("#overlay").innerHTML=""}};
+  setTimeout(()=>{const b=$('[data-m="no"]');b&&b.focus()},0);
+}
+async function estimate(v){
+  const prompt="Tu es un expert du marché belge des voitures d'occasion. Nous sommes le "+new Date().toLocaleDateString("fr-BE")+". Estime le prix de vente réaliste en Belgique de cette voiture, vendue par un petit négociant professionnel avec garantie 12 mois et contrôle technique fait.\n"+
+    "Véhicule : "+[v.marque,v.modele].join(" ")+", année "+(v.annee||"inconnue")+", "+(v.km?v.km+" km":"kilométrage inconnu")+", "+(v.carburant||"")+", boîte "+(v.boite||"")+".\n"+
+    "Réponds UNIQUEMENT avec un objet JSON, sans texte autour : {\"bas\":entier,\"median\":entier,\"haut\":entier,\"delai\":\"fourchette de jours pour vendre, ex 15-30\",\"commentaire\":\"une phrase en français sur la demande et les points à vérifier pour ce modèle\"}. Prix en euros TTC.";
+  let out=null;
+  try{out=sample.json?await sample.json(prompt,{modelTier:"default"}):null}catch(e){if(e&&e.code==="not_granted"){sample=null;throw e}}
+  if(!out){const r=await sample(prompt,{modelTier:"default"});const m=(r.text||"").match(/\{[\s\S]*\}/);out=m?JSON.parse(m[0]):null}
+  if(!out||!num(out.median))throw new Error("format");
+  return{bas:Math.round(num(out.bas)),median:Math.round(num(out.median)),haut:Math.round(num(out.haut)),delai:String(out.delai||"").slice(0,20),commentaire:String(out.commentaire||"").slice(0,240),date:today()};
+}
+function estErr(e){if(e&&e.code==="rate_limited")toast("Trop de demandes, réessaie dans une minute.");else if(e&&e.code==="not_granted")toast("Estimation par Claude non autorisée.");else toast("Estimation impossible pour le moment.")}
+
+document.addEventListener("click",async e=>{
+  const fb=e.target.closest("[data-filter]");
+  if(fb){S.garageFilter=fb.dataset.filter;if(location.hash!=="#garage"){e.preventDefault();location.hash="garage"}else render();return}
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const act=b.dataset.act,r=route(),v=r.view==="fiche"?curVeh(r.id):null;
+  if(act==="toggleSignup"){S.signup=!S.signup;render();return}
+  if(act==="localmode"){try{localStorage.setItem("gc-local","1")}catch(_){ }S.mode="local";lsLoad();render();return}
+  if(act==="gologin"){try{localStorage.removeItem("gc-local")}catch(_){ }S.mode="login";render();return}
+  if(act==="logout"){await auth.signOut();toast("Déconnecté.");return}
+  if(act==="install"&&installEvt){installEvt.prompt();installEvt=null;return}
+  if(act==="resetpw"){const em=($("#l-email")||{}).value;if(!em){$("#l-err").textContent="Entre ton e-mail d'abord.";return}try{await auth.sendPasswordResetEmail(em.trim());$("#l-err").textContent="E-mail de réinitialisation envoyé."}catch(x){$("#l-err").textContent=AUTH_ERR[x.code]||"Envoi impossible."}return}
+  if(act==="add")addVehicle();
+  else if(act==="del")modal("Supprimer cette voiture ?","Elle sera retirée de ton garage et de tes statistiques. Cette action est définitive.","Supprimer",()=>{removeVehicle(b.dataset.id);location.hash="garage"});
+  else if(act==="addfrais"&&v&&!v.demo){v.frais.push({id:newId(),cat:"Réparation",libelle:"",montant:""});persistVehicle(v,true);render();const ins=document.querySelectorAll('[data-k="montant"]');ins.length&&ins[ins.length-1].focus()}
+  else if(act==="delfrais"&&v&&!v.demo){v.frais=v.frais.filter(f=>f.id!==b.dataset.id);persistVehicle(v,true);render()}
+  else if(act==="estimer"&&v&&sample){
+    if(!v.marque||!v.modele){toast("Indique au moins la marque et le modèle.");return}
+    S.estBusy=true;render();
+    try{v.estim=await estimate(v);persistVehicle(v,true)}catch(err){estErr(err)}
+    S.estBusy=false;render();
+  }
+  else if(act==="simest"&&sample){
+    const s=S.sim;if(!s.marque||!s.modele){toast("Indique au moins la marque et le modèle.");return}
+    S.simBusy=true;render();
+    try{S.simEst=await estimate(s);if(!num(s.revente))s.revente=S.simEst.median}catch(err){estErr(err)}
+    S.simBusy=false;render();
+  }
+  else if(act==="simsave"){const s=S.sim;addVehicle({marque:s.marque,modele:s.modele,annee:numOrNull(s.annee)??"",km:numOrNull(s.km)??"",carburant:s.carburant,boite:s.boite,prixAchat:numOrNull(s.achat)??"",estim:S.simEst||null,notes:"Revente visée : "+eur(num(s.revente))+" · frais prévus : "+eur(num(s.frais))})}
+  else if(act==="export"){const txt=JSON.stringify({app:"negoce-auto",version:1,date:today(),settings:S.settings,vehicles:S.vehicles},null,1);const ta=$("#backup");ta.value=txt;
+    try{await navigator.clipboard.writeText(txt);toast("Données copiées. Colle-les dans une note ou un e-mail pour les garder.")}catch(err){ta.select();toast("Sélectionne le texte et copie-le.")}}
+  else if(act==="import"){let d;try{d=JSON.parse($("#backup").value)}catch(err){toast("Sauvegarde illisible : colle le texte complet.");return}
+    if(!d||!Array.isArray(d.vehicles)){toast("Ce texte n'est pas une sauvegarde de l'app.");return}
+    modal("Restaurer cette sauvegarde ?",d.vehicles.length+" voiture(s) seront ajoutées ou mises à jour.","Restaurer",async()=>{
+      for(const nv of d.vehicles){if(!nv.id)nv.id=newId();delete nv.demo;const i=S.vehicles.findIndex(x=>x.id===nv.id);if(i>=0)S.vehicles[i]=nv;else S.vehicles.push(nv);persistVehicle(nv,true)}
+      if(d.settings){S.settings={...DEF_SETTINGS,...d.settings};persistSettings()}
+      toast("Sauvegarde restaurée.");render()})}
+});
+document.addEventListener("input",e=>{
+  const t=e.target,r=route();
+  if(t.id==="search"){S.search=t.value;const pos=t.selectionStart;render();const s=$("#search");if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(_){}}return}
+  if(t.dataset.sim){S.sim[t.dataset.sim]=t.value;updateSim();return}
+  if(t.dataset.set){S.settings[t.dataset.set]=num(t.value);persistSettings();return}
+  if(r.view!=="fiche")return;const v=curVeh(r.id);if(!v||v.demo)return;
+  if(t.dataset.field){const k=t.dataset.field,numeric=["annee","km","prixAchat","prixAffiche","prixVente"].includes(k);v[k]=numeric?(numOrNull(t.value)??""):t.value;
+    if(k==="dateVente"&&t.value&&v.statut!=="vendu"){v.statut="vendu";render()}
+    if(k==="dateAchat"&&t.value&&v.statut==="reperage"){v.statut="achete";render()}
+    persistVehicle(v);updateCalc();return}
+  if(t.dataset.frais){const f=v.frais.find(x=>x.id===t.dataset.frais);if(f){f[t.dataset.k]=t.dataset.k==="montant"?(numOrNull(t.value)??""):t.value;persistVehicle(v);updateCalc()}return}
+  if(t.dataset.estim){v.estim=v.estim||{};v.estim[t.dataset.estim]=numOrNull(t.value)??"";persistVehicle(v);updateCalc();return}
+  if(t.dataset.check){v.check=v.check||{};if(t.checked)v.check[t.dataset.check]=1;else delete v.check[t.dataset.check];persistVehicle(v,true);return}
+});
+document.addEventListener("change",e=>{
+  const t=e.target,r=route();
+  if(t.dataset.sim&&t.tagName==="SELECT"){S.sim[t.dataset.sim]=t.value;return}
+  if(r.view==="fiche"&&t.dataset.field==="statut"){const v=curVeh(r.id);if(v&&!v.demo){if(t.value==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(t.value)&&!v.dateAchat)v.dateAchat=today();persistVehicle(v,true);render()}}
+  if(r.view==="fiche"&&(t.dataset.field||t.dataset.frais)){const v=curVeh(r.id);if(v&&!v.demo)persistVehicle(v,true)}
+});
+document.addEventListener("focusout",()=>{setTimeout(()=>{if(!editing()&&route().view!=="fiche"&&route().view!=="simulateur"&&route().view!=="reglages")render()},50)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#overlay").innerHTML=""});
+
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(route().view==="reglages"&&!editing())render()});
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+boot();
+})();
+</script>
+</body>
+</html>
