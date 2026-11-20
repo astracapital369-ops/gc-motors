@@ -408,7 +408,7 @@ nav.tabs{display:none}
 "use strict";
 /* ---------- constantes ---------- */
 const STATUTS=[
-  {k:"reperage",l:"Repérage"},{k:"achete",l:"Acheté"},{k:"preparation",l:"Au garage"},
+  {k:"achete",l:"En stock"},{k:"preparation",l:"En réparation"},
   {k:"en_vente",l:"En vente"},{k:"vendu",l:"Vendu"}];
 const EN_STOCK=["achete","preparation","en_vente"];
 const CATS=["Réparation","Entretien","Pneus","Contrôle technique","Car-Pass","Nettoyage","Garantie externe","Transport / plateau","Annonce","Autre"];
@@ -416,7 +416,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.9";
+const APP_VERSION="6.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -486,14 +486,14 @@ function demoData(){
     {id:"demo1",demo:true,marque:"Toyota",modele:"Yaris 1.33 VVT-i",annee:2014,km:112000,carburant:"Essence",boite:"Manuelle",statut:"en_vente",prixAchat:6200,dateAchat:addDays(-18),source:"2ememain",prixAffiche:7900,estim:{bas:7300,median:7800,haut:8400},frais:fr([["Réparation",220,"Plaquettes + disques AV"],["Contrôle technique",60],["Nettoyage",60],["Car-Pass",10]]),check:{carpassAchat:1,obd:1,essai:1,bordereau:1,docsAchat:1,registre:1,repar:1,nettoyage:1,ct:1,carpassVente:1,photos:1,annonce:1}},
     {id:"demo2",demo:true,marque:"Hyundai",modele:"i10 1.0",annee:2016,km:96000,carburant:"Essence",boite:"Manuelle",statut:"preparation",prixAchat:4300,dateAchat:addDays(-6),source:"Facebook Marketplace",prixAffiche:"",estim:{bas:5200,median:5600,haut:6000},frais:fr([["Entretien",150,"Vidange + filtres"]]),check:{carpassAchat:1,obd:1,essai:1,bordereau:1,docsAchat:1,registre:1}},
     {id:"demo3",demo:true,marque:"Volkswagen",modele:"Polo 1.0 MPI",annee:2015,km:128000,carburant:"Essence",boite:"Manuelle",statut:"vendu",prixAchat:5000,dateAchat:addDays(-62),dateVente:addDays(-34),prixVente:6900,acheteur:"Particulier, Namur",frais:fr([["Réparation",300],["Garantie externe",300],["Contrôle technique",60],["Nettoyage",60]]),check:Object.fromEntries(CHECK.flatMap(g=>g.items.map(([k])=>[k,1])))},
-    {id:"demo4",demo:true,marque:"Kia",modele:"Picanto 1.0",annee:2013,km:141000,carburant:"Essence",boite:"Manuelle",statut:"reperage",prixAchat:3200,source:"AutoScout24",notes:"Vendeur pressé, rayures pare-chocs AR. Rappeler samedi.",frais:[],check:{}}];
+    {id:"demo4",demo:true,marque:"Kia",modele:"Picanto 1.0",annee:2013,km:141000,carburant:"Essence",boite:"Manuelle",statut:"achete",prixAchat:3200,source:"AutoScout24",notes:"Vendeur pressé, rayures pare-chocs AR. Rappeler samedi.",frais:[],check:{}}];
 }
 function list(){if(S.vehicles.length)return S.vehicles;if(!S.loaded)return[];const hid=S.settings.hiddenDemos||[];return demoData().filter(d=>!hid.includes(d.id))}
 const showingDemo=()=>S.loaded&&!S.vehicles.length&&list().length>0;
 
 /* ---------- stockage ---------- */
 const LS="negoce-auto-v1";
-function lsLoad(){try{const d=JSON.parse(localStorage.getItem(LS)||"{}");S.vehicles=d.vehicles||[];S.settings={...DEF_SETTINGS,...(d.settings||{})}}catch(e){}}
+function lsLoad(){try{const d=JSON.parse(localStorage.getItem(LS)||"{}");S.vehicles=(d.vehicles||[]).map(v=>(v.statut==="reperage"||!STATUTS.some(x=>x.k===v.statut))?{...v,statut:"achete"}:v);S.settings={...DEF_SETTINGS,...(d.settings||{})}}catch(e){}}
 function lsSave(){try{localStorage.setItem(LS,JSON.stringify({vehicles:S.vehicles,settings:S.settings}))}catch(e){}}
 function clean(o){return JSON.parse(JSON.stringify(o))}
 function persistVehicle(v,now){
@@ -616,7 +616,7 @@ async function boot(){
       const merged=remote.filter(r=>!PEND.del[r.id]).map(r=>{const p=PEND.veh[r.id];if(p&&(p.updatedAt||0)>=(r.updatedAt||0)){const loc=S.vehicles.find(x=>x.id===r.id);return loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id:r.id}}return r});
       Object.entries(PEND.veh).forEach(([id,p])=>{if(!merged.some(x=>x.id===id)&&!PEND.del[id]){const loc=S.vehicles.find(x=>x.id===id);merged.push(loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id})}});
       S.vehicles=merged;
-      S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={}});
+      S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={};if(v.statut==='reperage'||!STATUTS.some(x=>x.k===v.statut))v.statut='achete'});
       if(!snap.metadata.fromCache){gotV=true;clearTimeout(timer);if(S.mode==="db-slow")S.mode="db"}
       S.loaded=true;if(!editing())render();
     },e=>{clearTimeout(timer);S.loaded=true;S.mode="db-error";render()}));
@@ -770,8 +770,8 @@ function vGarage(){
   if(q)items=items.filter(v=>(v.marque+" "+v.modele+" "+(v.annee||"")).toLowerCase().includes(q));
   const order={en_vente:0,preparation:1,achete:2,reperage:3,vendu:4};
   items.sort((a,b)=>(order[a.statut]-order[b.statut])||((b.dateAchat||"").localeCompare(a.dateAchat||"")));
-  const chips=[["stock","En stock"],["reperage","Repérage"],["achete","Achetés"],["preparation","Au garage"],["en_vente","En vente"],["vendu","Vendus"],["tous","Tous"]];
-  let h='<div class="top"><div><h1>Garage</h1><p>'+L.filter(v=>EN_STOCK.includes(v.statut)).length+' voiture(s) à ta disposition · '+L.filter(v=>v.statut==="reperage").length+' en repérage</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
+  const chips=[["stock","Non vendus"],["achete","En stock"],["preparation","En réparation"],["en_vente","En vente"],["vendu","Vendus"],["tous","Tous"]];
+  let h='<div class="top"><div><h1>Garage</h1><p>'+L.filter(v=>EN_STOCK.includes(v.statut)).length+' voiture(s) à ta disposition</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
   const cnt=k=>L.filter(v=>k==="tous"||(k==="stock"?EN_STOCK.includes(v.statut):v.statut===k)).length;
   h+='<div class="toolbar"><label class="f gfilter">Afficher<select data-gfilter aria-label="Filtrer les voitures">'+chips.map(([k,l])=>'<option value="'+k+'"'+(f===k?" selected":"")+'>'+l+' ('+cnt(k)+')</option>').join("")+'</select></label><input class="search" id="search" type="search" placeholder="Rechercher une marque, un modèle…" value="'+esc(S.search)+'"></div>';
   if(!items.length)return h+'<div class="card empty">Aucune voiture dans cette catégorie.</div>';
@@ -2032,7 +2032,7 @@ function simResult(){
   h+='<div class="buybox"><small>Prix d\'achat maximum'+(vend==="both"?" (revente pro)":"")+'</small><div class="big num">'+eur(maxMed)+'</div><div class="note">pour revendre au prix médian avec '+eur(mg)+' de marge nette'+(isPro?", TVA sur la marge comprise":"")+' (marge réglable dans Réglages)</div>'+
      '<div class="calc" style="margin-top:10px">'+row("Scénario prudent (revente au minimum)",eur(maxBas))+(vend==="both"?row("Si tu revends entre particuliers",eur(maxFor(rPart.median,false))):"")+row("Première offre conseillée",eur(offre))+row("Frais prévus"+(nbPb?" ("+nbPb+" problème"+(nbPb>1?"s":"")+")":""),eur(fr))+'</div></div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn small" href="'+asUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model,annee:Math.round((s.anneeMin+s.anneeMax)/2)})+'" target="_blank" rel="noopener">Comparer sur AutoScout24</a><a class="btn small" href="'+dmUrl({marque:s.brand==="Autre"?(s.libre||""):s.brand,modele:s.brand==="Autre"?"":s.model})+'" target="_blank" rel="noopener">2ememain</a></div>';
-  h+='<button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-act="simsave">Ajouter au garage en repérage</button>';
+  h+='<button class="btn primary" style="margin-top:12px;width:100%;justify-content:center" data-act="simsave">Ajouter au garage</button>';
   h+='<p class="note" style="margin-top:10px">Estimation calculée par l\'app (prix neuf de référence, âge, kilométrage, état). Elle ne lit pas les annonces : vérifie toujours avec 3 ou 4 annonces comparables avant d\'acheter.</p>';
   return h;
 }
@@ -2085,7 +2085,7 @@ function vReglages(){
 
 /* ---------- actions ---------- */
 function addVehicle(pre){
-  const v={id:newId(),marque:"",modele:"",annee:"",km:"",carburant:"Essence",boite:"Manuelle",statut:"reperage",prixAchat:"",dateAchat:"",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],createdAt:Date.now(),...(pre||{})};
+  const v={id:newId(),marque:"",modele:"",annee:"",km:"",carburant:"Essence",boite:"Manuelle",statut:"achete",prixAchat:"",dateAchat:"",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],createdAt:Date.now(),...(pre||{})};
   S.vehicles.push(v);persistVehicle(v,true);location.hash="v-"+v.id;
 }
 function modal(title,text,okLabel,onOk){
@@ -2202,7 +2202,6 @@ document.addEventListener("input",e=>{
   if(t.dataset.field==='km'){const sl=document.querySelector('[data-vkm]');if(sl)sl.value=num(t.value)}
   if(t.dataset.field==="statut")return;
   if(t.dataset.field){const k=t.dataset.field,numeric=["annee","km","prixAchat","prixAffiche","prixVente"].includes(k);v[k]=numeric?(numOrNull(t.value)??""):t.value;
-    if(k==="dateAchat"&&t.value&&v.statut==="reperage"){v.statut="achete";render()}
     persistVehicle(v);updateCalc();return}
   if(t.dataset.frais){const f=v.frais.find(x=>x.id===t.dataset.frais);if(f){f[t.dataset.k]=t.dataset.k==="montant"?(numOrNull(t.value)??""):t.value;persistVehicle(v);updateCalc();const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v))}return}
   if(t.dataset.estim){v.estim=v.estim||{};v.estim[t.dataset.estim]=numOrNull(t.value)??"";persistVehicle(v);updateCalc();return}
