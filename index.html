@@ -416,7 +416,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="5.7";
+const APP_VERSION="5.8";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -436,7 +436,15 @@ const NAV=[["tableau","Tableau de bord"],["garage","Garage"],["simulateur","Simu
 /* ---------- état ---------- */
 const S={vehicles:[],settings:{...DEF_SETTINGS},mode:"loading",loaded:false,garageFilter:"stock",search:"",sim:null,simEst:null,simBusy:false,estBusy:false};
 let db=null,uid=null,vehCol=null,setRef=null,sample=null;
-const chains={},timers={};
+const chains={},timers={},goers={};
+/* journal local des modifications pas encore confirmées par le serveur : survit à la fermeture de l'app */
+let PEND={veh:{},del:{},settings:null};
+const pendKey=()=>"gc-pending-"+(uid||"x");
+function pendLoad(){try{const d=JSON.parse(localStorage.getItem(pendKey())||"null");PEND={veh:{},del:{},settings:null,...(d||{})}}catch(e){PEND={veh:{},del:{},settings:null}}}
+function pendSave(){try{localStorage.setItem(pendKey(),JSON.stringify(PEND))}catch(e){try{const t={...PEND,veh:{}};Object.entries(PEND.veh).forEach(([k,v])=>{const c={...v};delete c.cover;t.veh[k]=c});localStorage.setItem(pendKey(),JSON.stringify(t))}catch(_){}}}
+function flushAll(){Object.keys(goers).forEach(id=>{clearTimeout(timers[id]);const g=goers[id];delete goers[id];try{g()}catch(e){}});if(setTimer){clearTimeout(setTimer);setTimer=null;try{settingsGo()}catch(e){}}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flushAll()});
+window.addEventListener("pagehide",flushAll);
 
 /* ---------- utilitaires ---------- */
 const $=s=>document.querySelector(s);
@@ -491,17 +499,20 @@ function persistVehicle(v,now){
   if(v.demo)return;
   v.updatedAt=Date.now();
   clearTimeout(timers[v.id]);
-  const go=()=>{
-    if(S.mode==="db"){const data=clean(v);delete data.id;
-      chains[v.id]=(chains[v.id]||Promise.resolve()).then(()=>vehCol.doc(v.id).set(data)).catch(e=>{toast(e&&e.code==="quota_exceeded"?"Stockage plein : supprime d'anciens véhicules.":"Enregistrement impossible pour le moment.")});
-    }else lsSave();
+  if(S.mode!=="db"){lsSave();return}
+  const snap=clean(v);PEND.veh[v.id]=snap;delete PEND.del[v.id];pendSave();
+  const go=()=>{delete goers[v.id];const data=clean(v);delete data.id;const ts=data.updatedAt;
+    chains[v.id]=(chains[v.id]||Promise.resolve()).then(()=>vehCol.doc(v.id).set(data)).then(()=>{const p=PEND.veh[v.id];if(p&&p.updatedAt===ts){delete PEND.veh[v.id];pendSave()}}).catch(e=>{toast(e&&e.code==="quota_exceeded"?"Stockage plein : supprime d'anciens véhicules.":"Enregistrement en attente : il sera envoyé dès que possible.")});
   };
-  if(now)go();else timers[v.id]=setTimeout(go,700);
+  goers[v.id]=go;
+  if(now)go();else timers[v.id]=setTimeout(go,500);
 }
 function removeVehicle(id){
   S.vehicles=S.vehicles.filter(v=>v.id!==id);
   photosFor(id).then(ps=>ps.forEach(p=>deletePhoto(p.id).catch(()=>{}))).catch(()=>{});delete photoCache[id];
-  if(S.mode==="db"){chains[id]=(chains[id]||Promise.resolve()).then(()=>vehCol.doc(id).delete()).catch(()=>toast("Suppression impossible pour le moment."))}else lsSave();
+  clearTimeout(timers[id]);delete goers[id];
+  if(S.mode==="db"){delete PEND.veh[id];PEND.del[id]=Date.now();pendSave();
+    chains[id]=(chains[id]||Promise.resolve()).then(()=>vehCol.doc(id).delete()).then(()=>{delete PEND.del[id];pendSave()}).catch(()=>toast("Suppression en attente : elle sera faite dès que possible."))}else lsSave();
 }
 /* ---------- photos ---------- */
 let photoCol=null,idb=null;
@@ -569,8 +580,12 @@ function openLb(v,i){
   im.addEventListener("touchend",e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50&&list.length>1)openLb(v,lbIdx+(dx<0?1:-1))});
 }
 let setTimer=null;
-function persistSettings(){clearTimeout(setTimer);setTimer=setTimeout(()=>{
-  if(S.mode==="db"){chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(clean(S.settings))).catch(()=>toast("Réglages non enregistrés."))}else lsSave();},600)}
+function settingsGo(){setTimer=null;const data=clean(S.settings);const ts=PEND.settings&&PEND.settings._ts;
+  chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(data)).then(()=>{if(PEND.settings&&PEND.settings._ts===ts){PEND.settings=null;pendSave()}}).catch(()=>toast("Réglages en attente : ils seront envoyés dès que possible."))}
+function persistSettings(){
+  if(S.mode!=="db"){lsSave();return}
+  PEND.settings={...clean(S.settings),_ts:Date.now()};pendSave();
+  clearTimeout(setTimer);setTimer=setTimeout(settingsGo,500)}
 function editing(){const a=document.activeElement;return a&&$("#app").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)}
 
 let auth=null,unsubs=[];
@@ -589,16 +604,22 @@ async function boot(){
     uid=u.uid;S.email=u.email;S.mode="db";S.loaded=false;render();
     const base=db.collection("users").doc(uid);
     vehCol=base.collection("vehicles");photoCol=base.collection("photos");setRef=base.collection("meta").doc("settings");
+    pendLoad();
+    Object.entries(PEND.veh).forEach(([id,d])=>{const data={...d};delete data.id;const ts=data.updatedAt;chains[id]=(chains[id]||Promise.resolve()).then(()=>vehCol.doc(id).set(data,{merge:true})).then(()=>{const p=PEND.veh[id];if(p&&p.updatedAt===ts){delete PEND.veh[id];pendSave()}}).catch(()=>{})});
+    Object.keys(PEND.del).forEach(id=>{chains[id]=(chains[id]||Promise.resolve()).then(()=>vehCol.doc(id).delete()).then(()=>{delete PEND.del[id];pendSave()}).catch(()=>{})});
+    if(PEND.settings){const d={...PEND.settings};const ts=d._ts;delete d._ts;S.settings={...DEF_SETTINGS,...d};chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(d)).then(()=>{if(PEND.settings&&PEND.settings._ts===ts){PEND.settings=null;pendSave()}}).catch(()=>{})}
     let gotV=false;
     const timer=setTimeout(()=>{if(!gotV){S.loaded=true;S.mode="db-slow";render()}},10000);
     unsubs.push(vehCol.onSnapshot(snap=>{
       const remote=snap.docs.map(d=>({...d.data(),id:d.id}));
-      S.vehicles=remote.map(r=>{const loc=S.vehicles.find(x=>x.id===r.id);return(loc&&timers[r.id]&&loc.updatedAt>(r.updatedAt||0))?loc:r});
+      const merged=remote.filter(r=>!PEND.del[r.id]).map(r=>{const p=PEND.veh[r.id];if(p&&(p.updatedAt||0)>=(r.updatedAt||0)){const loc=S.vehicles.find(x=>x.id===r.id);return loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id:r.id}}return r});
+      Object.entries(PEND.veh).forEach(([id,p])=>{if(!merged.some(x=>x.id===id)&&!PEND.del[id]){const loc=S.vehicles.find(x=>x.id===id);merged.push(loc&&loc.updatedAt>=p.updatedAt?loc:{...p,id})}});
+      S.vehicles=merged;
       S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={}});
       if(!snap.metadata.fromCache){gotV=true;clearTimeout(timer);if(S.mode==="db-slow")S.mode="db"}
       S.loaded=true;if(!editing())render();
     },e=>{clearTimeout(timer);S.loaded=true;S.mode="db-error";render()}));
-    unsubs.push(setRef.onSnapshot(d=>{if(d.exists){S.settings={...DEF_SETTINGS,...d.data()};if(!editing())render()}},()=>{}));
+    unsubs.push(setRef.onSnapshot(d=>{if(PEND.settings||setTimer)return;if(d.exists){S.settings={...DEF_SETTINGS,...d.data()};if(!editing())render()}},()=>{}));
   });
 }
 const AUTH_ERR={"auth/invalid-email":"Adresse e-mail invalide.","auth/missing-password":"Entre un mot de passe.","auth/weak-password":"Mot de passe trop court : 6 caractères minimum.","auth/email-already-in-use":"Un compte existe déjà avec cet e-mail : connecte-toi.","auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/wrong-password":"E-mail ou mot de passe incorrect.","auth/user-not-found":"Aucun compte avec cet e-mail : crée-le.","auth/too-many-requests":"Trop d'essais. Réessaie dans quelques minutes.","auth/network-request-failed":"Pas de connexion internet."};
@@ -2105,7 +2126,7 @@ document.addEventListener("click",async e=>{
   if(act==="toggleSignup"){S.signup=!S.signup;render();return}
   if(act==="localmode"){try{localStorage.setItem("gc-local","1")}catch(_){ }S.mode="local";lsLoad();render();return}
   if(act==="gologin"){try{localStorage.removeItem("gc-local")}catch(_){ }S.mode="login";render();return}
-  if(act==="logout"){await auth.signOut();toast("Déconnecté.");return}
+  if(act==="logout"){flushAll();await auth.signOut();toast("Déconnecté.");return}
   if(act==="install"&&installEvt){installEvt.prompt();installEvt=null;return}
   if(act==="resetpw"){const em=($("#l-email")||{}).value;if(!em){$("#l-err").textContent="Entre ton e-mail d'abord.";return}try{await auth.sendPasswordResetEmail(em.trim());$("#l-err").textContent="E-mail de réinitialisation envoyé."}catch(x){$("#l-err").textContent=AUTH_ERR[x.code]||"Envoi impossible."}return}
   if(act==="deldemo"){const id=b.dataset.id;modal("Supprimer cet exemple ?","Cette voiture d'exemple disparaîtra de ton garage et de tes statistiques.","Supprimer",()=>{S.settings.hiddenDemos=[...new Set([...(S.settings.hiddenDemos||[]),id])];persistSettings();toast("Exemple supprimé.");location.hash="garage";render()});return}
