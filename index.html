@@ -345,7 +345,7 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .dacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:-4px 0 14px}
 .dacts>*{min-height:44px;width:100%;justify-content:center;text-align:center;margin:0;box-sizing:border-box}
 .dacts .stwrap{display:flex;height:44px;align-items:center;justify-content:center;border-radius:10px}.dacts .stwrap .stsel{width:100%;height:44px;line-height:44px;font-size:14.5px!important;text-align:center;text-align-last:center}
-.dacts .pill{display:flex;align-items:center;justify-content:center;border-radius:10px}
+.dacts .pill{display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:14.5px}
 @media (min-width:900px){.dacts{max-width:520px}}
 .doc.ok{box-shadow:inset 3px 0 0 var(--good)}.doc.ok .dico{background:var(--good-soft);color:var(--good);font-size:18px}
 .doc.todo{box-shadow:inset 3px 0 0 var(--warn);background:color-mix(in srgb,var(--warn) 9%,var(--surface-2))}.doc.todo .dico{background:var(--warn-soft);color:var(--warn)}
@@ -492,7 +492,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="11.5";
+const APP_VERSION="11.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -1245,7 +1245,8 @@ function vFiche(r){
   const dis=v.demo?" disabled":"";
   const fb={vendeurNom:v.vendeur,clientNom:v.acheteur};const inp=(k,l,t,extra)=>'<label class="f'+(extra&&extra.full?" full":"")+'">'+l+'<input id="f-'+k+'" data-field="'+k+'" type="'+(t||"text")+'" value="'+esc(t==="month"?String(v[k]||"").slice(0,7):(v[k]??fb[k]??""))+'"'+(t==="number"?' inputmode="decimal"':"")+(extra&&extra.ph?' placeholder="'+esc(extra.ph)+'"':"")+dis+'></label>';
   const sel=(k,l,opts)=>'<label class="f">'+l+'<select id="f-'+k+'" data-field="'+k+'"'+dis+'>'+opts.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(val)+'"'+(String(v[k])===String(val)?" selected":"")+'>'+esc(lab)+'</option>'}).join("")+'</select></label>';
-  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a>'+(v.num?'<span class="vnum">'+vnum(v)+'</span>':'')+'<h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+esc(v.annee||"")+(v.km?" · "+kmFmt(v.km):"")+'</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span><button class="btn small" data-foldall="1">'+(foldGet().length>=8?"Tout ouvrir":"Tout réduire")+'</button>'+(v.demo?'<button class="btn primary small" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger small" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<button class="btn danger small" data-act="del" data-id="'+v.id+'">Supprimer</button>')+'</div></div>';
+  let h='<div class="top"><div><a href="#d-'+v.id+'" class="note">← Détails du véhicule</a><div class="vrow">'+(v.num?'<span class="vnum">'+vnum(v)+'</span>':'<span></span>')+'<button class="btn small" data-foldall="1">'+(foldGet().length>=8?"Tout ouvrir":"Tout réduire")+'</button></div><h1>'+esc(v.marque||"Nouvelle voiture")+' '+esc(v.modele||"")+'</h1><p class="num">'+[v.annee,v.km?kmFmt(v.km):"",v.moteur||""].filter(Boolean).map(esc).join(" · ")+'</p></div></div>'+
+    '<div class="dacts"><span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>'+(v.demo?'<button class="btn primary" data-act="demoimport" data-id="'+v.id+'">Modifier cette voiture</button><button class="btn danger" data-act="deldemo" data-id="'+v.id+'" style="grid-column:1/-1">Supprimer</button>':'<button class="btn danger" data-act="del" data-id="'+v.id+'">Supprimer la voiture</button>')+'</div>';
   h+='<div class="ficheone">';
   const vb=CATALOGUE[v.marque]?v.marque:((v.marque||v.autreMarque)?"__autre":"");
   const vModels=vb&&vb!=="__autre"?Object.keys(CATALOGUE[vb].m):[];
