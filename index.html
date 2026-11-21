@@ -494,7 +494,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="11.9";
+const APP_VERSION="12.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -536,8 +536,10 @@ const today=()=>new Date().toISOString().slice(0,10);
 const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
 const aVenir=(e,v)=>{if(!e.date||e.type==="Statut")return"";if(e.fait)return'<button type="button" class="avenir ok" data-rtog="'+e.id+'" data-v="'+v.id+'" title="Annuler">Fait · annuler</button>';if(e.date<today())return"";const d=daysBetween(today(),e.date);return'<span class="avenir">À venir · '+(d===0?"aujourd'hui":d===1?"demain":"dans "+d+" j")+'</span>'+(v.demo?'':'<button type="button" class="avenir mk" data-rtog="'+e.id+'" data-v="'+v.id+'">Marquer fait</button>')};
-const foldGet=()=>{try{return JSON.parse(localStorage.getItem("gc-fold3")||"[]")}catch(e){return[]}};
-const foldSet=a=>{try{localStorage.setItem("gc-fold3",JSON.stringify(a))}catch(e){}};
+let FOLDF=null,FOLDD=null;
+const foldGet=()=>FOLDF||(FOLDF=[1,2,3,4,5,6,7,8]);
+const foldSet=a=>{FOLDF=a};
+window.addEventListener("hashchange",()=>{FOLDF=null;FOLDD=null});
 function foldApply(){const f=foldGet();document.querySelectorAll("[data-fold]").forEach(b=>{const n=+b.dataset.fold,c=b.closest(".card");if(!c)return;const on=f.includes(n);c.classList.toggle("folded",on);b.setAttribute("aria-expanded",String(!on))});const a=document.querySelector("[data-foldall]");if(a)a.textContent=f.length>=document.querySelectorAll("[data-fold]").length?"Tout ouvrir":"Tout réduire"}
 function suiviList(v){const L=(v.journal||[]).filter(e=>e.type!=="Statut");
   if(v.dateAchat)L.push({id:"__achat",virtual:true,t:0,date:v.dateAchat,type:"Achat du véhicule",texte:[v.prixAchat?"Prix d'achat "+eur(num(v.prixAchat)):"",v.source?"via "+v.source:"",[v.vendeurPrenom,v.vendeurNom].filter(Boolean).join(" ")?"vendeur : "+[v.vendeurPrenom,v.vendeurNom].filter(Boolean).join(" "):""].filter(Boolean).join(" · ")});
@@ -549,8 +551,8 @@ function tlItem(e,v,edit){if(e.virtual)return'<div class="tl achat"><div class="
     (e.texte?'<div class="tltxt">'+esc(e.texte)+'</div>':'')+(e.type==="Statut"?'':'<div class="jfs" data-jf="'+e.id+'" data-edit="'+(v.demo?0:1)+'">'+jFacts(v,e,!v.demo)+'</div>')+'</div></div>'}
 const vnum=v=>v&&v.num?"#"+String(v.num).padStart(4,"0"):"";
 function numeroter(){const L=S.vehicles.filter(v=>!v.demo);let max=L.reduce((m,v)=>Math.max(m,num(v.num)),0);const sans=L.filter(v=>!num(v.num)).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)||(a.dateAchat||"").localeCompare(b.dateAchat||""));sans.forEach(v=>{v.num=++max;persistVehicle(v,true)})}
-const foldDGet=()=>{try{return JSON.parse(localStorage.getItem("gc-foldd")||"[]")}catch(e){return[]}};
-const foldDSet=a=>{try{localStorage.setItem("gc-foldd",JSON.stringify(a))}catch(e){}};
+const foldDGet=()=>FOLDD||(FOLDD=[...document.querySelectorAll("#app .ficheone > .card > h2")].map(h=>(h.textContent||"").replace(/·.*$/,"").trim()));
+const foldDSet=a=>{FOLDD=a};
 const CHEV='<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function foldDetails(){const f=foldDGet();const cards=[...document.querySelectorAll("#app .ficheone > .card")].filter(c=>{const h=c.firstElementChild;return h&&h.tagName==="H2"});
   cards.forEach(c=>{const h=c.firstElementChild;const k=(h.textContent||"").replace(/·.*$/,"").trim();if(!h.classList.contains("dfold")){h.classList.add("dfold");h.dataset.foldd=k;h.setAttribute("role","button");h.insertAdjacentHTML("beforeend",CHEV)}c.classList.add("dcard");c.classList.toggle("folded",f.includes(k))});
