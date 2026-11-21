@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="13.1";
+const APP_VERSION="13.2";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -2617,11 +2617,6 @@ function vVentes(){
 function vReglages(){
   const s=S.settings,i=(k,l,hint)=>'<label class="f">'+l+'<input id="r-'+k+'" data-set="'+k+'" type="number" inputmode="decimal" value="'+esc(s[k])+'">'+(hint?'<span class="note">'+hint+'</span>':"")+'</label>';
   let h='<div class="top"><div><h1>Réglages</h1><p>'+modeText()+'</p></div></div>';
-  h+='<div class="card"><h2>Installer GC Motors</h2><div class="install">'+logo()+'<div>'+
-    (installEvt?'<p><button class="btn primary" data-act="install">Installer l\'application</button></p>':'')+
-    '<b>iPhone</b><ol><li>Ouvre cette page dans <b>Safari</b>.</li><li>Touche le bouton Partager (carré avec une flèche vers le haut).</li><li>Choisis « Sur l\'écran d\'accueil », puis « Ajouter ».</li></ol>'+
-    '<b>Android</b><ol><li>Ouvre cette page dans <b>Chrome</b>.</li><li>Menu ⋮, puis « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».</li></ol>'+
-    '<b>PC</b><ol><li>Dans Chrome ou Edge, clique sur l\'icône d\'installation à droite de la barre d\'adresse.</li></ol></div></div></div>';
   if(S.mode!=="local"&&auth&&auth.currentUser)h+='<div class="card"><h2>Compte</h2><p class="note">Connecté avec '+esc(S.email||"")+'.</p><button class="btn small" data-act="logout">Se déconnecter</button></div>';
   else if(fbReady())h+='<div class="card"><h2>Compte</h2><p class="note">Tu utilises l\'app sans compte : tes données restent sur cet appareil.</p><button class="btn small" data-act="gologin">Se connecter / créer un compte</button></div>';
   const tx=(k,l,ph,t)=>'<label class="f">'+l+'<input data-sett="'+k+'" type="'+(t||"text")+'" value="'+esc(s[k]||"")+'" placeholder="'+esc(ph||"")+'"></label>';
