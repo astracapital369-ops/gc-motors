@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="13.8";
+const APP_VERSION="13.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -787,7 +787,8 @@ function openLb(v,i){
 let setTimer=null;
 function settingsGo(){setTimer=null;const data=clean(S.settings);const ts=PEND.settings&&PEND.settings._ts;
   chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(data)).then(()=>{if(PEND.settings&&PEND.settings._ts===ts){PEND.settings=null;pendSave()}}).catch(()=>toast("Réglages en attente : ils seront envoyés dès que possible."))}
-function persistSettings(){
+let lastSetLocal=0;
+function persistSettings(){lastSetLocal=Date.now();
   if(!isDb()){lsSave();return}
   PEND.settings={...clean(S.settings),_ts:Date.now()};pendSave();
   clearTimeout(setTimer);setTimer=setTimeout(settingsGo,500)}
@@ -814,7 +815,7 @@ async function boot(){
     Object.keys(PEND.del).forEach(id=>{chains[id]=(chains[id]||Promise.resolve()).then(()=>vehCol.doc(id).delete()).then(()=>{delete PEND.del[id];pendSave()}).catch(()=>{})});
     if(PEND.settings){const d={...PEND.settings};const ts=d._ts;delete d._ts;S.settings={...DEF_SETTINGS,...d};chains._s=(chains._s||Promise.resolve()).then(()=>setRef.set(d)).then(()=>{if(PEND.settings&&PEND.settings._ts===ts){PEND.settings=null;pendSave()}}).catch(()=>{})}
     let gotV=false;
-    const timer=setTimeout(()=>{if(!gotV){S.loaded=true;S.mode="db-slow";render()}},10000);
+    const timer=setTimeout(()=>{if(!gotV){S.loaded=true;S.mode="db-slow";if(!editing())render()}},10000);
     unsubs.push(vehCol.onSnapshot({includeMetadataChanges:true},snap=>{
       if(!snap.metadata.fromCache&&!gotV){gotV=true;clearTimeout(timer);if(S.mode==="db-slow"){S.mode="db";if(!editing())render()}}
       if(S.loaded&&!snap.docChanges().length)return;
@@ -827,7 +828,7 @@ async function boot(){
       S.vehicles.forEach(v=>{if(!v.frais)v.frais=[];if(!v.check)v.check={};if(v.frais.length&&!v.demo&&migrateFrais(v))setTimeout(()=>persistVehicle(v,true),0);if(v.statut==='reperage'||!STATUTS.some(x=>x.k===v.statut))v.statut='achete'});
       S.loaded=true;if(!editing())render();
     },e=>{clearTimeout(timer);S.loaded=true;S.mode="db-error";render()}));
-    unsubs.push(setRef.onSnapshot(d=>{if(PEND.settings||setTimer)return;if(d.exists){S.settings={...DEF_SETTINGS,...d.data()};if(!editing())render()}},()=>{}));
+    unsubs.push(setRef.onSnapshot(d=>{if(PEND.settings||setTimer||Date.now()-lastSetLocal<15000)return;if(d.exists){S.settings={...DEF_SETTINGS,...d.data()};if(!editing())render()}},()=>{}));
   });
 }
 const AUTH_ERR={"auth/invalid-email":"Adresse e-mail invalide.","auth/missing-password":"Entre un mot de passe.","auth/weak-password":"Mot de passe trop court : 6 caractères minimum.","auth/email-already-in-use":"Un compte existe déjà avec cet e-mail : connecte-toi.","auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/wrong-password":"E-mail ou mot de passe incorrect.","auth/user-not-found":"Aucun compte avec cet e-mail : crée-le.","auth/too-many-requests":"Trop d'essais. Réessaie dans quelques minutes.","auth/network-request-failed":"Pas de connexion internet."};
@@ -1186,7 +1187,10 @@ function render(){render._up=render._up||{};
   h+=({tableau:vTableau,garage:vGarage,fiche:vFiche,details:vDetails,simulateur:vSim,ventes:vVentes,compta:vCompta,reglages:vReglages,plaque:vPlaque,fraisgen:vFraisGen}[r.view])(r);
   const keep={},same=render._last===location.hash,wy=window.scrollY;
   if(same)app.querySelectorAll("details[data-dd] .ddlist").forEach(l=>{keep[l.closest("details").dataset.dd]=l.scrollTop});
-  app.innerHTML=h;render._last=location.hash;
+  const kf={},kfOn=same&&!render._fresh&&(r.view==="plaque"||r.view==="fraisgen"),fid=document.activeElement&&document.activeElement.id;render._fresh=false;
+  if(kfOn)app.querySelectorAll("input[id],select[id],textarea[id]").forEach(e=>{kf[e.id]=e.value});
+  app.innerHTML=h;
+  if(kfOn){Object.entries(kf).forEach(([id,val])=>{const e=document.getElementById(id);if(e&&e.value!==val)e.value=val});if(fid){const e=document.getElementById(fid);if(e)try{e.focus({preventScroll:true})}catch(_){}}}render._last=location.hash;
   if(same){app.querySelectorAll("details[data-dd] .ddlist").forEach(l=>{const k=keep[l.closest("details").dataset.dd];if(k)l.scrollTop=k});if(Math.abs(window.scrollY-wy)>2)window.scrollTo(0,wy)}
   if(r.view==="garage")list().forEach(v=>cardPhotos(v));
   if(r.view==="garage"||r.view==="tableau")list().forEach(v=>{if(v.coverId&&!v.coverHd&&!v.demo&&!render._up[v.id]){render._up[v.id]=1;upgradeCover(v)}});
@@ -2763,10 +2767,10 @@ document.addEventListener("click",async e=>{
   else if(act==="recappdf"){const r=await recapPdf();if(r)apercuGen(r,r.titre)}
   else if(act==="recapcsv"){recapCsv()}
   else if(act==="zadd"){const vid=$("#z-veh").value,dep=$("#z-dep").value.trim(),arr=$("#z-arr").value.trim();if(!vid||(!dep&&!arr)){toast("Choisis le véhicule et indique le trajet.");return}
-    const vv=S.vehicles.find(x=>x.id===vid);S.settings.trajets=[...(S.settings.trajets||[]),{id:newId(),t:Date.now(),date:$("#z-date").value||today(),vid:vv?vid:"",vlib:vv?"":"Autre véhicule",dep,arr,motif:$("#z-mot").value,km:$("#z-km").value.trim()}];persistSettings();render();toast("Trajet ajouté.")}
+    const vv=S.vehicles.find(x=>x.id===vid);S.settings.trajets=[...(S.settings.trajets||[]),{id:newId(),t:Date.now(),date:$("#z-date").value||today(),vid:vv?vid:"",vlib:vv?"":"Autre véhicule",dep,arr,motif:$("#z-mot").value,km:$("#z-km").value.trim()}];persistSettings();render._fresh=true;render();toast("Trajet ajouté.")}
   else if(act==="zdel"){const id=b.dataset.id;const old=S.settings.trajets||[];S.settings.trajets=old.filter(t=>t.id!==id);persistSettings();render();toast("Trajet supprimé.",()=>{S.settings.trajets=old;persistSettings();render()})}
   else if(act==="zpdf"){const r=await plaquePdf();if(r)apercuGen(r,"Carnet plaque Z")}
-  else if(act==="fgadd"){const m=numOrNull($("#fg-mt").value);if(m==null||m<=0){toast("Indique le montant.");return}S.settings.fraisGen=[...fgList(),{id:newId(),date:$("#fg-date").value||today(),cat:$("#fg-cat").value,libelle:$("#fg-lib").value.trim(),montant:m}];persistSettings();render();toast("Dépense ajoutée.")}
+  else if(act==="fgadd"){const m=numOrNull($("#fg-mt").value);if(m==null||m<=0){toast("Indique le montant.");return}S.settings.fraisGen=[...fgList(),{id:newId(),date:$("#fg-date").value||today(),cat:$("#fg-cat").value,libelle:$("#fg-lib").value.trim(),montant:m}];persistSettings();render._fresh=true;render();toast("Dépense ajoutée.")}
   else if(act==="fgdel"){const id=b.dataset.id;const old=fgList();S.settings.fraisGen=old.filter(f=>f.id!==id);persistSettings();render();toast("Dépense supprimée.",()=>{S.settings.fraisGen=old;persistSettings();render()})}
   else if(act==="godocs"){e.preventDefault();const d=$("#ddocs");if(d)d.scrollIntoView({behavior:"smooth",block:"start"})}
   else if(act==="bdcv"){const vv=curVeh(b.dataset.id);if(vv&&!vv.demo)demanderBdc(vv)}
