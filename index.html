@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="12.4";
+const APP_VERSION="12.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1451,18 +1451,21 @@ async function bonCommandePdf(v){
   doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(...navy);doc.text("GC",R-43,21);doc.setTextColor(42,95,240);doc.text("Motors",R-31,21);
   doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(...muted);doc.text("ACHAT · REVENTE",R-43,25.5,{charSpace:0.6});
   // bloc client
-  doc.setFillColor(...grey);doc.rect(118,36,R-118,30,"F");doc.setTextColor(...ink);
   const cname=[v.clientNom,v.clientPrenom].filter(Boolean).join(" ")||v.acheteur||"";
+  const adrL=String(v.clientAdresse||"").split(",").map(x=>x.trim()).filter(Boolean);adrL.push("BELGIQUE");
+  const infL=[v.clientTel?["Tél.",v.clientTel]:null,v.clientEmail?["E-mail",v.clientEmail]:null,v.clientNum?["Client n°",v.clientNum]:null].filter(Boolean);
+  const bh=12+adrL.length*4.2+(infL.length?3+infL.length*4.4:0)+2;
+  doc.setFillColor(...grey);doc.rect(118,36,R-118,Math.max(30,bh),"F");doc.setTextColor(...ink);
   doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.text(T(cname?String(v.clientNom||"").toUpperCase()+" "+(v.clientPrenom||""):"Client"),122,43);
-  if(v.clientNum){doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(...muted);doc.text("Client n° "+T(v.clientNum),R-4,43,{align:"right"});doc.setTextColor(...ink)}
-  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let cy=49;String(v.clientAdresse||"").split(",").map(x=>x.trim()).filter(Boolean).forEach(l=>{doc.text(T(l),122,cy);cy+=4.2});doc.text("BELGIQUE",122,cy);
-  y=Math.max(y,70)+6;
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let cy=49;adrL.forEach(l=>{doc.text(T(l),122,cy);cy+=4.2});
+  if(infL.length){cy+=2.5;infL.forEach(([k,val])=>{doc.setFont("helvetica","bold");doc.setFontSize(8);doc.text(k,122,cy);doc.setFont("helvetica","normal");doc.text(doc.splitTextToSize(T(val),R-140)[0],138,cy);cy+=4.4})}
+  y=Math.max(y,36+Math.max(30,bh)+2)+6;
   // titre
   doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("Bon de commande "+T(v.bdcNum),M,y);
   doc.setFontSize(8.5);doc.text("Date",R-22,y);doc.setFont("helvetica","normal");doc.text(fdNum(v.bdcDate||today()),R,y,{align:"right"});
   doc.setDrawColor(...line);doc.line(M,y+2.5,R,y+2.5);y+=9;
   const row2=(k,val,x,yy,kw)=>{doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(...ink);doc.text(k,x,yy);doc.setFont("helvetica","normal");doc.text(T(val||""),x+(kw||30),yy)};
-  if(v.clientNum){row2("Numéro client",v.clientNum,M,y);y+=4.5}row2("Portable",v.clientTel,M,y);y+=4.5;row2("Email",v.clientEmail,M,y);y+=8;
+  y+=2;
   // véhicule
   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("Voiture d'occasion",M,y);doc.line(M,y+2,R,y+2);y+=8;
   const left=[...(v.num?[["N° véhicule",vnum(v)]]:[]),["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
