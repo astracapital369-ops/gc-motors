@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="14.6";
+const APP_VERSION="14.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1048,6 +1048,7 @@ function vCompta(){const cy=new Date().getFullYear(),T=S.settings.trajets||[];
   const tile=(to,t,sub,lbl)=>'<div class="ctile"><div class="ctx"><b>'+t+'</b><small>'+sub+'</small></div><div class="cbt"><button class="btn primary" data-act="cgo" data-to="'+to+'" data-m="add" aria-label="'+lbl+'">+ Ajouter</button><button class="btn" data-act="cgo" data-to="'+to+'" data-m="list">Voir →</button></div></div>';
   h+='<div class="ctiles">'+tile("fraisgen","Frais généraux",eur(fgTotal(String(cy)))+' en '+cy,"Ajouter un frais")+tile("plaque","Carnet plaque Z",T.length+' trajet'+(T.length>1?"s":""),"Ajouter un trajet")+'</div>';
   h+='<div id="recap">'+recapCard()+'</div>';
+  h+=reserveCard();
   return h}
 let fgFiles=null,fgLoading=false;
 async function loadFgFiles(){if(fgLoading)return;fgLoading=true;try{fgFiles=(await allFilesFor("__fg")).filter(x=>x.kind==="facture")}catch(e){fgFiles=[]}fgLoading=false;refreshFgFiles()}
@@ -1261,15 +1262,18 @@ function vTableau(){
     kpi("Bénéfice moyen / voiture",moyB==null?"—":'<span class="'+(moyB<0?"neg":"pos")+'">'+eur(moyB)+'</span>',"sur les ventes · "+per)+'</div>';
   h+='<div class="grid two"><div class="card chart"><h2>Bénéfice net par mois · '+y+'</h2>'+chartMois(vendus,y,pm)+'<p class="note">Touche un mois pour le sélectionner. Prix de vente moins achat et frais, par mois de vente. Avant TVA sur la marge, impôt et cotisations.</p></div>';
   h+='<div class="card"><h2>À surveiller / Rappels</h2><div class="alerts">'+alertes(L).join("")+'</div></div></div>';
-  h+='<div class="grid two"><div class="card"><h2>Pipeline</h2><div class="pipeline">'+STATUTS.map(s=>'<a class="pipe" href="#garage" data-filter="'+s.k+'"><b class="num">'+L.filter(v=>v.statut===s.k).length+'</b><span>'+s.l+'</span></a>').join("")+'</div>'+
+  h+='<div class="card"><h2>Pipeline</h2><div class="pipeline">'+STATUTS.map(s=>'<a class="pipe" href="#garage" data-filter="'+s.k+'"><b class="num">'+L.filter(v=>v.statut===s.k).length+'</b><span>'+s.l+'</span></a>').join("")+'</div>'+
     '<p class="note" style="margin-top:12px">Marge nette potentielle du stock actuel : <b class="num">'+eur(potentiel)+'</b> (sur prix affiché ou estimation).</p></div>';
-  h+='<div class="card"><h2>À mettre de côté</h2><div class="calc">'+
+  return h;
+}
+function reserveCard(){const vendus=list().filter(v=>!v.demo&&v.statut==="vendu"),now=new Date(),q=Math.floor(now.getMonth()/3),qStart=now.getFullYear()+"-"+String(q*3+1).padStart(2,"0")+"-01";
+  const tvaQ=vendus.filter(v=>v.dateVente&&v.dateVente>=qStart).reduce((s,v)=>s+(calc(v).tva||0),0);
+  const gar=vendus.filter(v=>{const f=finGarantie(v);return f&&f>=today()}),prov=gar.length*num(S.settings.provGarantie);
+  return'<div class="card"><h2>À mettre de côté</h2><div class="calc">'+
     row("TVA sur la marge, trimestre en cours",eur(tvaQ))+
     row("Provision garantie ("+gar.length+" voiture"+(gar.length>1?"s":"")+" sous garantie)",eur(prov))+
     '<div class="row total"><span>Total à réserver</span><span class="num">'+eur(tvaQ+prov)+'</span></div></div>'+
-    '<p class="note">Plus une part pour l\'impôt et les cotisations, à voir avec ton comptable.</p></div></div>';
-  return h;
-}
+    '<p class="note">Plus une part pour l\'impôt et les cotisations, à voir avec ton comptable.</p></div>'}
 function kpi(l,v,s){return'<div class="card kpi"><div class="lbl">'+l+'</div><div class="val num">'+v+'</div><div class="sub">'+s+'</div></div>'}
 function row(a,b,cls){return'<div class="row"><span>'+a+'</span><span class="num '+(cls||"")+'">'+b+'</span></div>'}
 function alertes(L){
