@@ -222,6 +222,9 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .sstep .chev{width:20px;height:20px;margin-left:auto;color:var(--muted);transition:transform .2s;transform:rotate(180deg);flex:none}
 .card.folded > .sstep{margin-bottom:0}.card.folded > .sstep .chev{transform:none}
 .card.folded > :not(.sstep){display:none!important}
+.dcard > h2.dfold{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}.dcard > h2.dfold .chev{width:20px;height:20px;margin-left:auto;color:var(--muted);transition:transform .2s;transform:rotate(180deg);flex:none}
+.dcard.folded > h2.dfold{margin-bottom:0;display:flex!important}.dcard.folded > h2.dfold .chev{transform:none}.dcard.folded > :not(h2){display:none!important}
+.dfoldbar{display:flex;justify-content:flex-end;margin:-6px 0 10px}
 .sstep h2{margin:0}
 .sn{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:none}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
@@ -488,7 +491,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="10.8";
+const APP_VERSION="10.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -543,6 +546,17 @@ function tlItem(e,v,edit){if(e.virtual)return'<div class="tl achat"><div class="
     (e.texte?'<div class="tltxt">'+esc(e.texte)+'</div>':'')+(e.type==="Statut"?'':'<div class="jfs" data-jf="'+e.id+'" data-edit="'+(v.demo?0:1)+'">'+jFacts(v,e,!v.demo)+'</div>')+'</div></div>'}
 const vnum=v=>v&&v.num?"#"+String(v.num).padStart(4,"0"):"";
 function numeroter(){const L=S.vehicles.filter(v=>!v.demo);let max=L.reduce((m,v)=>Math.max(m,num(v.num)),0);const sans=L.filter(v=>!num(v.num)).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)||(a.dateAchat||"").localeCompare(b.dateAchat||""));sans.forEach(v=>{v.num=++max;persistVehicle(v,true)})}
+const foldDGet=()=>{try{return JSON.parse(localStorage.getItem("gc-foldd")||"[]")}catch(e){return[]}};
+const foldDSet=a=>{try{localStorage.setItem("gc-foldd",JSON.stringify(a))}catch(e){}};
+const CHEV='<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function foldDetails(){const f=foldDGet();const cards=[...document.querySelectorAll("#app .ficheone > .card")].filter(c=>{const h=c.firstElementChild;return h&&h.tagName==="H2"});
+  cards.forEach(c=>{const h=c.firstElementChild;const k=(h.textContent||"").replace(/·.*$/,"").trim();if(!h.classList.contains("dfold")){h.classList.add("dfold");h.dataset.foldd=k;h.setAttribute("role","button");h.insertAdjacentHTML("beforeend",CHEV)}c.classList.add("dcard");c.classList.toggle("folded",f.includes(k))});
+  const top=document.querySelector("#app .dacts");if(top&&cards.length&&!document.querySelector("[data-folddall]")){top.insertAdjacentHTML("afterend",'<div class="dfoldbar"><button class="btn small" data-folddall="1"></button></div>')}
+  const b=document.querySelector("[data-folddall]");if(b)b.textContent=cards.every(c=>c.classList.contains("folded"))?"Tout ouvrir":"Tout réduire"}
+document.addEventListener("click",e=>{const a=e.target.closest("[data-folddall]");const h=e.target.closest("[data-foldd]");if(!a&&!h)return;if(h&&e.target.closest("a,button:not([data-folddall]),label,input"))return;e.preventDefault();
+  const keys=[...document.querySelectorAll("[data-foldd]")].map(x=>x.dataset.foldd);let f=foldDGet();
+  if(a){const allF=keys.every(k=>f.includes(k));f=allF?f.filter(k=>!keys.includes(k)):[...new Set([...f,...keys])]}else{const k=h.dataset.foldd;f=f.includes(k)?f.filter(x=>x!==k):[...f,k]}
+  foldDSet(f);foldDetails()});
 const moisAn=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})/);return m?m[2]+"/"+m[1]:""};
 const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
 const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -1071,6 +1085,7 @@ function render(){render._up=render._up||{};
   if(same){app.querySelectorAll("details[data-dd] .ddlist").forEach(l=>{const k=keep[l.closest("details").dataset.dd];if(k)l.scrollTop=k});if(Math.abs(window.scrollY-wy)>2)window.scrollTo(0,wy)}
   if(r.view==="garage")list().forEach(v=>cardPhotos(v));
   if(r.view==="garage"||r.view==="tableau")list().forEach(v=>{if(v.coverId&&!v.coverHd&&!v.demo&&!render._up[v.id]){render._up[v.id]=1;upgradeCover(v)}});
+  if(r.view==="details")foldDetails();
   if(r.view==="fiche"){foldApply();updateCalc();const fv=curVeh(r.id);if(fv)ensurePhotos(fv)}
   if(r.view==="details"){const dv=curVeh(r.id);if(dv)ensurePhotos(dv)}
   if(r.view==="simulateur")updateSim();
