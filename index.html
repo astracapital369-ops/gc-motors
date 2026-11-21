@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="15.0";
+const APP_VERSION="15.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1311,6 +1311,8 @@ function alertes(L){
     if(ym){const key=ym.getFullYear()+"-"+String(ym.getMonth()+1).padStart(2,"0"),nom=MOIS[ym.getMonth()].toLowerCase();
       const nv=L.filter(v=>!v.demo&&v.statut==="vendu"&&(v.dateVente||"").startsWith(key)).length,na=L.filter(v=>!v.demo&&(v.dateAchat||"").startsWith(key)).length,nf=L.reduce((a,v)=>a+fraisJ(v).filter(e=>(e.date||"").startsWith(key)).length,0)+fgList().filter(f=>(f.date||"").startsWith(key)).length;
       if(nv||na||nf)al("comptam:"+key,rest<=1||d<=5?"bad":"",null,'<b>Transmettre les factures de '+nom+' au comptable</b><small>À faire '+txt+' · '+[nv?nv+" vente"+(nv>1?"s":""):"",na?na+" achat"+(na>1?"s":""):"",nf?nf+" frais":""].filter(Boolean).join(", ")+'. Récap dans Comptabilité.</small>')}}
+  if([2,5,8,11].includes(m)&&num(S.settings.cotisTrim)>0){const last=new Date(now.getFullYear(),m+1,0).getDate(),rest=last-d,qn=m/3+1|0;
+    if(rest<=15)al("cot:"+now.getFullYear()+"-"+qn,rest<=5?"bad":"",null,'<b>Payer les cotisations sociales du T'+qn+'</b><small>'+eur(num(S.settings.cotisTrim))+' à payer avant le '+last+' '+MOIS[m].toLowerCase()+' ('+(rest===0?"aujourd'hui":rest===1?"demain":"dans "+rest+" jours")+'). Montant modifiable dans Réglages.</small>')}
   if([0,3,6,9].includes(m)&&d<=20)al("tva:"+now.getFullYear()+"-"+m,"",null,'<b>Déclaration TVA trimestrielle</b><small>Mois de déclaration : vérifie l\'échéance avec ton comptable.</small>');
   return out.length?out:['<div class="alert ok"><div>Rien à signaler.</div></div>'];
 }
