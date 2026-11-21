@@ -358,7 +358,7 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .docadd.todo{border-color:var(--warn);color:var(--warn)}
 .docadd{position:relative;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:10px;padding:10px;color:var(--accent);font-weight:600;font-size:14px;cursor:pointer;margin-top:2px}
 .tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}.tplus{margin-top:8px;width:26px;height:26px;border-radius:50%;background:var(--accent,#5b8cff);color:#fff;font-weight:700;font-size:18px;line-height:26px;text-align:center}.tools2{grid-template-columns:repeat(2,minmax(0,1fr));max-width:480px;margin-left:auto;margin-right:auto}.tools2 .tool{position:relative;padding-top:14px;padding-bottom:14px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}.tool{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:2px;min-width:0}.tool b{font-size:13.5px;line-height:1.2}.tool small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.zl{display:flex;flex-direction:column;gap:6px;margin-top:12px}.zi{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:10px;padding:9px 10px}.zi>div{flex:1;min-width:0}.zi small{display:block;color:var(--muted);font-size:12.5px}.zi .x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+.zl{display:flex;flex-direction:column;gap:6px;margin-top:12px}.zi{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:10px;padding:9px 10px}.zi>div{flex:1;min-width:0}.zi small{display:block;color:var(--muted);font-size:12.5px}.fgi{flex-direction:column;align-items:stretch;gap:8px}.fgl{display:flex;align-items:center;gap:10px}.fgl>div{flex:1;min-width:0}.fgf{display:flex;flex-wrap:wrap;gap:6px}.zi .x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
 .data.vtab th,.data.vtab td{text-align:center!important;vertical-align:middle}.data.vtab td:first-child,.data.vtab th:first-child{text-align:left!important}
 .data.vtab td .vnum{display:inline-block;vertical-align:middle}.data.vtab td .note{display:block;font-size:11.5px}
 .data td.gar{white-space:nowrap}.data td.gar .gok,.data td.gar .gend{display:inline-block}.data td.gar small{display:block;color:var(--muted);font-size:12px;margin-top:2px}.gok,.gend{font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:10px}.gok{background:var(--good-soft);color:var(--good)}.gend{background:var(--surface-2);color:var(--muted)}
@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="13.9";
+const APP_VERSION="14.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1041,7 +1041,13 @@ function vCompta(){const cy=new Date().getFullYear(),T=S.settings.trajets||[];
   h+='<div class="tools tools2"><a class="tool" href="#fraisgen" aria-label="Frais généraux, ajouter un frais"><b>Frais généraux</b><small>'+eur(fgTotal(String(cy)))+' en '+cy+'</small><span class="tplus" aria-hidden="true">+</span></a><a class="tool" href="#plaque" aria-label="Trajets plaque Z, ajouter un trajet"><b>Trajets plaque Z</b><small>'+T.length+' trajet'+(T.length>1?"s":"")+'</small><span class="tplus" aria-hidden="true">+</span></a></div>';
   h+='<div id="recap">'+recapCard()+'</div>';
   return h}
-function vFraisGen(){
+let fgFiles=null,fgLoading=false;
+async function loadFgFiles(){if(fgLoading)return;fgLoading=true;try{fgFiles=(await allFilesFor("__fg")).filter(x=>x.kind==="facture")}catch(e){fgFiles=[]}fgLoading=false;refreshFgFiles()}
+function refreshFgFiles(){if(route().view!=="fraisgen")return;document.querySelectorAll(".fgf[data-fg]").forEach(el=>{const f=fgList().find(x=>x.id===el.dataset.fg);if(f)el.innerHTML=fgFilesInner(f)})}
+function fgFilesInner(f){if(!fgFiles)return'<span class="note">Chargement…</span>';const L=fgFiles.filter(x=>x.fgId===f.id);
+  return L.map(x=>'<span class="jf"><button type="button" class="jfo" data-fgopen="'+x.id+'">'+(x.mime==="application/pdf"?'<span class="fico s">PDF</span>':'<img src="'+x.thumb+'" alt="">')+'<span>Facture</span></button><button class="x" data-fgfdel="'+x.id+'" aria-label="Supprimer cette facture">×</button></span>').join("")+
+    '<label class="jfadd">+ '+(L.length?"Autre facture":"Ajouter la facture")+'<input type="file" class="vh" data-fgin="'+f.id+'" accept="image/*,application/pdf" multiple></label>'}
+function vFraisGen(){if(!fgFiles)setTimeout(loadFgFiles,0);
   const st=S.settings,cy=new Date().getFullYear();if(!S.fgY)S.fgY=cy;const Y=S.fgY;
   const all=fgList(),F=all.filter(f=>(f.date||"").startsWith(String(Y))).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   const years=[...new Set([cy,...all.map(f=>+String(f.date||"").slice(0,4)).filter(Boolean)])].sort((a,b)=>b-a);
@@ -1052,7 +1058,7 @@ function vFraisGen(){
     '<button class="btn primary" style="margin-top:12px" data-act="fgadd">+ Ajouter la dépense</button></div>';
   h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">Dépenses '+Y+'</h2><select data-fgy style="width:auto">'+years.map(a=>'<option'+(a===Y?" selected":"")+'>'+a+'</option>').join("")+'</select></div>'+
     '<div class="calc" style="margin-top:12px">'+Object.entries(parCat).sort((a,b)=>b[1]-a[1]).map(([c,m])=>row(esc(c),eur(m))).join("")+'<div class="row total"><span>Total '+Y+'</span><span class="num">'+eur(fgTotal(String(Y)))+'</span></div></div>'+
-    (F.length?'<div class="zl" style="margin-top:12px">'+F.map(f=>'<div class="zi"><div><b>'+esc(f.libelle||f.cat)+'</b><small>'+fdate(f.date)+' · '+esc(f.cat)+'</small></div><b class="num" style="white-space:nowrap">'+eur(num(f.montant))+'</b><button class="x" data-act="fgdel" data-id="'+f.id+'" aria-label="Supprimer cette dépense">×</button></div>').join("")+'</div>':'<p class="note" style="margin-top:10px">Aucune dépense en '+Y+'.</p>')+'</div>';
+    (F.length?'<div class="zl" style="margin-top:12px">'+F.map(f=>'<div class="zi fgi"><div class="fgl"><div><b>'+esc(f.libelle||f.cat)+'</b><small>'+fdate(f.date)+' · '+esc(f.cat)+'</small></div><b class="num" style="white-space:nowrap">'+eur(num(f.montant))+'</b><button class="x" data-act="fgdel" data-id="'+f.id+'" aria-label="Supprimer cette dépense">×</button></div><div class="fgf" data-fg="'+f.id+'">'+fgFilesInner(f)+'</div></div>').join("")+'</div>':'<p class="note" style="margin-top:10px">Aucune dépense en '+Y+'.</p>')+'</div>';
   return h+'</div>';
 }
 
@@ -1072,7 +1078,7 @@ function recapCard(){
   return'<div class="card"><h2>Récap pour le comptable</h2><div class="form"><label class="f">Année<select data-rq="y">'+[cy,cy-1,cy-2].map(a=>'<option'+(a===y?" selected":"")+'>'+a+'</option>').join("")+'</select></label><label class="f">Trimestre<select data-rq="q">'+[0,1,2,3].map(i=>'<option value="'+i+'"'+(i===q?" selected":"")+'>T'+(i+1)+' ('+["janv.-mars","avr.-juin","juil.-sept.","oct.-déc."][i]+')</option>').join("")+'</select></label></div>'+
     '<div class="calc" style="margin-top:12px">'+row("Ventes ("+d.ventes.length+")",eur(T.ca))+row("Achats de véhicules ("+d.achats.length+")",eur(T.achats))+row("Frais sur véhicules",eur(T.fraisV))+row("Frais généraux",eur(T.fg))+row("Marge sur les ventes",eur(T.marge))+row("TVA sur la marge à déclarer",eur(T.tva))+'<div class="row total"><span>Résultat avant impôt</span><span class="num">'+eur(T.res)+'</span></div></div>'+
     '<div class="fmrow" style="margin-top:12px"><button class="btn" data-act="recapcsv">Tableau (CSV)</button><button class="btn" data-act="recappdf">Récap seul (PDF)</button></div>'+
-    '<button class="btn primary" style="width:100%;margin-top:8px" data-act="dossiercompta">Dossier complet pour le comptable (PDF)</button><p class="note" style="margin-top:6px;text-align:center">Récap + factures de vente, factures et contrats d\'achat, factures de garage et autres documents du trimestre, en un seul PDF.</p></div>';
+    '<button class="btn primary" style="width:100%;margin-top:8px" data-act="dossiercompta">Dossier complet pour le comptable (PDF)</button><p class="note" style="margin-top:6px;text-align:center">Récap + factures de vente, factures et contrats d\'achat, factures de garage, factures des frais généraux et autres documents du trimestre, en un seul PDF.</p></div>';
 }
 async function recapPdf(annexe){
   try{await loadJsPdf()}catch(e){toast("Connexion nécessaire pour créer le PDF.");return}
@@ -1128,7 +1134,9 @@ async function dossierCompta(){
     fj.filter(e=>(e.fait||e.date<today())&&!F.some(f=>f.jId===e.id)).forEach(e=>manques.push({type:"Facture de garage",veh,det:e.type+(e.texte?" - "+e.texte:"")+" · "+fdNum(e.date)+" · "+fmtNum(num(e.montant))+" €"}));
     if(sold||bought)F.filter(x=>x.cat==="autre").forEach(f=>G.autre.push({type:"Autre document",veh,det:f.name||"",f}));
   }
-  const pieces=[...G.vente,...G.achat,...G.garage,...G.autre];
+  G.fg=[];try{const FF=(await allFilesFor("__fg")).filter(x=>x.kind==="facture");d.fg.forEach(f=>{const L=FF.filter(x=>x.fgId===f.id),lab=(f.cat||"")+(f.libelle?" - "+f.libelle:"")+" · "+fdNum(f.date)+" · "+fmtNum(num(f.montant))+" €";
+    L.forEach(x=>G.fg.push({type:"Frais général",veh:"-",det:lab,f:x}));if(!L.length)manques.push({type:"Facture frais général",veh:"-",det:lab})})}catch(e){}
+  const pieces=[...G.vente,...G.achat,...G.garage,...G.fg,...G.autre];
   const rec=await recapPdf({pieces,manques});if(!rec)return;
   const {PDFDocument,StandardFonts,rgb}=window.PDFLib;const out=await PDFDocument.create();
   const font=await out.embedFont(StandardFonts.Helvetica);
@@ -2771,7 +2779,7 @@ document.addEventListener("click",async e=>{
   else if(act==="zdel"){const id=b.dataset.id;const old=S.settings.trajets||[];S.settings.trajets=old.filter(t=>t.id!==id);persistSettings();render();toast("Trajet supprimé.",()=>{S.settings.trajets=old;persistSettings();render()})}
   else if(act==="zpdf"){const r=await plaquePdf();if(r)apercuGen(r,"Carnet plaque Z")}
   else if(act==="fgadd"){const m=numOrNull($("#fg-mt").value);if(m==null||m<=0){toast("Indique le montant.");return}S.settings.fraisGen=[...fgList(),{id:newId(),date:$("#fg-date").value||today(),cat:$("#fg-cat").value,libelle:$("#fg-lib").value.trim(),montant:m}];persistSettings();render._fresh=true;render();toast("Dépense ajoutée.")}
-  else if(act==="fgdel"){const id=b.dataset.id;const old=fgList();S.settings.fraisGen=old.filter(f=>f.id!==id);persistSettings();render();toast("Dépense supprimée.",()=>{S.settings.fraisGen=old;persistSettings();render()})}
+  else if(act==="fgdel"){const id=b.dataset.id;const old=fgList();S.settings.fraisGen=old.filter(f=>f.id!==id);persistSettings();render();setTimeout(async()=>{if(fgList().some(f=>f.id===id))return;for(const x of (fgFiles||[]).filter(x=>x.fgId===id)){try{await deletePhoto(x.id)}catch(_){}}fgFiles=(fgFiles||[]).filter(x=>x.fgId!==id)},7000);toast("Dépense supprimée.",()=>{S.settings.fraisGen=old;persistSettings();render()})}
   else if(act==="godocs"){e.preventDefault();const d=$("#ddocs");if(d)d.scrollIntoView({behavior:"smooth",block:"start"})}
   else if(act==="bdcv"){const vv=curVeh(b.dataset.id);if(vv&&!vv.demo)demanderBdc(vv)}
   else if(act==="bdc"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage (bouton Modifier).");return}demanderBdc(v)}
@@ -2915,6 +2923,15 @@ document.addEventListener("change",e=>{const t=e.target;if(t.id!=="factinput"||!
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-factopen],[data-factdel]");if(!o)return;const v=curVeh(route().id);if(!v)return;const L=factCache[v.id]||[];
   if(o.dataset.factopen){const f=L.find(x=>x.id===o.dataset.factopen);if(f)openFacture(f);return}
   e.preventDefault();e.stopPropagation();const id=o.dataset.factdel;modal("Supprimer ce document ?","Le fichier importé sera supprimé de cette voiture.","Supprimer",async()=>{try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}factCache[v.id]=(factCache[v.id]||[]).filter(x=>x.id!==id);refreshFacts(v);toast("Document supprimé.")})});
+document.addEventListener("change",async e=>{const t=e.target;if(!t.dataset||!t.dataset.fgin||!t.files||!t.files.length)return;const fid=t.dataset.fgin,files=[...t.files];t.value="";let ok=0;
+  for(const f of files){try{let p;const base={id:newId(),vehicleId:"__fg",fgId:fid,kind:"facture",createdAt:Date.now()};
+    if(f.type==="application/pdf"){if(f.size>700000){toast("PDF trop lourd (max 700 Ko). Prends plutôt une photo de la facture.");continue}p={...base,mime:"application/pdf",name:f.name,full:await fileData(f)}}
+    else{const img=await loadImg(f);p={...base,mime:"image/jpeg",name:f.name||"Facture",full:shrink(img,2200,0.85),thumb:shrink(img,200,0.7)}}
+    await savePhoto(p);(fgFiles=fgFiles||[]).push(p);ok++}catch(err){toast("La facture n'a pas pu être ajoutée.")}}
+  refreshFgFiles();if(ok)toast(ok>1?ok+" factures ajoutées.":"Facture ajoutée.")});
+document.addEventListener("click",e=>{const o=e.target.closest("[data-fgopen],[data-fgfdel]");if(!o)return;e.preventDefault();e.stopPropagation();
+  if(o.dataset.fgopen){const f=(fgFiles||[]).find(x=>x.id===o.dataset.fgopen);if(f)openFacture(f);return}
+  const id=o.dataset.fgfdel;modal("Supprimer cette facture ?","Le fichier sera retiré de cette dépense.","Supprimer",async()=>{try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}fgFiles=(fgFiles||[]).filter(x=>x.id!==id);refreshFgFiles();toast("Facture supprimée.")})},true);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-dismiss]");if(!b)return;e.preventDefault();e.stopPropagation();const k=b.dataset.dismiss;const h=S.settings.hiddenAlerts||[];if(!h.includes(k))S.settings.hiddenAlerts=[...h,k].slice(-300);persistSettings();const y0=window.scrollY;render();window.scrollTo(0,y0);
   toast("Rappel supprimé de l'accueil.",()=>{S.settings.hiddenAlerts=(S.settings.hiddenAlerts||[]).filter(x=>x!==k);persistSettings();const y1=window.scrollY;render();window.scrollTo(0,y1)})},true);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-docdel]");if(!b)return;e.preventDefault();e.stopPropagation();const v=curVeh(route().id);if(!v)return;const k=b.dataset.docdel,st=S.settings;
