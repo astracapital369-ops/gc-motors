@@ -437,8 +437,10 @@ table.data tfoot td{font-weight:600;border-top:2px solid var(--line)}
 table.data a{color:var(--ink);font-weight:500}
 .chart svg{width:100%;height:auto;display:block}
 .chart text{fill:var(--muted);font:11px var(--body)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
-.modal .card{max-width:440px;width:100%;max-height:calc(100% - 20px);overflow-y:auto}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));z-index:50;overscroll-behavior:contain;overflow:hidden;touch-action:none}
+.modal .card{max-width:440px;width:100%;max-height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;box-sizing:border-box}
+.modal .card *{max-width:100%;box-sizing:border-box}.modal input,.modal select,.modal textarea{min-width:0;width:100%}.modal input[type=checkbox],.modal input[type=radio]{width:auto}
+html.lock,html.lock body{overflow:hidden!important;overscroll-behavior:none}body.lockfix{position:fixed;left:0;right:0;width:100%}
 .modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:60;max-width:90vw}
 nav.tabs{display:none}
@@ -492,7 +494,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="11.6";
+const APP_VERSION="11.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -557,6 +559,7 @@ document.addEventListener("click",e=>{const a=e.target.closest("[data-folddall]"
   const keys=[...document.querySelectorAll("[data-foldd]")].map(x=>x.dataset.foldd);let f=foldDGet();
   if(a){const allF=keys.every(k=>f.includes(k));f=allF?f.filter(k=>!keys.includes(k)):[...new Set([...f,...keys])]}else{const k=h.dataset.foldd;f=f.includes(k)?f.filter(x=>x!==k):[...f,k]}
   foldDSet(f);foldDetails()});
+(()=>{const ov=document.getElementById("overlay");if(!ov)return;let y=0,on=false;new MutationObserver(()=>{const open=!!ov.firstElementChild;if(open&&!on){on=true;y=window.scrollY;document.documentElement.classList.add("lock");document.body.classList.add("lockfix");document.body.style.top=(-y)+"px"}else if(!open&&on){on=false;document.documentElement.classList.remove("lock");document.body.classList.remove("lockfix");document.body.style.top="";window.scrollTo(0,y)}}).observe(ov,{childList:true})})();
 const moisAn=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})/);return m?m[2]+"/"+m[1]:""};
 const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"}):"—";
 const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
