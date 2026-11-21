@@ -469,7 +469,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="8.7";
+const APP_VERSION="8.8";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -2047,6 +2047,7 @@ function equipBase(v){const y=num(v.annee);if(!y||!v.marque)return[];const m=cat
   a(prem&&y>=2012,"GPS intégré","Frein de stationnement électrique");a(prem&&y>=2006&&y<2016,"Phares xénon");a(prem&&y>=2016,"Phares LED");
   a(el,"Câble de recharge fourni","Récupération d'énergie réglable","Charge rapide DC");
   return[...new Set(o)]}
+function simBase(s){if(!s||s.optsAuto===false||!s.brand||s.brand==="Autre"||!s.model)return;const b=equipBase({marque:s.brand,modele:s.model,annee:s.anneeMin,carburant:s.carburant});if(b.length){s.options=b;s.optsAuto=true}}
 function applyBase(v){if(v.demo||v.optsAuto===false)return false;if((v.options||[]).length&&!v.optsAuto)return false;const b=equipBase(v);if(!b.length)return false;const same=(v.options||[]).length===b.length&&b.every(x=>v.options.includes(x));if(same)return false;v.options=b;v.optsAuto=true;return true}
 function applyEuro(v){v.auto=v.auto||{};if(v.euronorm&&!v.auto.euronorm)return false;const e=euroNormeAuto(v.annee,v.carburant,v.premiereImmat);if(!e||e===v.euronorm)return false;v.euronorm=e;v.auto.euronorm=true;return true}
 function autoSpecs(v,force){const lab=v.moteur||"";v.auto=v.auto||{};const set=(k,val)=>{if(val===""||val==null)return;if(force||!v[k]||v.auto[k]){v[k]=val;v.auto[k]=true}};
@@ -2266,7 +2267,7 @@ document.addEventListener("click",async e=>{
     const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   const mp=e.target.closest("[data-mpick]");
   if(mp){const sc=mp.dataset.mpick,b=mp.dataset.b,m=mp.dataset.m;
-    if(sc==="sim"&&S.sim){const s=S.sim;s.brand=b;s.model=m;s.moteur="";s.carburant="Essence";s.coef=1;s.result=null;const ys=anneesDe(b,m);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax))}
+    if(sc==="sim"&&S.sim){const s=S.sim;s.brand=b;s.model=m;s.moteur="";s.carburant="Essence";s.coef=1;s.result=null;const ys=anneesDe(b,m);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax));simBase(s)}
     if(sc==="veh"){const v=curVeh(route().id);if(v&&!v.demo){v.marque=b;v.autreMarque=false;v.modele=m;v.moteur="";applyEuro(v);applyBase(v);persistVehicle(v,true)}}
     const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   const mo=e.target.closest("[data-month]");if(mo){const i=mo.dataset.month;S.period.m=String(S.period.m)===i?"":i;render();return}
@@ -2368,6 +2369,7 @@ document.addEventListener("change",e=>{
     if(k==="brand"){s.model="";s.moteur="";s.carburant="Essence";s.coef=1;s.result=null}
     if(k==="model"){s.moteur="";s.carburant="Essence";s.coef=1;s.result=null;const ys=anneesDe(s.brand,s.model);const lo=ys[ys.length-1],hi=ys[0];s.anneeMin=Math.min(hi,Math.max(lo,s.anneeMin));s.anneeMax=Math.min(hi,Math.max(lo,s.anneeMax))}
     if(k==="moteur"){const m=moteursDe(s.brand,s.model),e=m&&m.e.find(x=>x[0]===v);if(e){s.carburant=FUEL[e[1]];s.coef=e[2]}else{s.carburant="Essence";s.coef=1}}
+    if(["brand","model","moteur"].includes(k))simBase(s);
     if(k==="anneeMin"&&s.anneeMin>s.anneeMax)s.anneeMax=s.anneeMin;
     if(k==="anneeMax"&&s.anneeMax<s.anneeMin)s.anneeMin=s.anneeMax;
     if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
@@ -2387,9 +2389,9 @@ document.addEventListener("change",e=>{
     persistVehicle(v,true);const sm=$("#dd-vfrais");if(sm)sm.textContent=vfSummary(v);const tt=$("#vfraistotal");if(tt)tt.textContent=eur(fraisTotal(v));updateCalc();return}
   if(t.dataset.vopt!==undefined&&t.type==="checkbox"&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo)return;v.optsAuto=false;const o=t.dataset.vopt;v.options=v.options||[];v.options=t.checked?[...new Set([...v.options,o])]:v.options.filter(x=>x!==o);persistVehicle(v,true);const sm=$("#dd-vopt");if(sm)sm.textContent=eqSummary(v.options);return}
   if(t.hasAttribute&&t.hasAttribute("data-addpb")&&r.view==="fiche"){const v=curVeh(r.id);if(!v||v.demo||!t.value)return;const p=PB_INDEX[t.value];v.frais.push({id:newId(),cat:p.cat,libelle:p.l,montant:p.c});persistVehicle(v,true);const y0=window.scrollY;render();window.scrollTo(0,y0);toast("Frais ajouté : "+p.l);return}
-  if(t.dataset.simyear1!==undefined&&S.sim){const s=S.sim,yN=new Date().getFullYear();let y=parseInt(t.value,10);if(isNaN(y))return;if(y<1990||y>yN)return;s.anneeMin=s.anneeMax=y;if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
+  if(t.dataset.simyear1!==undefined&&S.sim){const s=S.sim,yN=new Date().getFullYear();let y=parseInt(t.value,10);if(isNaN(y))return;if(y<1990||y>yN)return;s.anneeMin=s.anneeMax=y;simBase(s);if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   if(t.dataset.simyear&&S.sim){const s=S.sim,k=t.dataset.simyear,yN=new Date().getFullYear();let y=parseInt(t.value,10);if(isNaN(y))y=s[k];y=Math.min(yN,Math.max(1990,y));s[k]=y;if(s.anneeMin>s.anneeMax){if(k==="anneeMin")s.anneeMax=y;else s.anneeMin=y}if(s.result&&simReady(s))s.result=estimerSim(s);const y0=window.scrollY;render();window.scrollTo(0,y0);return}
-  if(t.dataset.simck&&S.sim){const s=S.sim,o=t.dataset.simck;s.options=t.checked?[...new Set([...s.options,o])]:s.options.filter(x=>x!==o);simRefresh();return}
+  if(t.dataset.simck&&S.sim){const s=S.sim,o=t.dataset.simck;s.optsAuto=false;s.options=t.checked?[...new Set([...s.options,o])]:s.options.filter(x=>x!==o);simRefresh();return}
   if(t.dataset.simfr&&S.sim){const s=S.sim,k=t.dataset.simfr,amt=document.querySelector('[data-simfra="'+k+'"]');if(t.checked){s.frais[k]=num(amt&&amt.value)||PB_INDEX[k].c;if(amt)amt.disabled=false}else{delete s.frais[k];if(amt){amt.disabled=true;amt.value=PB_INDEX[k].c}}simRefresh();return}
   if(t.dataset.period){S.period[t.dataset.period]=t.dataset.period==="y"?+t.value:t.value;render();return}
   if(t.id==="phinput"){const v=curVeh(r.id);if(v&&!v.demo)addPhotos(v,[...t.files]);t.value="";return}
