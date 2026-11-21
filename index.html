@@ -354,7 +354,7 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .dst.addin{position:relative;cursor:pointer}
 .dsum{display:flex;gap:8px;align-items:center;margin:-4px 0 12px}
 .dsub{font-size:11.5px;color:var(--muted);margin:6px 0 0}
-.docw{position:relative}.docw .doc{padding-right:30px}.dx{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:15px;line-height:22px;padding:0;cursor:pointer;opacity:.8}
+.docw{position:relative}.docw .doc{padding-right:30px}.dx{position:absolute;z-index:2;top:2px;right:2px;width:28px;height:28px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:16px;line-height:28px;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}.dx::before{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--surface);z-index:-1}
 .docadd.todo{border-color:var(--warn);color:var(--warn)}
 .docadd{position:relative;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:10px;padding:10px;color:var(--accent);font-weight:600;font-size:14px;cursor:pointer;margin-top:2px}
 .tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}.tool{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:2px;min-width:0}.tool b{font-size:13.5px;line-height:1.2}.tool small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -492,7 +492,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="11.3";
+const APP_VERSION="11.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -2761,7 +2761,7 @@ document.addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset
 document.addEventListener("change",e=>{const t=e.target;if(t.id!=="factinput"||!t.files||!t.files.length)return;const v=curVeh(route().id);if(v&&!v.demo)addFactures(v,[...t.files]);t.value=""});
 document.addEventListener("click",async e=>{const o=e.target.closest("[data-factopen],[data-factdel]");if(!o)return;const v=curVeh(route().id);if(!v)return;const L=factCache[v.id]||[];
   if(o.dataset.factopen){const f=L.find(x=>x.id===o.dataset.factopen);if(f)openFacture(f);return}
-  const id=o.dataset.factdel;if(!window.confirm("Supprimer ce document ?"))return;try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}factCache[v.id]=L.filter(x=>x.id!==id);refreshFacts(v)});
+  e.preventDefault();e.stopPropagation();const id=o.dataset.factdel;modal("Supprimer ce document ?","Le fichier importé sera supprimé de cette voiture.","Supprimer",async()=>{try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}factCache[v.id]=(factCache[v.id]||[]).filter(x=>x.id!==id);refreshFacts(v);toast("Document supprimé.")})});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-dismiss]");if(!b)return;e.preventDefault();e.stopPropagation();const k=b.dataset.dismiss;const h=S.settings.hiddenAlerts||[];if(!h.includes(k))S.settings.hiddenAlerts=[...h,k].slice(-300);persistSettings();const y0=window.scrollY;render();window.scrollTo(0,y0);
   toast("Rappel supprimé de l'accueil.",()=>{S.settings.hiddenAlerts=(S.settings.hiddenAlerts||[]).filter(x=>x!==k);persistSettings();const y1=window.scrollY;render();window.scrollTo(0,y1)})},true);
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("bp")&&d.open){const i=d.querySelector("[data-bsearch]");if(i)setTimeout(()=>i.focus(),30)}if(d.dataset&&d.dataset.dd==="vopt"){S.vOpen=d.open;return}if(d.dataset&&d.dataset.dd==="vfrais"){S.vfOpen=d.open;return}if(d.dataset&&d.dataset.dd&&S.sim){S.sim.open=S.sim.open||{};S.sim.open[d.dataset.dd]=d.open}},true);
