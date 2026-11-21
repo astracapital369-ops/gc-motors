@@ -492,7 +492,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="11.2";
+const APP_VERSION="11.3";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -667,8 +667,8 @@ function docsHtml(v){
   if(!L){return'<div class="dsum">Chargement…</div><div class="docs">'+h+'<p class="note">Chargement des factures…</p></div>'}
   const ach=L.filter(f=>!f.jId&&!f.garage&&!f.cat),gar=L.filter(f=>f.jId||f.garage),aut=L.filter(f=>f.cat==="autre"),sig=L.filter(f=>f.cat==="contrat");
   h+='<div class="dgrp">Achat</div>';
-  h+=sig.length?sig.map(f=>it("CA","Contrat d'achat signé",fdC(f),'data-factopen="'+f.id+'"',"ok")).join(""):it("CA","Contrat d'achat","Imprime-le, fais-le signer, puis ajoute la version signée",'data-act="pdfachat"',"todo")+add("contrat","Ajouter le contrat signé");
-  h+=ach.length?ach.map(f=>it(f.mime==="application/pdf"?"PDF":"IMG","Facture d'achat",esc(f.name||"")+" · "+fdC(f),'data-factopen="'+f.id+'"',"ok")).join("")+'':'<div class="doc ro todo"><span class="dico">FA</span><span class="dtx"><b>Facture d\'achat</b><small>Pas encore ajoutée</small></span><span class="dst todo">À faire</span></div>'+add("achat","Ajouter la facture d'achat",true);
+  h+=sig.length?sig.map(f=>it("CA","Contrat d'achat signé",fdC(f),'data-factopen="'+f.id+'"',"ok")).join(""):(nTodo++,'<div class="doc ro todo"><span class="dico">CA</span><span class="dtx" data-act="pdfachat" style="cursor:pointer"><b>Contrat d\'achat</b><small>Touche ici pour l\'imprimer, puis ajoute la version signée</small></span><label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="contrat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label></div>');
+  h+=ach.length?ach.map(f=>it(f.mime==="application/pdf"?"PDF":"IMG","Facture d'achat",esc(f.name||"")+" · "+fdC(f),'data-factopen="'+f.id+'"',"ok")).join("")+'':(nTodo++,'<div class="doc ro todo"><span class="dico">FA</span><span class="dtx"><b>Facture d\'achat</b><small>Pas encore ajoutée</small></span><label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="achat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label></div>');
   const manq=(v.journal||[]).filter(e=>e.type!=="Statut"&&num(e.montant)&&(e.fait||(e.date&&e.date<today()))&&!L.some(f=>f.jId===e.id));
   h+='<div class="dgrp">Factures de garage / réparations</div>';
   h+=gar.map(f=>{const e=(v.journal||[]).find(x=>x.id===f.jId);return it(f.mime==="application/pdf"?"PDF":"IMG",esc(e?e.type+(e.texte?" · "+e.texte:""):(f.name||"Facture de garage")),(e?fdate(e.date):fdC(f))+(e&&e.montant?" · "+eur(num(e.montant)):""),'data-factopen="'+f.id+'"',"ok")}).join("");
