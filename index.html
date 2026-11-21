@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="12.6";
+const APP_VERSION="12.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -869,7 +869,7 @@ async function pdfEntete(doc,titre,num,date){
   return y;
 }
 function pdfPied(doc,page,tot){const st=S.settings;doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(90,96,110);doc.text(PT([st.entNom||"GC Motors",st.entTva?"TVA "+st.entTva:"",st.entWeb,st.entEmail,st.entTel].filter(Boolean).join(" | ")),16,287);if(tot)doc.text(page+"/"+tot,194,287,{align:"right"});doc.setTextColor(25,28,36)}
-function vehRows(v){return[["N° véhicule",vnum(v)],["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis (VIN)",v.vin],["1re immatriculation",moisAn(v.premiereImmat)],["Année",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""],["Carburant",v.carburant],["Boîte",v.boite],["Couleur",v.couleur],["Norme Euro",v.euronorm]].filter(r=>r[1])}
+function vehRows(v){return[["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis (VIN)",v.vin],["1re immatriculation",moisAn(v.premiereImmat)],["Année",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""],["Carburant",v.carburant],["Boîte",v.boite],["Couleur",v.couleur],["Norme Euro",v.euronorm]].filter(r=>r[1])}
 function kvBlock(doc,rows,x,y,kw,maxw){doc.setFontSize(9);rows.forEach(([k,v])=>{doc.setFont("helvetica","bold");doc.text(PT(k),x,y);doc.setFont("helvetica","normal");doc.text(doc.splitTextToSize(PT(v),maxw||80)[0]||"",x+kw,y);y+=5});return y}
 
 /* 1. Facture au régime de la marge */
@@ -1357,7 +1357,7 @@ async function fichePdf(v){
   // caractéristiques (mêmes champs que le bon de commande + état)
   sec("Caractéristiques du véhicule");
   const etat=(ETATS.find(e=>e[0]===v.etat)||[])[1];
-  const left=[...(v.num?[["N° véhicule",vnum(v)]]:[]),["Marque",v.marque],["Modèle",v.modele],["Motorisation",v.moteur],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
+  const left=[["Marque",v.marque],["Modèle",v.modele],["Motorisation",v.moteur],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
   const right=[["Capacité cyl.",v.cylindree?fmtNum(num(v.cylindree)).replace(",00","")+" cm3":""],["Puissance",v.puissance?v.puissance+" kW ("+Math.round(num(v.puissance)*1.35962)+" ch)":""],["Carburant",v.carburant],["Boîte",v.boite],["Euronorm",v.euronorm],["État général",etat],["Carnet d'entretien",v.entretien===false?"Incomplet":"Complet"],["Propriétaires",v.proprios?(v.proprios>=3?"3 et plus":String(v.proprios)):""]];
   const rows=Math.max(left.length,right.length);need(rows*5.6+4);
   doc.setFontSize(9.5);const colW=pw/2;
@@ -1426,7 +1426,7 @@ function loadQr(){if(window.qrcode)return Promise.resolve();if(qrP)return qrP;qr
 function commStructuree(bdcNum){const d=String(bdcNum).replace(/\D/g,"");const base=(d+"0000000000").slice(0,10);const n=BigInt(base);let c=Number(n%97n);if(c===0)c=97;const all=base+String(c).padStart(2,"0");return"+++"+all.slice(0,3)+"/"+all.slice(3,7)+"/"+all.slice(7)+"+++"}
 function fmtNum(n){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n).replace(/[  ]/g,".")}
 function fdNum(d){if(!d)return"";const x=new Date(d+"T12:00:00");return String(x.getDate()).padStart(2,"0")+"/"+String(x.getMonth()+1).padStart(2,"0")+"/"+x.getFullYear()}
-async function bonCommandePdf(v){
+async function bonCommandePdf(v,lvl){lvl=lvl||0;const LS=[4.8,4.2,3.7][lvl],DL=[4,3.6,3.3][lvl],DF=[8.5,8,7.5][lvl];
   toast("Création du bon de commande…");
   try{await loadJsPdf()}catch(e){toast("Connexion nécessaire pour créer le PDF.");return}
   try{await loadQr()}catch(e){}
@@ -1468,17 +1468,17 @@ async function bonCommandePdf(v){
   y+=2;
   // véhicule
   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("Voiture d'occasion",M,y);doc.line(M,y+2,R,y+2);y+=8;
-  const left=[...(v.num?[["N° véhicule",vnum(v)]]:[]),["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
+  const left=[["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
   const right=[["Capacité cyl.",v.cylindree?fmtNum(num(v.cylindree)).replace(",00","")+" cm3":""],["Puissance (kW)",v.puissance],["Carburant",v.carburant],["Boîte",v.boite],["Euronorm",v.euronorm],["Code couleur",v.codeCouleur]];
-  const y0=y;left.forEach((p,i)=>{row2(p[0],doc.splitTextToSize(T(p[1]||""),62)[0],M,y0+i*4.8)});right.forEach((p,i)=>row2(p[0],p[1],118,y0+i*4.8,27));
-  y=y0+left.length*4.8+5;
+  const y0=y;left.forEach((p,i)=>{row2(p[0],doc.splitTextToSize(T(p[1]||""),62)[0],M,y0+i*LS)});right.forEach((p,i)=>row2(p[0],p[1],118,y0+i*LS,27));
+  y=y0+Math.max(left.length,right.length)*LS+(lvl?3:5);
   // description
   doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("Description",M,y);doc.line(M,y+2,R,y+2);y+=7;
-  doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+  doc.setFont("helvetica","normal");doc.setFontSize(DF);
   const docsRemis=(v.bdcDocs&&v.bdcDocs.length?v.bdcDocs:["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass"]);
-  doc.text("Documents remis avec le véhicule à la livraison :",M,y);y+=4.5;docsRemis.forEach(d=>{doc.circle(M+3,y-1.1,0.6,"F");doc.text(T(d),M+6,y);y+=4.2});y+=2;
-  doc.splitTextToSize(T(st.bdcConditions||BDC_CONDITIONS_DEF),R-M).forEach(l=>{doc.text(l,M,y);y+=4});y+=2;
-  const bl=(k,val)=>{doc.setFont("helvetica","bold");doc.text(T(k),M,y);const w=doc.getTextWidth(T(k))+2;doc.setFont("helvetica","normal");const ls=doc.splitTextToSize(T(val),R-M-w);ls.forEach((l,i)=>doc.text(l,M+w,y+i*4));y+=ls.length*4+1};
+  doc.text("Documents remis avec le véhicule à la livraison :",M,y);y+=DL+0.5;if(lvl>=2){doc.text(T(docsRemis.join(" · ")),M+3,y);y+=DL}else docsRemis.forEach(d=>{doc.circle(M+3,y-1.1,0.6,"F");doc.text(T(d),M+6,y);y+=DL});y+=lvl?1:2;
+  doc.splitTextToSize(T(st.bdcConditions||BDC_CONDITIONS_DEF),R-M).forEach(l=>{doc.text(l,M,y);y+=DL});y+=lvl?1:2;
+  const bl=(k,val)=>{doc.setFont("helvetica","bold");doc.text(T(k),M,y);const w=doc.getTextWidth(T(k))+2;doc.setFont("helvetica","normal");const ls=doc.splitTextToSize(T(val),R-M-w);ls.forEach((l,i)=>doc.text(l,M+w,y+i*DL));y+=ls.length*DL+(lvl?0.5:1)};
   bl("Caractéristiques spécifiques essentielles : ",v.bdcSpec||"aucune");
   bl("Livraison : ",(v.bdcLivDate?"au plus tard le "+fdNum(v.bdcLivDate):"à convenir")+" - "+(v.bdcLivLieu||"au siège du vendeur"));
   bl("Garantie : ","garantie légale de conformité de "+(num(st.dureeGarantie)||12)+" mois à compter de la livraison (art. 1649quater du Code civil).");
@@ -1497,7 +1497,7 @@ async function bonCommandePdf(v){
   doc.setDrawColor(...line);doc.line(M,y-2.5,R,y-2.5);
   y+=4;
   // bas de page : signatures, totaux, QR
-  let by=Math.max(y,200);{const na=(v.acomptes||[]).filter(a=>num(a.montant)).length;const end=Math.max(by+3+7*(2+na),by+33)+5+15;if(end>286){by=Math.max(y,0);const end2=Math.max(by+3+7*(2+na),by+33)+5+15;if(end2>286){doc.addPage();by=24}}}
+  let by=Math.max(y,200);{const na=(v.acomptes||[]).filter(a=>num(a.montant)).length;const need=b=>Math.max(b+3+7*(2+na),b+33)+5+15;if(need(by)>286){by=y;if(need(by)>286){if(lvl<2)return bonCommandePdf(v,lvl+1);doc.addPage();by=24}}}
   const acomptes=(v.acomptes||[]).filter(a=>num(a.montant));const paye=acomptes.reduce((a,b)=>a+num(b.montant),0);const reste=tot-paye;
   // totaux
   const tx=R-56,tw=56;let ty=by;
