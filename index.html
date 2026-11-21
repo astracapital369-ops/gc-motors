@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="12.5";
+const APP_VERSION="12.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1495,10 +1495,9 @@ async function bonCommandePdf(v){
   if(v.reprise&&v.reprise.on&&num(v.reprise.prix))lignes.push({d:"Reprise de votre véhicule"+(v.reprise.mod?" ("+v.reprise.mod+")":""),q:1,p:-num(v.reprise.prix)});
   lignes.forEach(l=>{doc.text(doc.splitTextToSize(T(l.d),95)[0],cx.d,y);doc.text(String(l.q),cx.q,y,{align:"right"});doc.text(fmtNum(l.p),cx.p,y,{align:"right"});doc.text(fmtNum(l.p*l.q),cx.t,y,{align:"right"});doc.text("0%",cx.v,y,{align:"right"});tot+=l.p*l.q;y+=5});
   doc.setDrawColor(...line);doc.line(M,y-2.5,R,y-2.5);
-  doc.setFillColor(252,246,214);const gtxt="En tant que particulier ou entreprise (hors marchand et usage commercial), vous bénéficiez d'1 an de garantie légale à compter de la date de livraison.";
-  const gl=doc.splitTextToSize(gtxt,R-M-6);doc.rect(M,y-1,R-M,gl.length*4+4,"F");doc.setFontSize(8.5);gl.forEach((l,i)=>doc.text(l,M+3,y+3.2+i*4));y+=gl.length*4+8;
+  y+=4;
   // bas de page : signatures, totaux, QR
-  let by=Math.max(y,214);
+  let by=Math.max(y,200);{const na=(v.acomptes||[]).filter(a=>num(a.montant)).length;const end=Math.max(by+3+7*(2+na),by+33)+5+15;if(end>286){by=Math.max(y,0);const end2=Math.max(by+3+7*(2+na),by+33)+5+15;if(end2>286){doc.addPage();by=24}}}
   const acomptes=(v.acomptes||[]).filter(a=>num(a.montant));const paye=acomptes.reduce((a,b)=>a+num(b.montant),0);const reste=tot-paye;
   // totaux
   const tx=R-56,tw=56;let ty=by;
@@ -1522,7 +1521,7 @@ async function bonCommandePdf(v){
   if(reste>0){doc.text("Mentionner lors du paiement :",R-50,by+1,{align:"right"});doc.setFont("helvetica","normal");doc.text(comm,R,by+1,{align:"right"})}
   doc.line(M,by+8,R,by+8);
   doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(...muted);doc.text("Livraison soumise au régime particulier d'imposition de la marge bénéficiaire. TVA non déductible.",M,by+13);
-  doc.text(T([st.entWeb,st.entEmail,st.entTel].filter(Boolean).join(" | ")),M,287);
+
   // page 2 : conditions générales
   doc.addPage();doc.setTextColor(...ink);doc.setFont("helvetica","bold");doc.setFontSize(14);doc.text("Conditions générales de vente de véhicules d'occasion",W/2,26,{align:"center"});
   y=40;doc.setFont("helvetica","normal");doc.setFontSize(9.5);
@@ -1541,6 +1540,7 @@ async function bonCommandePdf(v){
     doc.text(T((ad?"[ ] ":"[X] ")+"le consommateur ne demande pas des adaptations avant la livraison ;"),M+2,ay);ay+=5;
     doc.text(T((ad?"[X] ":"[ ] ")+"pour les points suivants, les adaptations/réparations suivantes seront faites avant la livraison :"),M+2,ay);ay+=5;
     (ad?doc.splitTextToSize(T(ad),R-M-8):["........................................................................................................................................"]).forEach(l=>{doc.text(l,M+6,ay);ay+=4.5});ay+=6;
+    if(ay+38>282){doc.addPage();ay=24}
     doc.text("Lieu et date de la signature : ........................................................",M,ay);ay+=8;doc.setFont("helvetica","bold");doc.text("Signature de l'acheteur",M,ay);doc.text("Signature du vendeur",M+92,ay);doc.setDrawColor(...ink);doc.rect(M,ay+2,84,20);doc.rect(M+92,ay+2,R-M-92,20)}
   {const np=doc.getNumberOfPages();for(let i=1;i<=np;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(...muted);doc.text(i+"/"+np,R,287,{align:"right"})}}
   const titre="Bon de commande "+v.bdcNum;
