@@ -492,7 +492,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="11.0";
+const APP_VERSION="11.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const BDC_DOCS=["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass","Carnet d'entretien","Factures d'entretien","2 clés","Manuel d'utilisation"];
@@ -660,7 +660,7 @@ function docsHtml(v){
   const add=(k,t,big)=>'<label class="docadd'+(big?" todo":"")+'">+ '+t+'<input type="file" class="vh" data-docin="'+k+'" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>';
   let h='';
   h+='<div class="dgrp">Vente</div>'+(v.bdcNum?it("BDC","Bon de commande n° "+esc(v.bdcNum),(v.bdcDate?fdate(v.bdcDate):"")+([v.clientPrenom,v.clientNom].filter(Boolean).length?" · "+esc([v.clientPrenom,v.clientNom].filter(Boolean).join(" ")):""),'data-act="pdfbdc"',"ok"):it("BDC","Bon de commande","Pas encore créé : touche pour le créer",'data-act="bdc"',v.statut==="vendu"||v.statut==="en_vente"?"todo":""));
-  if(v.factNum)h+=it("FAC","Facture n° "+esc(v.factNum),(v.factDate?fdate(v.factDate):"")+" · régime de la marge",'data-act="pdffact"',"ok");else if(v.statut==="vendu")h+=it("FAC","Facture","Pas encore créée : touche pour la créer",'data-act="pdffact"',"todo");
+  if(v.factNum)h+=it("FAC","Facture n° "+esc(v.factNum),(v.factDate?fdate(v.factDate):"")+" · régime de la marge",'data-act="pdffact"',"ok");else if(v.statut==="vendu")h+=it("FAC","Facture","Pas encore créée : touche pour la créer",'data-act="pdffact"',"todo");else h+=it("FAC","Facture","À créer à la livraison, une fois la voiture vendue et payée",'data-act="pdffact"',"");
   if(v.statut==="vendu"&&v.dateVente){const f=finGarantie(v),enc=f&&f>=today();h+='<div class="doc ro info"><span class="dico">G</span><span class="dtx"><b>Garantie légale '+num(S.settings.dureeGarantie||12)+' mois</b><small>'+(f?(enc?"En cours jusqu'au ":"Terminée le ")+fdate(f):"")+'</small></span></div>'}
   h+='<div class="dsub">Générés à la demande</div>'+it("PDF","Fiche détails du véhicule","Caractéristiques, options et photos",'data-act="pdf"');
   if(v.statut!=="vendu")h+=it("TXT","Texte d'annonce","Prêt à copier pour 2ememain ou AutoScout24",'data-act="annonce"');
@@ -2599,7 +2599,7 @@ document.addEventListener("click",async e=>{
   else if(act==="viewph"&&v){openLb(v,+b.dataset.i)}
   else if(act==="pdf"&&v){apercuPdf(v)}
   else if(act==="pdfbdc"&&v){apercuPdf(v,"bdc")}
-  else if(act==="pdffact"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}if(!num(v.prixVente)&&!num(v.prixAffiche)){toast("Indique d'abord le prix de vente final.");return}const r=await facturePdf(v);if(r){apercuGen(r,"Facture "+v.factNum);if($("#doclist"))refreshFacts(v)}}
+  else if(act==="pdffact"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}if(v.statut!=="vendu"&&!v.factNum){toast("La facture se crée une fois la voiture passée en « Vendu », à la livraison.");return}if(!num(v.prixVente)&&!num(v.prixAffiche)){toast("Indique d'abord le prix de vente final.");return}const r=await facturePdf(v);if(r){apercuGen(r,"Facture "+v.factNum);if($("#doclist"))refreshFacts(v)}}
   else if(act==="pdfachat"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}const r=await contratAchatPdf(v);if(r)apercuGen(r,"Contrat d'achat",()=>{location.hash="v-"+v.id})}
   else if(act==="annonce"&&v){annonceModal(v)}
   else if(act==="gorecap"){e.preventDefault();location.hash="ventes";setTimeout(()=>{const x=$("#recap");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},150)}
