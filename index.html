@@ -7,9 +7,9 @@
 <meta name="theme-color" content="#0f1d3d">
 <meta name="apple-mobile-web-app-title" content="GC Motors">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
-<link rel="icon" type="image/png" href="favicon-64.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon-64.png?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="manifest" href="manifest.webmanifest?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="17.9";
+const APP_VERSION="18.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -529,10 +529,10 @@ const ICONS={
   compta:'<path d="M7 3h8l4 4v14H7zM15 3v4h4M10 11h6M10 15h6M10 19h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
   ventes:'<path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
   reglages:'<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'};
-const LOGO_SRC=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16274f"/><stop offset="1" stop-color="#0a1226"/></linearGradient><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d5dcea"/><stop offset="1" stop-color="#9aa6bd"/></linearGradient><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f97ff"/><stop offset="1" stop-color="#2a5ff0"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#bg)"/><rect x="10" y="10" width="492" height="492" rx="103" fill="none" stroke="#2a3d6e" stroke-width="4"/><path d="M362.07 149.93 A150 150 0 1 0 396.95 307.3 V256 H318" fill="none" stroke="url(#chrome)" stroke-width="46" stroke-linejoin="round"/><path d="M307.4 194.7 A80 80 0 1 0 307.4 317.3" fill="none" stroke="url(#blue)" stroke-width="38" stroke-linecap="round"/><path d="M150 452 H362" stroke="#2a5ff0" stroke-width="6" stroke-linecap="round" opacity=".9"/></svg>`;
+const LOGO_SRC=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16274f"/><stop offset="1" stop-color="#0a1226"/></linearGradient><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d5dcea"/><stop offset="1" stop-color="#9aa6bd"/></linearGradient><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f97ff"/><stop offset="1" stop-color="#2a5ff0"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#bg)"/><rect x="10" y="10" width="492" height="492" rx="103" fill="none" stroke="#2a3d6e" stroke-width="4"/><path d="M256 58 L420 108 V246 C420 354 346 426 256 456 C166 426 92 354 92 246 V108 Z" fill="#0d1834" stroke="url(#chrome)" stroke-width="13" stroke-linejoin="round"/><path d="M256 84 L398 127 V246 C398 338 336 400 256 428 C176 400 114 338 114 246 V127 Z" fill="none" stroke="#2a3d6e" stroke-width="3"/><path d="M140 206 C172 200 198 196 218 191 C236 170 254 158 278 156 C310 154 336 162 356 180 C372 184 384 192 390 204" fill="none" stroke="url(#chrome)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M232 186 C248 172 262 167 282 167 C302 167 320 172 336 184 Z" fill="url(#blue)"/><g transform="translate(262 322) scale(.84) translate(-262 -322)"><path d="M240 284 A54 54 0 1 0 245 342 V317 H210" fill="none" stroke="url(#chrome)" stroke-width="27" stroke-linejoin="round" transform="translate(-16,8)"/><path d="M360 284 A54 54 0 1 0 360 352" fill="none" stroke="url(#blue)" stroke-width="27" stroke-linecap="round" transform="translate(-4,8)"/></g></svg>`;
 let logoN=0;
 function logo(){const n="g"+(logoN++);return LOGO_SRC.replace(/id="(bg|chrome|blue)"/g,(m,a)=>'id="'+a+n+'"').replace(/url\(#(bg|chrome|blue)\)/g,(m,a)=>"url(#"+a+n+")").replace("<svg ",'<svg aria-hidden="true" ')}
-const WORDMARK='<div class="wm"><em>GC</em> Motors<span>ACHAT · REVENTE</span></div>';
+const WORDMARK='<div class="wm"><em>GC</em> Motors</div>';
 const NAV=[["tableau","Tableau de bord"],["garage","Garage"],["simulateur","Simulateur"],["ventes","Ventes"],["compta","Comptabilité"],["reglages","Réglages"]];
 
 /* ---------- état ---------- */
@@ -870,7 +870,7 @@ async function pdfEntete(doc,titre,num,date){
   kv("TVA",st.entTva);kv("IBAN",st.entIban);kv("BIC",st.entBic);
   const logo=await urlToData("icon-192.png").catch(()=>null);if(logo)doc.addImage(logo,"PNG",R-62,10,16,16);
   doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(...navy);doc.text("GC",R-43,21);doc.setTextColor(42,95,240);doc.text("Motors",R-31,21);
-  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(...muted);doc.text("ACHAT · REVENTE",R-43,25.5,{charSpace:0.6});
+  
   doc.setTextColor(...ink);
   y=Math.max(y,40)+4;
   if(titre){doc.setFont("helvetica","bold");doc.setFontSize(14);doc.text(PT(titre)+(num?" "+PT(num):""),M,y);if(date){doc.setFontSize(9);doc.setFont("helvetica","normal");doc.text("Date : "+fdNum(date),R,y,{align:"right"})}doc.setDrawColor(200,204,212);doc.line(M,y+2.5,R,y+2.5);y+=10}
@@ -1631,7 +1631,7 @@ async function bonCommandePdf(v,lvl){lvl=lvl||0;const LS=[4.8,4.2,3.7][lvl],DL=[
   // logo
   const logo=await urlToData("icon-192.png");if(logo)doc.addImage(logo,"PNG",R-62,10,16,16);
   doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(...navy);doc.text("GC",R-43,21);doc.setTextColor(42,95,240);doc.text("Motors",R-31,21);
-  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(...muted);doc.text("ACHAT · REVENTE",R-43,25.5,{charSpace:0.6});
+  
   // bloc client
   const cname=(v.clientType==="pro"?v.clientSociete:[v.clientNom,v.clientPrenom].filter(Boolean).join(" "))||v.acheteur||"";
   const adrL=String(v.clientAdresse||"").split(",").map(x=>x.trim()).filter(Boolean);adrL.push("BELGIQUE");
