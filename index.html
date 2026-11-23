@@ -216,6 +216,7 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .topacts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 @media(max-width:640px){.top>.topacts,.top>[data-act=achatrapide]{width:100%}.topacts .btn{flex:1;justify-content:center}}
 .as-part[hidden],.as-pro[hidden]{display:none!important}
+@media(max-width:640px){.gtop{flex-direction:column;align-items:stretch;gap:10px}.gtop>div{align-self:stretch;text-align:left;margin:0}.gtop>.btn{width:100%;justify-content:center;padding:13px}.toolbar .gfilter{max-width:none;flex-basis:100%}.toolbar .search{flex:1 1 100%;width:100%;max-width:none;min-width:0}}
 .modal .f[hidden]{display:none!important}
 .liqrows{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
 .liqrows span{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
@@ -510,7 +511,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="20.2";
+const APP_VERSION="20.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1038,7 +1039,7 @@ async function apercuGen(r,label,onEdit,saveTo,next){
     if(a==="print")return printPdf(r);if(a==="zin")return setZ(z+0.5);if(a==="zout")return setZ(z-0.5);if(a==="close"||a==="done"){ov.innerHTML="";if(next)next();return}if(a==="sign"){signModal(r,async()=>{const r2=await r.regen();if(r2){if(r.commit&&!r2.commit)r2.commit=r.commit;apercuGen(r2,label,onEdit,saveTo,next)}});return}if(a==="edit"){ov.innerHTML="";onEdit();return}
     if(a==="send"){if(r.commit)r.commit();if(saveTo)savePdfDoc(saveTo.v,r,saveTo.cat);if(r.alsoSave&&!(saveTo&&saveTo.cat===r.alsoSave.cat))savePdfDoc(r.alsoSave.v,r,r.alsoSave.cat);const file=new File([r.blob],r.name,{type:"application/pdf"});let shared=false;try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});shared=true}}catch(err){if(err&&err.name==="AbortError"){if(next){ov.innerHTML="";next()}return}}if(!shared){r.doc.save(r.name);if(!saveTo)toast("PDF téléchargé.")}if(next){ov.innerHTML="";next()}}};
   try{await loadPdfJs();const pdf=await window.pdfjsLib.getDocument({data:await r.blob.arrayBuffer()}).promise;const box=$("#pdfpages");if(!box)return;box.innerHTML="";
-    for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp0=page.getViewport({scale:1});const scale=Math.min(5,(Math.min(box.clientWidth,800)*2*(window.devicePixelRatio||1))/vp0.width);const vp=page.getViewport({scale});const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";box.appendChild(c);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}}
+    for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp0=page.getViewport({scale:1});const scale=Math.min(3,(Math.min(box.clientWidth,800)*Math.min(2,window.devicePixelRatio||1)*1.3)/vp0.width);const vp=page.getViewport({scale});const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";box.appendChild(c);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}}
   catch(e){const box=$("#pdfpages");if(box)box.innerHTML='<iframe class="pdfframe" src="'+URL.createObjectURL(r.blob)+'" title="Aperçu PDF"></iframe>'}
 }
 
@@ -1414,7 +1415,7 @@ function vGarage(){
   const order={en_vente:0,preparation:1,achete:2,reperage:3,vendu:4};
   items.sort((a,b)=>(order[a.statut]-order[b.statut])||((b.dateAchat||"").localeCompare(a.dateAchat||"")));
   const chips=[["stock","Non vendus"],["achete","En stock"],["preparation","En réparation"],["en_vente","En vente"],["vendu","Vendus"],["tous","Tous"]];
-  let h='<div class="top"><div><h1>Garage</h1><p>'+L.filter(v=>EN_STOCK.includes(v.statut)).length+' voiture(s) à ta disposition</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
+  let h='<div class="top gtop"><div><h1>Garage</h1><p>'+L.filter(v=>EN_STOCK.includes(v.statut)).length+' voiture(s) à ta disposition</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
   const cnt=k=>L.filter(v=>k==="tous"||(k==="stock"?EN_STOCK.includes(v.statut):v.statut===k)).length;
   h+='<div class="toolbar"><label class="f gfilter">Afficher<select data-gfilter aria-label="Filtrer les voitures">'+chips.map(([k,l])=>'<option value="'+k+'"'+(f===k?" selected":"")+'>'+l+' ('+cnt(k)+')</option>').join("")+'</select></label><input class="search" id="search" type="search" placeholder="Rechercher une marque, un modèle…" value="'+esc(S.search)+'"></div>';
   if(!items.length)return h+'<div class="card empty">Aucune voiture dans cette catégorie.</div>';
@@ -1603,7 +1604,7 @@ async function apercuPdf(v,kind){
       try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(err){if(err&&err.name==="AbortError")return}
       r.doc.save(r.name);toast("PDF téléchargé.")}};
   try{await loadPdfJs();const pdf=await window.pdfjsLib.getDocument({data:await r.blob.arrayBuffer()}).promise;const box=$("#pdfpages");if(!box)return;box.innerHTML="";
-    for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp0=page.getViewport({scale:1});const scale=Math.min(5,(Math.min(box.clientWidth,800)*2*(window.devicePixelRatio||1))/vp0.width);const vp=page.getViewport({scale});
+    for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp0=page.getViewport({scale:1});const scale=Math.min(3,(Math.min(box.clientWidth,800)*Math.min(2,window.devicePixelRatio||1)*1.3)/vp0.width);const vp=page.getViewport({scale});
       const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";if(z>1){c.style.width=(z*100)+"%";c.style.maxWidth="none"}box.appendChild(c);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}}
   catch(e){const box=$("#pdfpages");if(box)box.innerHTML='<iframe class="pdfframe" src="'+URL.createObjectURL(r.blob)+'" title="Aperçu PDF"></iframe>'}
 }
@@ -2706,7 +2707,7 @@ function repriseNew(v){const nv={id:newId(),marque:"",modele:"",annee:"",km:"",c
   migrateFrais(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);v.reprise={...(v.reprise||{}),on:true,vid:nv.id};persistVehicle(v,true);return nv}
 function repriseVeh(v){const Rp=v.reprise||{};if(!Rp.on||!Rp.vid)return null;const ex=S.vehicles.find(x=>x.id===Rp.vid);if(!ex)return null;Object.assign(ex,repriseData(v));persistVehicle(ex,true);return ex}
 /* achat sur place : contrat d'achat rapide (particulier ou pro) */
-function achatModal(ev){const ov=$("#overlay");const E=ev||{};let typ=E.vendeurType==="pro"?"pro":"part";const P=typ==="pro";
+function achatModal(ev){const ov=$("#overlay");loadJsPdf().catch(()=>{});loadPdfJs().catch(()=>{});pdfCar().catch(()=>{});const E=ev||{};let typ=E.vendeurType==="pro"?"pro":"part";const P=typ==="pro";
   const fi=(id,l,o)=>{o=o||{};return'<label class="f'+(o.full?" full":"")+(o.cls?" "+o.cls:"")+'"'+(o.hid?" hidden":"")+'>'+l+'<input id="as-'+id+'" type="'+(o.t||"text")+'" autocomplete="off"'+(o.v==null&&o.k&&E[o.k]!=null&&E[o.k]!==""?' value="'+esc(E[o.k])+'"':'')+''+(o.im?' inputmode="'+o.im+'"':'')+(o.ph?' placeholder="'+o.ph+'"':'')+(o.v?' value="'+esc(o.v)+'"':'')+'></label>'};
   const sec=(n,t)=>'<div class="bsec full"><span class="bsn">'+n+'</span>'+t+'</div>';
   ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="astit"><div class="card mcard"><button type="button" class="mclose" data-as="no" aria-label="Fermer">×</button><h2 id="astit">'+(ev?"Modifier le contrat d\'achat":"Ajouter une voiture")+'</h2>'+(ev?'<p class="note">'+esc(vnum(ev)+" "+(ev.marque||"")+" "+(ev.modele||""))+' · le contrat sera recréé'+(((ev.sigs||{}).contrat||{}).vendeur||((ev.sigs||{}).contrat||{}).moi?" et devra être signé à nouveau":"")+'.</p>':'<p class="note">Commence par le contrat d\'achat : une fois créé, la voiture est ajoutée au garage et le contrat est rangé dans ses documents.</p><p class="note" style="margin-top:4px"><button type="button" data-act="addvide" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline">Pas encore achetée ? Ajouter sans contrat (repérage)</button></p>')+''+
@@ -2743,8 +2744,8 @@ function achatModal(ev){const ov=$("#overlay");const E=ev||{};let typ=E.vendeurT
       else{nv={id:newId(),annee:"",km:"",statut:"achete",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],journal:[],createdAt:Date.now(),...F};
       migrateFrais(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);
       ov.innerHTML="";toast("Voiture ajoutée au garage : "+vnum(nv)+" "+nv.marque+" "+nv.modele)}
-      const mk=async()=>{const r=await contratAchatPdf(nv);if(!r)return null;r.alsoSave=null;r.doneLabel=ev?"Enregistrer":"Ajouter le véhicule";r.regen=async()=>{const r2=await mk();if(r2)await savePdfDoc(nv,r2,"achat");return r2};return r};
-      const r=await mk();if(!r){location.hash="v-"+nv.id;return}await savePdfDoc(nv,r,"achat");
+      const mk=async()=>{const r=await contratAchatPdf(nv);if(!r)return null;r.alsoSave=null;r.doneLabel=ev?"Enregistrer":"Ajouter le véhicule";r.regen=async()=>{const r2=await mk();if(r2)savePdfDoc(nv,r2,"achat");return r2};return r};
+      const r=await mk();if(!r){location.hash="v-"+nv.id;return}savePdfDoc(nv,r,"achat");
       apercuGen(r,"Contrat d'achat · "+vnum(nv),()=>achatModal(nv),null,()=>{if(route().id===nv.id){const y=scrollY;render();scrollTo(0,y)}else location.hash="d-"+nv.id;if(!ev)toast("Véhicule ajouté : le contrat est dans ses documents.")})}});
 }
 function demanderBdc(v,vente){
@@ -3005,7 +3006,7 @@ document.addEventListener("click",async e=>{
   else if(act==="pdffact"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}if(v.statut!=="vendu"&&!v.factNum){toast("La facture se crée une fois la voiture passée en « Vendu », à la livraison.");return}if(!num(v.prixVente)&&!num(v.prixAffiche)){toast("Indique d'abord le prix de vente final.");return}factureModal(v)}
   else if(act==="pdfachat"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}
     const inAch=!(factCache[v.id]||[]).some(f=>f.cat==="contrat");
-    const mk=async()=>{const r=await contratAchatPdf(v);if(r&&inAch){r.alsoSave=null;r.regen=async()=>{const r2=await mk();if(r2)await savePdfDoc(v,r2,"achat");return r2}}return r};
+    const mk=async()=>{const r=await contratAchatPdf(v);if(r&&inAch){r.alsoSave=null;r.regen=async()=>{const r2=await mk();if(r2)savePdfDoc(v,r2,"achat");return r2}}return r};
     const r=await mk();if(r)apercuGen(r,"Contrat d'achat",v.repriseFor?()=>{location.hash="v-"+v.id}:()=>achatModal(v),inAch?{v,cat:"achat"}:null)}
   else if(act==="annonce"&&v){annonceModal(v)}
   else if(act==="repret"&&S.repriseRet){const rr=S.repriseRet,sv=curVeh(rr.sale);S.repriseRet=null;if(!sv){render();return}location.hash="d-"+sv.id;setTimeout(()=>demanderBdc(sv,rr.vente&&sv.statut!=="vendu"),200)}
