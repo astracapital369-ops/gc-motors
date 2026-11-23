@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="16.5";
+const APP_VERSION="16.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -890,14 +890,16 @@ async function facturePdf(v){
   const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});const M=16,R=194,grey=[236,238,242];
   let y=await pdfEntete(doc,"Facture",FN,FD);
   // client
-  doc.setFillColor(...grey);doc.rect(118,y-4,R-118,30,"F");doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(90,96,110);doc.text("FACTURÉ À",122,y+1);doc.setTextColor(25,28,36);
+  const adrL=String(v.clientAdresse||"").split(",").map(x=>x.trim()).filter(Boolean);
+  const infL=[v.clientType==="pro"&&v.clientTva?["TVA",v.clientTva]:null,v.clientTel?["Tél.",v.clientTel]:null,v.clientEmail?["E-mail",v.clientEmail]:null,v.clientNum?["Client n°",v.clientNum]:null].filter(Boolean);
+  const bh=13+adrL.length*4.2+(infL.length?2.5+infL.length*4.4:0)+2;
+  doc.setFillColor(...grey);doc.rect(118,y-4,R-118,Math.max(30,bh),"F");doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(90,96,110);doc.text("FACTURÉ À",122,y+1);doc.setTextColor(25,28,36);
   doc.setFontSize(10);doc.text(PT((v.clientType==="pro"?String(v.clientSociete||"").toUpperCase():[String(v.clientNom||"").toUpperCase(),v.clientPrenom].filter(Boolean).join(" "))||"Client"),122,y+7);
-  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let cy=y+12;String(v.clientAdresse||"").split(",").map(x=>x.trim()).filter(Boolean).forEach(l=>{doc.text(PT(l),122,cy);cy+=4.2});
-  if(v.clientType==="pro"&&v.clientTva){doc.text("TVA : "+PT(v.clientTva),122,cy);cy+=4.2}
-  if(v.clientNum){doc.text("Client n° "+PT(v.clientNum),122,cy);cy+=4.2}
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let cy=y+12;adrL.forEach(l=>{doc.text(PT(l),122,cy);cy+=4.2});
+  if(infL.length){cy+=2.5;infL.forEach(([k,val])=>{doc.setFont("helvetica","bold");doc.text(PT(k),122,cy);doc.setFont("helvetica","normal");doc.text(doc.splitTextToSize(PT(val),R-142)[0]||"",140,cy);cy+=4.4})}
   let ly=y+1;const kl=(k,val)=>{if(!val)return;doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text(k,M,ly);doc.setFont("helvetica","normal");doc.text(PT(val),M+34,ly);ly+=5};
-  kl("Date de facture",fdNum(FD));kl("Date de livraison",fdNum(v.dateVente||FD));kl("Bon de commande",v.bdcNum);kl("Téléphone",v.clientTel);kl("E-mail",v.clientEmail);
-  y=Math.max(ly,cy,y+28)+6;
+  kl("Date de facture",fdNum(FD));kl("Date de livraison",fdNum(v.dateVente||FD));kl("Bon de commande",v.bdcNum);
+  y=Math.max(ly,cy,y-4+Math.max(30,bh))+6;
   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("Véhicule d'occasion",M,y);doc.setDrawColor(200,204,212);doc.line(M,y+2,R,y+2);y+=8;
   const rows=vehRows(v);const half=Math.ceil(rows.length/2);kvBlock(doc,rows.slice(0,half),M,y,34,52);const ye=kvBlock(doc,rows.slice(half),112,y,30,50);y=Math.max(y+half*5,ye)+4;
   // tableau
