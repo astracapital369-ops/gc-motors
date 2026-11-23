@@ -213,9 +213,12 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .liq[open] .lbl::after{content:" ⌄"}
 .liqval{font-family:var(--display);font-size:26px;font-weight:600;line-height:1;color:var(--accent)}
 .liqval.neg{color:var(--bad)}
-.liqrows{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;margin-top:10px}
-.liqrows b{color:var(--ink);font-weight:600;margin-left:3px}
-.liqrows a{color:var(--accent);font-weight:600;text-decoration:none}
+.liqrows{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.liqrows span{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.liqrows b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.liqrows .liqtot{border-top:1px solid var(--line);padding-top:7px;margin-top:2px;color:var(--ink);font-weight:700}
+.liqrows .liqtot b{font-weight:800}
+.liqrows a{color:var(--accent);font-weight:600;text-decoration:none;margin-top:4px;align-self:flex-start}
 .simdone{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .simacts{display:flex;flex-direction:column;gap:8px}
 @media (max-width:980px){.stack.hide-m,.hide-m{display:none!important}}
@@ -503,7 +506,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="18.8";
+const APP_VERSION="18.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1311,7 +1314,7 @@ function vTableau(){
   const capDep=num(S.settings.capitalDepart),ajust=num(S.settings.ajustTreso);
   const fgAll=fgTotal("");const liq=capDep+ajust+encaisse-achats-fraisTot-fgAll;
   h+='<details class="card liq"><summary><span class="lbl">Liquidités disponibles</span><span class="liqval num '+(liq<0?"neg":"")+'">'+eur(liq)+'</span></summary>'+
-     '<div class="liqrows num"><span>Capital de départ <b>'+eur(capDep)+'</b></span><span>+ Ventes <b>'+eur(encaisse)+'</b></span><span>− Achats <b>'+eur(achats)+'</b></span><span>− Frais <b>'+eur(fraisTot)+'</b></span>'+(fgAll?'<span>− Frais généraux <b>'+eur(fgAll)+'</b></span>':'')+''+(ajust?'<span>± Apports / retraits <b>'+eur(ajust)+'</b></span>':'')+'<a href="#reglages">'+(capDep?"Modifier le capital":"Définir le capital de départ")+'</a></div></details>';
+     '<div class="liqrows num"><span>Capital de départ <b>'+eur(capDep)+'</b></span><span>+ Ventes <b>'+eur(encaisse)+'</b></span><span>− Achats <b>'+eur(achats)+'</b></span><span>− Frais <b>'+eur(fraisTot)+'</b></span>'+(fgAll?'<span>− Frais généraux <b>'+eur(fgAll)+'</b></span>':'')+''+(ajust?'<span>± Apports / retraits <b>'+eur(ajust)+'</b></span>':'')+'<span class="liqtot">= Liquidités <b>'+eur(liq)+'</b></span><a href="#reglages">'+(capDep?"Modifier le capital":"Définir le capital de départ")+'</a></div></details>';
   h+='<div class="grid kpis">'+
     kpi("Chiffre d'affaires",eur(ca),vendusAn.length+" voiture"+(vendusAn.length>1?"s":"")+" vendue"+(vendusAn.length>1?"s":"")+" · "+per)+
     kpi("Bénéfice net",'<span class="'+(benef<0?"neg":"pos")+'">'+eur(benef)+'</span>',per+(fgPer?" · après "+eur(fgPer)+" de frais généraux":"")+" · TVA marge à reverser : "+eur(tvaAn))+
