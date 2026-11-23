@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="17.1";
+const APP_VERSION="17.2";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -667,7 +667,7 @@ const factCache={};
 async function photosFor(vid){const all=await allFilesFor(vid);factCache[vid]=all.filter(x=>x.kind==="facture");return all.filter(x=>x.kind!=="facture")}
 function factList(v){
   if(v.demo)return'<p class="note">Les factures s\'ajoutent sur tes propres voitures.</p>';
-  const L0=factCache[v.id];if(!L0)return'<p class="note">Chargement…</p>';const L=L0.filter(f=>!f.jId&&!f.garage&&!f.cat);
+  const L0=factCache[v.id];if(!L0)return'<p class="note">Chargement…</p>';const L=L0.filter(f=>!f.jId&&!f.garage&&(!f.cat||f.cat==="achat"));
   if(!L.length)return'<p class="note">Aucune facture ajoutée.</p><label class="btn small" for="factinput" style="margin-top:8px">+ Ajouter une facture (photo ou PDF)</label>';
   return'<div class="factl">'+L.map(f=>'<div class="fact"><button type="button" class="factopen" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>'+esc(f.name||"Facture")+'<small>'+fdate(new Date(f.createdAt).toISOString().slice(0,10))+'</small></span></button><button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button></div>').join("")+'</div>';
 }
@@ -684,7 +684,7 @@ async function addFactures(v,files,jId,garage,cat){
   }
   refreshFacts(v);if(ok)toast(cat?(ok>1?ok+" documents ajoutés.":"Document ajouté."):(ok>1?ok+" factures ajoutées.":"Facture ajoutée."));
 }
-function jFacts(v,e,edit){if(e.virtual){const A=(factCache[v.id]||[]).filter(f=>!f.jId&&!f.garage&&!f.cat);return A.map(f=>'<span class="jf"><button type="button" class="jfo" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico s">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>Facture d\'achat</span></button>'+(edit?'<button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button>':'')+'</span>').join("")+(edit&&!A.length?'<label class="jfadd">+ Facture d\'achat<input type="file" class="vh" data-docin="achat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>':'')}const L=(factCache[v.id]||[]).filter(f=>f.jId===e.id);const can=edit&&e.type!=="Statut"&&(e.fait||(e.date&&e.date<today()));
+function jFacts(v,e,edit){if(e.virtual){const A=(factCache[v.id]||[]).filter(f=>!f.jId&&!f.garage&&(!f.cat||f.cat==="achat"));return A.map(f=>'<span class="jf"><button type="button" class="jfo" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico s">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>Facture d\'achat</span></button>'+(edit?'<button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button>':'')+'</span>').join("")+(edit&&!A.length?'<label class="jfadd">+ Facture d\'achat<input type="file" class="vh" data-docin="achat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>':'')}const L=(factCache[v.id]||[]).filter(f=>f.jId===e.id);const can=edit&&e.type!=="Statut"&&(e.fait||(e.date&&e.date<today()));
   if(!L.length&&!can)return"";
   return L.map(f=>'<span class="jf"><button type="button" class="jfo" data-factopen="'+f.id+'">'+(f.mime==="application/pdf"?'<span class="fico s">PDF</span>':'<img src="'+f.thumb+'" alt="">')+'<span>Facture</span></button>'+(edit?'<button class="x" data-factdel="'+f.id+'" aria-label="Supprimer cette facture">×</button>':'')+'</span>').join("")+
     (can?'<label class="jfadd">+ Facture du garage<input type="file" class="vh" data-jfin="'+e.id+'" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>':'')}
@@ -700,7 +700,7 @@ function docsHtml(v){
   h+='<div class="dsub">Générés à la demande</div>'+it("PDF","Fiche détails du véhicule","Caractéristiques, options et photos",'data-act="pdf"');
   if(v.statut!=="vendu")h+=it("TXT","Texte d'annonce","Prêt à copier pour 2ememain ou AutoScout24",'data-act="annonce"');
   if(!L){return'<div class="dsum">Chargement…</div><div class="docs">'+h+'<p class="note">Chargement des factures…</p></div>'}
-  const ach=L.filter(f=>!f.jId&&!f.garage&&!f.cat),gar=L.filter(f=>f.jId||f.garage),aut=L.filter(f=>f.cat==="autre"),sig=L.filter(f=>f.cat==="contrat");
+  const ach=L.filter(f=>!f.jId&&!f.garage&&(!f.cat||f.cat==="achat")),gar=L.filter(f=>f.jId||f.garage),aut=L.filter(f=>f.cat==="autre"),sig=L.filter(f=>f.cat==="contrat");
   h+='<div class="dgrp">Achat</div>';
   h+=sig.length?sig.map(f=>it("CA","Contrat d'achat signé",fdC(f),'data-factopen="'+f.id+'"',"ok")).join(""):(nTodo++,'<div class="doc ro todo"><span class="dico">CA</span><span class="dtx" data-act="pdfachat" style="cursor:pointer"><b>Contrat d\'achat</b><small>Touche ici pour l\'imprimer, puis ajoute la version signée</small></span><label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="contrat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label></div>');
   h+=ach.length?ach.map(f=>it(f.mime==="application/pdf"?"PDF":"IMG","Facture d'achat",esc(f.name||"")+" · "+fdC(f),'data-factopen="'+f.id+'"',"ok")).join("")+'':(nTodo++,'<div class="doc ro todo"><span class="dico">FA</span><span class="dtx"><b>Facture d\'achat</b><small>Pas encore ajoutée</small></span><label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="achat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label></div>');
@@ -972,7 +972,7 @@ async function savePdfDoc(v,r,cat){try{const data=await new Promise((res,rej)=>{
   for(const old of (factCache[v.id]||[]).filter(f=>f.cat===cat)){try{await deletePhoto(old.id)}catch(e){}}
   factCache[v.id]=(factCache[v.id]||[]).filter(f=>f.cat!==cat);
   const p={id:newId(),vehicleId:v.id,kind:"facture",cat,mime:"application/pdf",name:r.name,full:data,createdAt:Date.now()};await savePhoto(p);factCache[v.id].push(p);
-  refreshFacts(v);toast((cat==="bdc"?"Bon de commande":"Facture")+" importé"+(cat==="bdc"?"":"e")+" dans les documents.")}catch(e){toast("Import dans les documents impossible.")}}
+  if(route().id===v.id)refreshFacts(v);toast(cat==="bdc"?"Bon de commande importé dans les documents.":cat==="achat"?"Contrat de reprise ajouté comme facture d'achat de "+vnum(v)+".":"Facture importée dans les documents.")}catch(e){toast("Import dans les documents impossible.")}}
 async function apercuGen(r,label,onEdit,saveTo,next){
   if(!r)return;lastPdf=r;const ov=$("#overlay");
   ov.innerHTML='<div class="pdfov" role="dialog" aria-modal="true" aria-label="Aperçu PDF"><div class="pdfbar"><b>'+esc(label)+'</b><div class="pdfzoom"><button class="btn small icon" data-pdf="print" aria-label="Imprimer" title="Imprimer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><button class="btn small" data-pdf="close">Fermer</button></div></div><div class="pdfpages" id="pdfpages"><p class="note" style="color:#cfd6e6">Préparation de l\'aperçu…</p></div><div class="pdfacts">'+(onEdit?'<button class="btn" data-pdf="edit">Modifier</button>':'')+'<button class="btn primary" data-pdf="send">'+(saveTo?"Télécharger / importer":"Télécharger / envoyer")+'</button></div></div>';
@@ -1146,7 +1146,7 @@ async function dossierCompta(){
       else manques.push({type:"Facture de vente",veh,det:"pas encore créée"});
     }
     if(bought){
-      const ach=F.filter(x=>!x.jId&&!x.garage&&!x.cat),ct=F.filter(x=>x.cat==="contrat");
+      const ach=F.filter(x=>!x.jId&&!x.garage&&(!x.cat||x.cat==="achat")),ct=F.filter(x=>x.cat==="contrat");
       ach.forEach(f=>G.achat.push({type:"Facture d'achat",veh,det:f.name||"",f}));
       if(!ach.length)manques.push({type:"Facture d'achat",veh,det:"pas encore ajoutée"});
       ct.forEach(f=>G.achat.push({type:"Contrat d'achat signé",veh,det:vendeurNomV(v),f}));
@@ -2698,7 +2698,7 @@ function demanderBdc(v,vente){
       v.reprise=$("#bc-rep").checked?{on:true,mod:g("bc-rmod"),vin:g("bc-rvin"),km:g("bc-rkm"),imm:g("bc-rimm"),prix:numOrNull(g("bc-rprix"))||0,cond:g("bc-rcond")}:{on:false};
       if(vente){const pv=num(g("bc-prix")),dv=g("bc-dvente")||today();if(v.statut!=="vendu")applyStatut(v,"vendu",{prixVente:pv,dateVente:dv});v.prixVente=pv;v.dateVente=dv}
       persistVehicle(v,true);ov.innerHTML="";const rv=repriseVeh(v);
-      const goRep=async()=>{const y1=scrollY;render();scrollTo(0,y1);if(!rv)return;toast("Voiture reprise ajoutée au garage : "+vnum(rv)+" "+rv.marque+" "+rv.modele);const rc=await contratAchatPdf(rv);if(rc)apercuGen(rc,"Contrat d'achat · reprise "+vnum(rv),null,null,()=>{const y2=scrollY;render();scrollTo(0,y2)})};
+      const goRep=async()=>{const y1=scrollY;render();scrollTo(0,y1);if(!rv)return;toast("Voiture reprise ajoutée au garage : "+vnum(rv)+" "+rv.marque+" "+rv.modele);const rc=await contratAchatPdf(rv);if(rc)apercuGen(rc,"Contrat d'achat · reprise "+vnum(rv),null,{v:rv,cat:"achat"},()=>{const y2=scrollY;render();scrollTo(0,y2)})};
       if(vente){const y0=scrollY;render();scrollTo(0,y0);toast("Vente enregistrée.");(async()=>{const goFact=async()=>{const rf=await facturePdf(v);if(rf)apercuGen(rf,"Facture "+rf.num,null,{v,cat:"facturev"},goRep);else goRep()};const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,null,{v,cat:"bdc"},goFact);else goFact()})();return}
       if(rv){(async()=>{const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,()=>demanderBdc(v),{v,cat:"bdc"},goRep);else goRep()})();return}
       apercuPdf(v,"bdc")}};
