@@ -511,7 +511,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="20.6";
+const APP_VERSION="20.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -563,8 +563,8 @@ window.addEventListener("pagehide",flushAll);
 /* ---------- utilitaires ---------- */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const fmtE=new Intl.NumberFormat("fr-BE",{style:"currency",currency:"EUR",maximumFractionDigits:0});
-const eur=n=>(n==null||isNaN(n))?"—":fmtE.format(Math.round(n));
+const fmtE=new Intl.NumberFormat("fr-BE",{style:"currency",currency:"EUR",maximumFractionDigits:0}),fmtE2=new Intl.NumberFormat("fr-BE",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2});
+const eur=n=>{if(n==null||isNaN(n))return"—";const c=Math.round(n*100)/100;return Number.isInteger(c)?fmtE.format(c):fmtE2.format(c)};
 const num=v=>{const n=parseFloat(String(v??"").replace(",","."));return isNaN(n)?0:n};
 const numOrNull=v=>{if(v===""||v==null)return null;const n=parseFloat(String(v).replace(",","."));return isNaN(n)?null:n};
 const today=()=>new Date().toISOString().slice(0,10);
@@ -1256,6 +1256,7 @@ function recapCsv(){const {y,q}=S.rq,d=recapData(y,q);const c=x=>'"'+String(x??"
   const file=new File([blob],name,{type:"text/csv"});
   (async()=>{try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==="AbortError")return}const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();toast("Tableau téléchargé.")})()}
 
+let stepQ=0;new MutationObserver(()=>{if(stepQ)return;stepQ=1;requestAnimationFrame(()=>{stepQ=0;document.querySelectorAll('input[type="number"]:not([step])').forEach(i=>i.step="any")})}).observe(document.documentElement,{childList:true,subtree:true});
 function route(){const h=(location.hash||"").slice(1);if(h.startsWith("v-"))return{view:"fiche",id:h.slice(2)};if(h.startsWith("d-"))return{view:"details",id:h.slice(2)};return{view:(NAV.some(n=>n[0]===h)||["plaque","fraisgen"].includes(h))?h:"tableau"}}
 window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
 
@@ -1346,7 +1347,7 @@ function reserveCard(){const vendus=list().filter(v=>!v.demo&&v.statut==="vendu"
   const tvaQ=vendus.filter(v=>v.dateVente&&v.dateVente>=qStart).reduce((s,v)=>s+(calc(v).tva||0),0);
   const gar=vendus.filter(v=>{const f=finGarantie(v);return f&&f>=today()}),prov=gar.length*num(S.settings.provGarantie),cot=num(S.settings.cotisTrim);
   const yy=String(now.getFullYear()),vA=vendus.filter(v=>(v.dateVente||"").startsWith(yy)),tx=num(S.settings.tauxImpot);
-  const baseImp=Math.max(0,vA.reduce((s2,v)=>s2+num(v.prixVente)-num(v.prixAchat)-fraisTotal(v)-(calc(v).tva||0),0)-fgTotal(yy)-cot*(q+1)),imp=Math.round(baseImp*tx/100);
+  const baseImp=Math.max(0,vA.reduce((s2,v)=>s2+num(v.prixVente)-num(v.prixAchat)-fraisTotal(v)-(calc(v).tva||0),0)-fgTotal(yy)-cot*(q+1)),imp=Math.round(baseImp*tx)/100;
   return'<div class="card"><h2>À mettre de côté</h2><div class="calc">'+
     row("TVA sur la marge, trimestre en cours",eur(tvaQ))+
     row("Provision garantie ("+gar.length+" voiture"+(gar.length>1?"s":"")+" sous garantie)",eur(prov))+
@@ -1407,7 +1408,7 @@ function chartMois(vendus,yr,sel){
   return s+'</svg>';
 }
 function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r||1)));const n=r/p;return(n<=1?1:n<=2?2:n<=5?5:10)*p}
-function shortE(n){return Math.abs(n)>=1000?(n/1000).toLocaleString("fr-BE",{maximumFractionDigits:1})+" k€":Math.round(n)+" €"}
+function shortE(n){return Math.abs(n)>=1000?(n/1000).toLocaleString("fr-BE",{maximumFractionDigits:1})+" k€":eur(n)}
 
 /* ---------- garage ---------- */
 function vGarage(){
