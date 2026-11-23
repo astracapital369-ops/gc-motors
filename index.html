@@ -510,7 +510,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="19.4";
+const APP_VERSION="19.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1025,13 +1025,14 @@ async function regenDocs(btn){const L=list().filter(v=>!v.demo);let n=0,ko=0;S.q
 async function savePdfDoc(v,r,cat){try{const data=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(r.blob)});
   if(data.length>950000){toast("PDF trop lourd pour être importé automatiquement.");return}
   const L=factCache[v.id]||(factCache[v.id]=await photosFor(v.id).then(()=>factCache[v.id]||[]).catch(()=>[]));
-  for(const old of (factCache[v.id]||[]).filter(f=>f.cat===cat)){try{await deletePhoto(old.id)}catch(e){}}
-  factCache[v.id]=(factCache[v.id]||[]).filter(f=>f.cat!==cat);
+  const CAx=/^Contrat-achat-/,same=f=>f.cat===cat&&(cat!=="achat"||CAx.test(r.name||"")===CAx.test(f.name||""));
+  for(const old of (factCache[v.id]||[]).filter(same)){try{await deletePhoto(old.id)}catch(e){}}
+  factCache[v.id]=(factCache[v.id]||[]).filter(f=>!same(f));
   const p={id:newId(),vehicleId:v.id,kind:"facture",cat,mime:"application/pdf",name:r.name,full:data,createdAt:Date.now()};await savePhoto(p);factCache[v.id].push(p);
   if(route().id===v.id)refreshFacts(v);toast(cat==="contrat"?"Contrat d'achat signé ajouté aux documents.":cat==="bdc"?"Bon de commande importé dans les documents.":cat==="achat"?(v.repriseFor?"Contrat de reprise":"Contrat d'achat")+" ajouté aux documents de "+vnum(v)+".":"Facture importée dans les documents.")}catch(e){toast("Import dans les documents impossible.")}}
 async function apercuGen(r,label,onEdit,saveTo,next){
   if(!r)return;lastPdf=r;const ov=$("#overlay");
-  ov.innerHTML='<div class="pdfov" role="dialog" aria-modal="true" aria-label="Aperçu PDF"><div class="pdfbar"><b>'+esc(label)+'</b><div class="pdfzoom"><button class="btn small icon" data-pdf="print" aria-label="Imprimer" title="Imprimer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><button class="btn small" data-pdf="close">Fermer</button></div></div><div class="pdfpages" id="pdfpages"><p class="note" style="color:#cfd6e6">Préparation de l\'aperçu…</p></div><div class="pdfacts">'+(onEdit?'<button class="btn" data-pdf="edit">Modifier</button>':'')+(r.sign&&!r.sign.v.demo?'<button class="btn" data-pdf="sign">'+(()=>{const g=(r.sign.v.sigs||{})[r.sign.kind]||{},o=g[r.sign.kind==="bdc"?"client":"vendeur"],n=(o?1:0)+(g.moi?1:0);return n===2?"Signé ✓":n===1?"Signer (1/2)":"Signer"})()+'</button>':'')+'<button class="btn primary" data-pdf="send">'+(saveTo?"Enregistrer":"Télécharger / envoyer")+'</button></div></div>';
+  ov.innerHTML='<div class="pdfov" role="dialog" aria-modal="true" aria-label="Aperçu PDF"><div class="pdfbar"><b>'+esc(label)+'</b><div class="pdfzoom"><button class="btn small icon" data-pdf="print" aria-label="Imprimer" title="Imprimer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><button class="btn small" data-pdf="close">Fermer</button></div></div><div class="pdfpages" id="pdfpages"><p class="note" style="color:#cfd6e6">Préparation de l\'aperçu…</p></div><div class="pdfacts">'+(onEdit?'<button class="btn" data-pdf="edit">Modifier</button>':'')+(r.sign&&!r.sign.v.demo?'<button class="btn" data-pdf="sign">'+(()=>{const g=(r.sign.v.sigs||{})[r.sign.kind]||{},o=g[r.sign.kind==="bdc"?"client":"vendeur"],n=(o?1:0)+(g.moi?1:0);return n===2?"Signé ✓":n===1?"Signer (1/2)":"Signer"})()+'</button>':'')+'<button class="btn primary" data-pdf="send">'+(saveTo?"Enregistrer":"Envoyer")+'</button></div></div>';
   let z=1;const setZ=nz=>{const box=$("#pdfpages");if(!box)return;z=Math.max(1,Math.min(3,nz));box.classList.toggle("zoomed",z>1);box.querySelectorAll(".pdfpage").forEach(c=>{c.style.width=(z*100)+"%";c.style.maxWidth=z>1?"none":""});(($("#pdfz")||{}).textContent=Math.round(z*100)+" %")};
   ov.onclick=async e=>{if(e.target.classList.contains("pdfpage")){setZ(z>1?1:2);return}const b=e.target.closest("[data-pdf]");if(!b)return;const a=b.dataset.pdf;
     if(a==="print")return printPdf(r);if(a==="zin")return setZ(z+0.5);if(a==="zout")return setZ(z-0.5);if(a==="close"){ov.innerHTML="";if(next)next();return}if(a==="sign"){signModal(r,async()=>{const r2=await r.regen();if(r2){if(r.commit&&!r2.commit)r2.commit=r.commit;apercuGen(r2,label,onEdit,saveTo,next)}});return}if(a==="edit"){ov.innerHTML="";onEdit();return}
@@ -2705,18 +2706,18 @@ function repriseNew(v){const nv={id:newId(),marque:"",modele:"",annee:"",km:"",c
   migrateFrais(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);v.reprise={...(v.reprise||{}),on:true,vid:nv.id};persistVehicle(v,true);return nv}
 function repriseVeh(v){const Rp=v.reprise||{};if(!Rp.on||!Rp.vid)return null;const ex=S.vehicles.find(x=>x.id===Rp.vid);if(!ex)return null;Object.assign(ex,repriseData(v));persistVehicle(ex,true);return ex}
 /* achat sur place : contrat d'achat rapide (particulier ou pro) */
-function achatModal(){const ov=$("#overlay");let typ="part";
-  const fi=(id,l,o)=>{o=o||{};return'<label class="f'+(o.full?" full":"")+(o.cls?" "+o.cls:"")+'"'+(o.hid?" hidden":"")+'>'+l+'<input id="as-'+id+'" type="'+(o.t||"text")+'" autocomplete="off"'+(o.im?' inputmode="'+o.im+'"':'')+(o.ph?' placeholder="'+o.ph+'"':'')+(o.v?' value="'+esc(o.v)+'"':'')+'></label>'};
+function achatModal(ev){const ov=$("#overlay");const E=ev||{};let typ=E.vendeurType==="pro"?"pro":"part";const P=typ==="pro";
+  const fi=(id,l,o)=>{o=o||{};return'<label class="f'+(o.full?" full":"")+(o.cls?" "+o.cls:"")+'"'+(o.hid?" hidden":"")+'>'+l+'<input id="as-'+id+'" type="'+(o.t||"text")+'" autocomplete="off"'+(o.v==null&&o.k&&E[o.k]!=null&&E[o.k]!==""?' value="'+esc(E[o.k])+'"':'')+''+(o.im?' inputmode="'+o.im+'"':'')+(o.ph?' placeholder="'+o.ph+'"':'')+(o.v?' value="'+esc(o.v)+'"':'')+'></label>'};
   const sec=(n,t)=>'<div class="bsec full"><span class="bsn">'+n+'</span>'+t+'</div>';
-  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="astit"><div class="card mcard"><button type="button" class="mclose" data-as="no" aria-label="Fermer">×</button><h2 id="astit">Ajouter une voiture</h2><p class="note">Commence par le contrat d\'achat : une fois créé, la voiture est ajoutée au garage et le contrat est rangé dans ses documents.</p><p class="note" style="margin-top:4px"><button type="button" data-act="addvide" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline">Pas encore achetée ? Ajouter sans contrat (repérage)</button></p>'+
-   '<div class="form">'+sec(1,"Vendeur")+'<div class="f full vtyp"><div class="seg"><button type="button" class="on ok" data-ast="part">Particulier</button><button type="button" data-ast="pro">Professionnel</button></div></div>'+
-   fi("prenom","Prénom",{cls:"as-part"})+fi("nom","Nom",{cls:"as-part"})+fi("cni","N° de carte d\'identité",{full:true,cls:"as-part",ph:"592-1234567-89"})+
-   fi("soc","Nom du garage / société",{full:true,cls:"as-pro",hid:1})+fi("tva","Numéro de TVA",{cls:"as-pro",hid:1,ph:"BE0123.456.789"})+fi("fact","N° de sa facture",{cls:"as-pro",hid:1})+
-   fi("tel","Téléphone",{t:"tel",ph:"+32 …"})+fi("email","E-mail",{t:"email"})+fi("adr","Adresse",{full:true,ph:"Rue, numéro, code postal, ville"})+
-   sec(2,"Véhicule")+repFormHtml({})+fi("plaque","Plaque",{ph:"1-ABC-123"})+fi("couleur","Couleur")+
-   sec(3,"Prix et paiement")+fi("prix","Prix d\'achat (€)",{t:"number",im:"decimal"})+'<label class="f">Paiement<select id="as-pay"><option>Virement bancaire</option><option>Espèces</option><option>Virement + espèces</option></select></label>'+fi("date","Date",{t:"date",v:today()})+
+  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="astit"><div class="card mcard"><button type="button" class="mclose" data-as="no" aria-label="Fermer">×</button><h2 id="astit">'+(ev?"Modifier le contrat d\'achat":"Ajouter une voiture")+'</h2>'+(ev?'<p class="note">'+esc(vnum(ev)+" "+(ev.marque||"")+" "+(ev.modele||""))+' · le contrat sera recréé'+(((ev.sigs||{}).contrat||{}).vendeur||((ev.sigs||{}).contrat||{}).moi?" et devra être signé à nouveau":"")+'.</p>':'<p class="note">Commence par le contrat d\'achat : une fois créé, la voiture est ajoutée au garage et le contrat est rangé dans ses documents.</p><p class="note" style="margin-top:4px"><button type="button" data-act="addvide" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline">Pas encore achetée ? Ajouter sans contrat (repérage)</button></p>')+''+
+   '<div class="form">'+sec(1,"Vendeur")+'<div class="f full vtyp"><div class="seg"><button type="button" class="'+(P?"":"on ok")+'" data-ast="part">Particulier</button><button type="button" class="'+(P?"on ok":"")+'" data-ast="pro">Professionnel</button></div></div>'+
+   fi("prenom","Prénom",{cls:"as-part",hid:P,k:"vendeurPrenom"})+fi("nom","Nom",{cls:"as-part",hid:P,k:"vendeurNom"})+fi("cni","N° de carte d\'identité",{full:true,cls:"as-part",hid:P,ph:"592-1234567-89",k:"vendeurCni"})+
+   fi("soc","Nom du garage / société",{full:true,cls:"as-pro",hid:!P,k:"vendeurSociete"})+fi("tva","Numéro de TVA",{cls:"as-pro",hid:!P,ph:"BE0123.456.789",k:"vendeurTva"})+fi("fact","N° de sa facture",{cls:"as-pro",hid:!P,k:"vendeurFact"})+
+   fi("tel","Téléphone",{t:"tel",ph:"+32 …",k:"vendeurTel"})+fi("email","E-mail",{t:"email",k:"vendeurEmail"})+fi("adr","Adresse",{full:true,ph:"Rue, numéro, code postal, ville",k:"vendeurAdresse"})+
+   sec(2,"Véhicule")+repFormHtml(ev?{reprise:{vid:ev.id}}:{})+fi("plaque","Plaque",{ph:"1-ABC-123",k:"plaque"})+fi("couleur","Couleur",{k:"couleur"})+
+   sec(3,"Prix et paiement")+fi("prix","Prix d\'achat (€)",{t:"number",im:"decimal",k:"prixAchat"})+'<label class="f">Paiement<select id="as-pay">'+["Virement bancaire","Espèces","Virement + espèces"].map(x=>'<option'+(E.paiementAchat===x?" selected":"")+'>'+x+'</option>').join("")+'</select></label>'+fi("date","Date",{t:"date",v:E.dateAchat||today()})+
    '<p class="note full" id="as-warn" hidden style="color:var(--neg,#c62828)">En espèces, maximum 3 000 € : paie le reste par virement.</p></div>'+
-   '<div class="acts"><button class="btn primary" data-as="ok" style="flex:1;justify-content:center">Créer le contrat d\'achat et la voiture</button></div></div></div>';
+   '<div class="acts"><button class="btn primary" data-as="ok" style="flex:1;justify-content:center">'+(ev?"Mettre à jour le contrat":"Créer le contrat d\'achat et la voiture")+'</button></div></div></div>';
   const box=ov.querySelector(".modal");
   const g=id=>{const e=$("#as-"+id);return e?e.value.trim():""};
   const warn=()=>{const w=$("#as-warn");if(w)w.hidden=!(g("pay")!=="Virement bancaire"&&num(g("prix"))>3000)};
@@ -2734,15 +2735,17 @@ function achatModal(){const ov=$("#overlay");let typ="part";
       if(!d.marque||!d.modele){toast("Indique la marque et le modèle.");($("#rp-marque").value?$("#rp-modele"):$("#rp-marque")).focus();return}
       if(typ==="pro"?!g("soc"):!g("nom")){toast(typ==="pro"?"Indique le nom du garage vendeur.":"Indique le nom du vendeur.");$(typ==="pro"?"#as-soc":"#as-nom").focus();return}
       const pro=typ==="pro";
-      const nv={id:newId(),annee:"",km:"",statut:"achete",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],journal:[],createdAt:Date.now(),...d,
+      const F={...d,
         prixAchat:num(g("prix"))||"",dateAchat:g("date")||today(),source:pro?"Achat à un professionnel":"Achat à un particulier",plaque:g("plaque").toUpperCase(),couleur:g("couleur"),paiementAchat:g("pay"),
         vendeurType:pro?"pro":"part",vendeurPrenom:pro?"":g("prenom"),vendeurNom:pro?"":g("nom"),vendeurCni:pro?"":g("cni"),vendeurSociete:pro?g("soc"):"",vendeurTva:pro?g("tva"):"",vendeurFact:pro?g("fact"):"",
         vendeurTel:g("tel"),vendeurEmail:g("email"),vendeurAdresse:g("adr")};
+      let nv;if(ev){nv=ev;if(nv.source&&!/^Achat à un/.test(nv.source))delete F.source;Object.assign(nv,F);if(nv.sigs&&nv.sigs.contrat)delete nv.sigs.contrat;persistVehicle(nv,true);ov.innerHTML="";toast("Contrat mis à jour.")}
+      else{nv={id:newId(),annee:"",km:"",statut:"achete",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],journal:[],createdAt:Date.now(),...F};
       migrateFrais(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);
-      ov.innerHTML="";toast("Voiture ajoutée au garage : "+vnum(nv)+" "+nv.marque+" "+nv.modele);
+      ov.innerHTML="";toast("Voiture ajoutée au garage : "+vnum(nv)+" "+nv.marque+" "+nv.modele)}
       const mk=async()=>{const r=await contratAchatPdf(nv);if(!r)return null;r.alsoSave=null;r.regen=async()=>{const r2=await mk();if(r2)await savePdfDoc(nv,r2,"achat");return r2};return r};
       const r=await mk();if(!r){location.hash="v-"+nv.id;return}await savePdfDoc(nv,r,"achat");
-      apercuGen(r,"Contrat d'achat · "+vnum(nv),()=>{location.hash="v-"+nv.id},null,()=>{location.hash="d-"+nv.id})}});
+      apercuGen(r,"Contrat d'achat · "+vnum(nv),()=>achatModal(nv),null,()=>{if(route().id===nv.id){const y=scrollY;render();scrollTo(0,y)}else location.hash="d-"+nv.id})}});
 }
 function demanderBdc(v,vente){
   const cl=clientsConnus();const ov=$("#overlay");
@@ -3003,7 +3006,7 @@ document.addEventListener("click",async e=>{
   else if(act==="pdfachat"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}
     const inAch=!(factCache[v.id]||[]).some(f=>f.cat==="contrat");
     const mk=async()=>{const r=await contratAchatPdf(v);if(r&&inAch){r.alsoSave=null;r.regen=async()=>{const r2=await mk();if(r2)await savePdfDoc(v,r2,"achat");return r2}}return r};
-    const r=await mk();if(r)apercuGen(r,"Contrat d'achat",()=>{location.hash="v-"+v.id},inAch?{v,cat:"achat"}:null)}
+    const r=await mk();if(r)apercuGen(r,"Contrat d'achat",v.repriseFor?()=>{location.hash="v-"+v.id}:()=>achatModal(v),inAch?{v,cat:"achat"}:null)}
   else if(act==="annonce"&&v){annonceModal(v)}
   else if(act==="repret"&&S.repriseRet){const rr=S.repriseRet,sv=curVeh(rr.sale);S.repriseRet=null;if(!sv){render();return}location.hash="d-"+sv.id;setTimeout(()=>demanderBdc(sv,rr.vente&&sv.statut!=="vendu"),200)}
   else if(act==="regendocs"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;try{await loadJsPdf();await regenDocs(b)}catch(e){toast("Mise à jour impossible : connexion nécessaire.")}b.disabled=false;b.textContent=t0}
