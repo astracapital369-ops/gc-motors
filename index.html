@@ -511,7 +511,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="20.4";
+const APP_VERSION="20.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -670,12 +670,12 @@ function removeVehicle(id){
 let photoCol=null,idb=null;
 const photoCache={};
 function idbOpen(){if(idb)return Promise.resolve(idb);return new Promise((res,rej)=>{const r=indexedDB.open("gc-photos",1);r.onupgradeneeded=()=>{const st=r.result.createObjectStore("photos",{keyPath:"id"});st.createIndex("vehicleId","vehicleId")};r.onsuccess=()=>{idb=r.result;res(idb)};r.onerror=()=>rej(r.error)})}
-async function allFilesFor(vid){
-  if(isDb()&&photoCol){const q=await photoCol.where("vehicleId","==",vid).get();return q.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))}
+async function allFilesFor(vid,src){
+  if(isDb()&&photoCol){const q=await photoCol.where("vehicleId","==",vid).get(src?{source:src}:undefined);return q.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))}
   const d=await idbOpen();return new Promise(res=>{const t=d.transaction("photos").objectStore("photos").index("vehicleId").getAll(vid);t.onsuccess=()=>res((t.result||[]).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)));t.onerror=()=>res([])});
 }
 const factCache={};
-async function photosFor(vid){const all=await allFilesFor(vid);factCache[vid]=all.filter(x=>x.kind==="facture");return all.filter(x=>x.kind!=="facture")}
+async function photosFor(vid,src){const all=await allFilesFor(vid,src);factCache[vid]=all.filter(x=>x.kind==="facture");return all.filter(x=>x.kind!=="facture")}
 function factList(v){
   if(v.demo)return'<p class="note">Les factures s\'ajoutent sur tes propres voitures.</p>';
   const L0=factCache[v.id];if(!L0)return'<p class="note">Chargement…</p>';const L=L0.filter(f=>!f.jId&&!f.garage&&(!f.cat||f.cat==="achat")&&!(f.cat==="achat"&&/^Contrat-achat-/.test(f.name||"")));
@@ -767,10 +767,11 @@ async function addPhotos(v,files){
 async function ensurePhotos(v){
   if(v.demo||photoCache[v.id])return;
   photoCache[v.id]=[];
+  const show=()=>{if(route().view==="fiche"&&route().id===v.id){const g=$("#photogrid");if(g)g.innerHTML=photoGrid(v);refreshFacts(v)}
+    if(route().view==="details"&&route().id===v.id){const g=$("#dphotos");if(g)g.innerHTML=detPhotos(v);refreshFacts(v)}};
+  if(isDb()&&photoCol){try{const c=await photosFor(v.id,"cache");if(c.length||(factCache[v.id]||[]).length){photoCache[v.id]=c;show()}}catch(e){}}
   try{photoCache[v.id]=await photosFor(v.id)}catch(e){}
-  upgradeCover(v);
-  if(route().view==="fiche"&&route().id===v.id){const g=$("#photogrid");if(g)g.innerHTML=photoGrid(v);refreshFacts(v)}
-  if(route().view==="details"&&route().id===v.id){const g=$("#dphotos");if(g)g.innerHTML=detPhotos(v);refreshFacts(v)}
+  upgradeCover(v);show();
 }
 function photoGrid(v){
   const list=photoCache[v.id]||[];
