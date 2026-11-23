@@ -510,7 +510,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="19.3";
+const APP_VERSION="19.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -2716,7 +2716,7 @@ function achatModal(){const ov=$("#overlay");let typ="part";
    sec(2,"Véhicule")+repFormHtml({})+fi("plaque","Plaque",{ph:"1-ABC-123"})+fi("couleur","Couleur")+
    sec(3,"Prix et paiement")+fi("prix","Prix d\'achat (€)",{t:"number",im:"decimal"})+'<label class="f">Paiement<select id="as-pay"><option>Virement bancaire</option><option>Espèces</option><option>Virement + espèces</option></select></label>'+fi("date","Date",{t:"date",v:today()})+
    '<p class="note full" id="as-warn" hidden style="color:var(--neg,#c62828)">En espèces, maximum 3 000 € : paie le reste par virement.</p></div>'+
-   '<div class="acts" style="flex-wrap:wrap"><button class="btn" data-as="vierge">Contrat vierge (PDF)</button><button class="btn primary" data-as="ok">Créer la voiture et le contrat</button></div></div></div>';
+   '<div class="acts"><button class="btn primary" data-as="ok" style="flex:1;justify-content:center">Créer le contrat d\'achat et la voiture</button></div></div></div>';
   const box=ov.querySelector(".modal");
   const g=id=>{const e=$("#as-"+id);return e?e.value.trim():""};
   const warn=()=>{const w=$("#as-warn");if(w)w.hidden=!(g("pay")!=="Virement bancaire"&&num(g("prix"))>3000)};
