@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="16.9";
+const APP_VERSION="17.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -950,7 +950,7 @@ async function contratAchatPdf(v){
   blank("Kilométrage au compteur à la remise : ",v.km?fmtNum(num(v.km)).replace(",00","")+" km":"",M,R-M);y+=9;
   sec("Prix et remise");
   blank("Prix de vente convenu : ",v.prixAchat?"€ "+fmtNum(num(v.prixAchat)):"",M,110);y+=6.5;
-  blank("Mode de paiement : ","",M,R-M);y+=6.5;
+  blank("Mode de paiement : ",v.repriseDe?"déduit du prix de vente du véhicule "+v.repriseDe+" (reprise)":"",M,R-M);y+=6.5;
   blank("Remise du véhicule le : ",v.dateAchat?fdNum(v.dateAchat):"",M,80);blank("à (heure) : ","",M+86,R-M-86);y+=6.5;
   blank("Documents remis : ","",M,R-M);y+=4.5;
   doc.setFont("helvetica","normal");doc.setFontSize(8.5);
@@ -2621,6 +2621,17 @@ function changerStatut(v,nv){
 }
 function clientsConnus(){const m={};S.vehicles.forEach(o=>{if(o.clientNum&&!m[o.clientNum])m[o.clientNum]={num:o.clientNum,type:o.clientType||"part",soc:o.clientSociete||"",tva:o.clientTva||"",prenom:o.clientPrenom||"",nom:o.clientNom||"",tel:o.clientTel||"",email:o.clientEmail||"",adr:o.clientAdresse||""}});return Object.values(m).sort((a,b)=>(a.soc+a.nom+a.prenom).localeCompare(b.soc+b.nom+b.prenom))}
 function lieuDefaut(){const a=String(S.settings.entAdresse||"").split(",").map(x=>x.trim()).filter(Boolean);const l=a[a.length-1]||"";return l.replace(/^\d{4}\s*/,"")}
+function repriseVeh(v){const Rp=v.reprise||{};if(!Rp.on||!(num(Rp.prix)>0))return null;
+  const mod=String(Rp.mod||"").trim(),bk=Object.keys(CATALOGUE).sort((a,b)=>b.length-a.length).find(b=>mod.toLowerCase().startsWith(b.toLowerCase()));
+  let marque,modele;if(bk){marque=bk;modele=mod.slice(bk.length).trim()}else{const p=mod.split(/\s+/);marque=p[0]?p[0].charAt(0).toUpperCase()+p[0].slice(1):"Reprise";modele=p.slice(1).join(" ")}
+  const data={marque,modele,vin:Rp.vin||"",km:num(Rp.km)||"",premiereImmat:Rp.imm||"",annee:Rp.imm?+String(Rp.imm).slice(0,4):"",prixAchat:num(Rp.prix),dateAchat:v.dateVente||today(),source:"Reprise sur la vente "+((vnum(v)?vnum(v)+" ":"")+(v.marque||"")+" "+(v.modele||"")).trim(),repriseDe:((v.marque||"")+" "+(v.modele||"")+(v.bdcNum?" (bon de commande "+v.bdcNum+")":"")).trim(),
+    vendeurType:v.clientType||"part",vendeurPrenom:v.clientPrenom||"",vendeurNom:v.clientNom||"",vendeurSociete:v.clientSociete||"",vendeurTva:v.clientTva||"",vendeurTel:v.clientTel||"",vendeurEmail:v.clientEmail||"",vendeurAdresse:v.clientAdresse||""};
+  if(Rp.cond)data.notes="Conditions de reprise : "+Rp.cond;
+  const ex=Rp.vid&&S.vehicles.find(x=>x.id===Rp.vid);
+  if(ex){Object.assign(ex,data);persistVehicle(ex,true);return ex}
+  const nv={id:newId(),carburant:"Essence",boite:"Manuelle",statut:"achete",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],journal:[],createdAt:Date.now(),...data};
+  migrateFrais(nv);applyEuro(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);
+  v.reprise={...Rp,vid:nv.id};persistVehicle(v,true);return nv}
 function demanderBdc(v,vente){
   const cl=clientsConnus();const ov=$("#overlay");
   const bA=(v.acomptes||[]).find(a=>a.bdc),autres=(v.acomptes||[]).filter(a=>!a.bdc&&num(a.montant));
@@ -2643,7 +2654,7 @@ function demanderBdc(v,vente){
     '<label class="f">Solde à payer avant le<input id="bc-avant" type="date" value="'+esc(v.payerAvant||"")+'"></label>'+
     (autres.length?'<p class="note full" style="margin:0">Déjà reçu : '+eur(autres.reduce((a,x)=>a+num(x.montant),0))+' ('+autres.length+' acompte'+(autres.length>1?'s':'')+' dans la fiche)</p>':'')+
     sec(3,"Reprise")+
-    '<label class="ckline full"><input type="checkbox" id="bc-rep"'+(v.reprise&&v.reprise.on?" checked":"")+'><span>Le client me laisse un véhicule en reprise</span></label>'+
+    '<label class="ckline full"><input type="checkbox" id="bc-rep"'+(v.reprise&&v.reprise.on?" checked":"")+'><span>Le client me laisse un véhicule en reprise</span></label>'+'<p class="note full" style="margin:0">Elle sera ajoutée à ton garage (En stock) avec son contrat d\'achat, le client comme vendeur.</p>'+
     '<div class="form full" id="bc-repbox" style="'+(v.reprise&&v.reprise.on?"":"display:none;")+'grid-column:1/-1">'+
       '<label class="f">Marque / modèle / type<input id="bc-rmod" value="'+esc((v.reprise||{}).mod||"")+'"></label><label class="f">N° de châssis<input id="bc-rvin" value="'+esc((v.reprise||{}).vin||"")+'"></label>'+
       '<label class="f">Kilométrage<input id="bc-rkm" type="number" inputmode="numeric" value="'+esc((v.reprise||{}).km||"")+'"></label><label class="f">1re immatriculation<input id="bc-rimm" type="month" value="'+esc((v.reprise||{}).imm||"")+'"></label>'+
@@ -2685,8 +2696,10 @@ function demanderBdc(v,vente){
       v.bdcDistance=v.clientType==="pro"?false:$("#bc-dist").value==="1";v.garPro=v.clientType==="pro"?+$("#bc-garpro").value:0;
       v.reprise=$("#bc-rep").checked?{on:true,mod:g("bc-rmod"),vin:g("bc-rvin"),km:g("bc-rkm"),imm:g("bc-rimm"),prix:numOrNull(g("bc-rprix"))||0,cond:g("bc-rcond")}:{on:false};
       if(vente){const pv=num(g("bc-prix")),dv=g("bc-dvente")||today();if(v.statut!=="vendu")applyStatut(v,"vendu",{prixVente:pv,dateVente:dv});v.prixVente=pv;v.dateVente=dv}
-      persistVehicle(v,true);ov.innerHTML="";
-      if(vente){const y0=scrollY;render();scrollTo(0,y0);toast("Vente enregistrée.");(async()=>{const goFact=async()=>{const rf=await facturePdf(v);if(rf)apercuGen(rf,"Facture "+rf.num,null,{v,cat:"facturev"},()=>{const y1=scrollY;render();scrollTo(0,y1)})};const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,null,{v,cat:"bdc"},goFact);else goFact()})();return}
+      persistVehicle(v,true);ov.innerHTML="";const rv=repriseVeh(v);
+      const goRep=async()=>{const y1=scrollY;render();scrollTo(0,y1);if(!rv)return;toast("Voiture reprise ajoutée au garage : "+vnum(rv)+" "+rv.marque+" "+rv.modele);const rc=await contratAchatPdf(rv);if(rc)apercuGen(rc,"Contrat d'achat · reprise "+vnum(rv),null,null,()=>{const y2=scrollY;render();scrollTo(0,y2)})};
+      if(vente){const y0=scrollY;render();scrollTo(0,y0);toast("Vente enregistrée.");(async()=>{const goFact=async()=>{const rf=await facturePdf(v);if(rf)apercuGen(rf,"Facture "+rf.num,null,{v,cat:"facturev"},goRep);else goRep()};const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,null,{v,cat:"bdc"},goFact);else goFact()})();return}
+      if(rv){(async()=>{const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,()=>demanderBdc(v),{v,cat:"bdc"},goRep);else goRep()})();return}
       apercuPdf(v,"bdc")}};
 }
 function stSelect(v){return'<span class="stwrap st-'+v.statut+'"><select class="stsel" data-cstat="'+v.id+'" aria-label="Changer le statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select><svg class="stico" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'}
