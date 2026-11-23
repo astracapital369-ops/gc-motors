@@ -510,7 +510,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="19.2";
+const APP_VERSION="19.3";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -712,9 +712,11 @@ function docsHtml(v){
   if(!L){return'<div class="dsum">Chargement…</div><div class="docs">'+h+'<p class="note">Chargement des factures…</p></div>'}
   const ach=L.filter(f=>!f.jId&&!f.garage&&(!f.cat||f.cat==="achat")&&!(f.cat==="achat"&&/^Contrat-achat-/.test(f.name||""))),gar=L.filter(f=>f.jId||f.garage),aut=L.filter(f=>f.cat==="autre"),sig=L.filter(f=>f.cat==="contrat"||(f.cat==="achat"&&/^Contrat-achat-/.test(f.name||""))).slice(0,1),sgC=(v.sigs||{}).contrat||{},sgOk=sgC.vendeur&&sgC.moi;
   h+='<div class="dgrp">Achat</div>';
-  h+=sig.length?sig.map(f=>it("CA",sgOk||f.cat==="contrat"?"Contrat d'achat signé":"Contrat d'achat",f.cat==="contrat"||sgOk?fdC(f):fdC(f)+" · "+(sgC.vendeur||sgC.moi?"une signature manque":"à signer"),'data-factopen="'+f.id+'"',"ok")).join(""):(nTodo++,'<div class="doc ro todo"><span class="dico">CA</span><span class="dtx" data-act="pdfachat" style="cursor:pointer"><b>Contrat d\'achat</b><small>Touche ici pour l\'imprimer, puis ajoute la version signée</small></span><label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="contrat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label></div>');
-  const caAch=sig.some(f=>f.cat==="achat");
-  if(ach.length||!caAch||v.vendeurType==="pro")h+=ach.length?ach.map(f=>it(f.mime==="application/pdf"?"PDF":"IMG",v.vendeurType==="pro"?"Facture du vendeur":"Facture d'achat",esc(f.name||"")+" · "+fdC(f),'data-factopen="'+f.id+'"',"ok")).join("")+'':(nTodo++,'<div class="doc ro todo"><span class="dico">FA</span><span class="dtx"><b>'+(v.vendeurType==="pro"?"Facture du vendeur":"Facture d\'achat")+'</b><small>Pas encore ajoutée</small></span><label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="achat" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label></div>');
+  const pro=v.vendeurType==="pro",rp0=v.statut==="reperage",inp=k=>'<label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="'+k+'" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>';
+  if(sig.length){const f=sig[0],ok=sgOk||f.cat==="contrat";if(!ok)nTodo++;h+=it("CA",ok?"Contrat d'achat signé":"Contrat d'achat",ok?fdC(f):fdC(f)+" · "+(sgC.vendeur||sgC.moi?"une signature manque":"à faire signer"),ok?'data-factopen="'+f.id+'"':'data-act="pdfachat"',ok?"ok":"todo")}
+  else if(!pro&&!ach.length){if(rp0)h+=it("CA","Contrat d'achat","À faire le jour de l'achat",'data-act="pdfachat"',"");else{nTodo++;h+='<div class="doc ro todo"><span class="dico">CA</span><span class="dtx" data-act="pdfachat" style="cursor:pointer"><b>Contrat d\'achat</b><small>Touche ici pour le créer et le faire signer</small></span>'+inp("contrat")+'</div>'}}
+  h+=ach.map(f=>it(f.mime==="application/pdf"?"PDF":"IMG",pro?"Facture du vendeur":"Facture d'achat",esc(f.name||"")+" · "+fdC(f),'data-factopen="'+f.id+'"',"ok")).join("");
+  if(pro&&!ach.length){if(rp0)h+=it("FA","Facture du vendeur","À demander au garage le jour de l'achat","","");else{nTodo++;h+='<div class="doc ro todo"><span class="dico">FA</span><span class="dtx"><b>Facture du vendeur</b><small>Demande sa facture au garage et ajoute-la ici</small></span>'+inp("achat")+'</div>'}}
   const manq=(v.journal||[]).filter(e=>e.type!=="Statut"&&num(e.montant)&&(e.fait||(e.date&&e.date<today()))&&!L.some(f=>f.jId===e.id));
   h+='<div class="dgrp">Factures de garage / réparations</div>';
   h+=gar.map(f=>{const e=(v.journal||[]).find(x=>x.id===f.jId);return it(f.mime==="application/pdf"?"PDF":"IMG",esc(e?e.type+(e.texte?" · "+e.texte:""):(f.name||"Facture de garage")),(e?fdate(e.date):fdC(f))+(e&&e.montant?" · "+eur(num(e.montant)):""),'data-factopen="'+f.id+'"',"ok")}).join("");
@@ -1512,7 +1514,7 @@ function vFiche(r){
       (v.vendeurType==="pro"?inp("vendeurSociete","Nom du garage","text",{full:true,ph:"ex. Garage Dupont SRL"})+inp("vendeurTva","Numéro de TVA","text",{ph:"BE0123.456.789"})+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")
         :inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurCni","N° de carte d'identité","text",{ph:"592-1234567-89"}))+
       inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+
-     (v.demo?"":'<h3 class="subh">Contrat d\'achat</h3><div id="contratbox">'+contratBox(v)+'</div>')+'<h3 class="subh">Facture d\'achat</h3><div id="factlist">'+factList(v)+'</div>'+(v.demo?"":'<input id="factinput" type="file" accept="image/*,application/pdf" multiple hidden>')+'</div>';
+     (v.demo?"":'<h3 class="subh">Contrat d\'achat</h3><div id="contratbox">'+contratBox(v)+'</div>')+(v.vendeurType==="pro"?'<h3 class="subh">Facture du vendeur</h3><div id="factlist">'+factList(v)+'</div>':'')+(v.demo?"":'<input id="factinput" type="file" accept="image/*,application/pdf" multiple hidden>')+'</div>';
   h+='<div class="card">'+step(6,"Vente")+'<div class="subl">Prix de vente conseillé</div>'+'<div id="estbox">'+bandesHtml(v)+'</div>'+
      '<div class="estlinks"><span class="note">Comparer :</span><a href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
      '<div class="buybox" style="margin-top:14px"><small>Prix d\'achat maximum</small><div id="maxbox"></div></div>'+'<h3 class="subh">Vente</h3><div class="form">'+inp("prixAffiche","Prix affiché (€)","number")+'<div class="f full"><div id="calcbox"></div></div></div>'+(v.demo||v.statut==="vendu"?'':'<p class="note" style="margin-top:10px">Le bon de commande et la facture se créent quand tu passes la voiture en « Vendu ».</p>')+'</div>';
@@ -2999,7 +3001,7 @@ document.addEventListener("click",async e=>{
   else if(act==="pdfbdc"&&v){apercuPdf(v,"bdc")}
   else if(act==="pdffact"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}if(v.statut!=="vendu"&&!v.factNum){toast("La facture se crée une fois la voiture passée en « Vendu », à la livraison.");return}if(!num(v.prixVente)&&!num(v.prixAffiche)){toast("Indique d'abord le prix de vente final.");return}factureModal(v)}
   else if(act==="pdfachat"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}
-    const inAch=(factCache[v.id]||[]).some(f=>f.cat==="achat"&&/^Contrat-achat-/.test(f.name||""));
+    const inAch=!(factCache[v.id]||[]).some(f=>f.cat==="contrat");
     const mk=async()=>{const r=await contratAchatPdf(v);if(r&&inAch){r.alsoSave=null;r.regen=async()=>{const r2=await mk();if(r2)await savePdfDoc(v,r2,"achat");return r2}}return r};
     const r=await mk();if(r)apercuGen(r,"Contrat d'achat",()=>{location.hash="v-"+v.id},inAch?{v,cat:"achat"}:null)}
   else if(act==="annonce"&&v){annonceModal(v)}

@@ -1,5 +1,5 @@
 // GC Motors : met l'app en cache pour l'ouvrir même sans réseau. Les données passent par Firebase.
-const CACHE = "gc-motors-v14";
+const CACHE = "gc-motors-v15";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "firebase-config.js", "icon-192.png", "icon-512.png", "logo.svg", "apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
