@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="17.0";
+const APP_VERSION="17.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1623,8 +1623,9 @@ async function bonCommandePdf(v,lvl){lvl=lvl||0;const LS=[4.8,4.2,3.7][lvl],DL=[
   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("Voiture d'occasion",M,y);doc.line(M,y+2,R,y+2);y+=8;
   const left=[["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis",v.vin],["1re inscription",moisAn(v.premiereImmat)],["Couleur",v.couleur],["Année constr.",v.annee],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""]];
   const right=[["Capacité cyl.",v.cylindree?fmtNum(num(v.cylindree)).replace(",00","")+" cm3":""],["Puissance (kW)",v.puissance],["Carburant",v.carburant],["Boîte",v.boite],["Euronorm",v.euronorm],["Code couleur",v.codeCouleur]];
-  const y0=y;left.forEach((p,i)=>{row2(p[0],doc.splitTextToSize(T(p[1]||""),62)[0],M,y0+i*LS)});right.forEach((p,i)=>row2(p[0],p[1],118,y0+i*LS,27));
-  y=y0+Math.max(left.length,right.length)*LS+(lvl?3:5);
+  const fill=a=>a.filter(p=>p[1]!=null&&String(p[1]).trim()!=="");const L2=fill(left),R2=fill(right);
+  const y0=y;L2.forEach((p,i)=>{row2(p[0],doc.splitTextToSize(T(p[1]||""),62)[0],M,y0+i*LS)});R2.forEach((p,i)=>row2(p[0],p[1],118,y0+i*LS,27));
+  y=y0+Math.max(L2.length,R2.length,1)*LS+(lvl?3:5);
   // description
   doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("Description",M,y);doc.line(M,y+2,R,y+2);y+=7;
   doc.setFont("helvetica","normal");doc.setFontSize(DF);
@@ -1632,8 +1633,8 @@ async function bonCommandePdf(v,lvl){lvl=lvl||0;const LS=[4.8,4.2,3.7][lvl],DL=[
   doc.text("Documents remis avec le véhicule à la livraison :",M,y);y+=DL+0.5;{const half=Math.ceil(docsRemis.length/2),cx=(R-M)/2;docsRemis.forEach((d,i)=>{const col=i<half?0:1,row=col?i-half:i,yy=y+row*DL,x=M+col*cx;doc.circle(x+3,yy-1.1,0.6,"F");doc.text(T(d),x+6,yy)});y+=half*DL}y+=lvl?1:2;
   if(!(v.clientType==="pro"&&!garMois(v))){doc.splitTextToSize(T(st.bdcConditions||BDC_CONDITIONS_DEF),R-M).forEach(l=>{doc.text(l,M,y);y+=DL});y+=lvl?1:2}
   const bl=(k,val)=>{doc.setFont("helvetica","bold");doc.text(T(k),M,y);const w=doc.getTextWidth(T(k))+2;doc.setFont("helvetica","normal");const ls=doc.splitTextToSize(T(val),R-M-w);ls.forEach((l,i)=>doc.text(l,M+w,y+i*DL));y+=ls.length*DL+(lvl?0.5:1)};
-  bl("Caractéristiques spécifiques essentielles : ",v.bdcSpec||"aucune");
-  bl("Livraison : ",(v.bdcLivDate?"au plus tard le "+fdNum(v.bdcLivDate):"à convenir")+" - "+(v.bdcLivLieu||"au siège du vendeur"));
+  if(String(v.bdcSpec||"").trim())bl("Caractéristiques spécifiques essentielles : ",v.bdcSpec);
+  bl("Livraison : ",[v.bdcLivDate?"au plus tard le "+fdNum(v.bdcLivDate):"",(v.bdcLivLieu||"au siège du vendeur")].filter(Boolean).join(" - "));
   bl("Garantie : ",garTexte(v));
   if(v.clientType!=="pro")bl("Droit de rétractation : ",v.bdcDistance?"contrat conclu à distance ou hors établissement : le consommateur dispose de 14 jours à compter de la livraison pour se rétracter, sans justification, en le notifiant au vendeur par écrit.":"contrat conclu dans l'établissement du vendeur : pas de droit de rétractation.");
   if(v.reprise&&v.reprise.on){bl("Véhicule repris : ",[v.reprise.mod,v.reprise.vin?"châssis "+v.reprise.vin:"",v.reprise.km?fmtNum(num(v.reprise.km)).replace(",00","")+" km":"",v.reprise.imm?"1re immatriculation "+moisAn(v.reprise.imm):"",v.reprise.cond].filter(Boolean).join(" - "))}
