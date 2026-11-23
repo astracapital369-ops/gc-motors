@@ -511,7 +511,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="20.8";
+const APP_VERSION="20.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -684,16 +684,23 @@ function factList(v){
 }
 function fileData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(file)})}
 /* photo(s) de facture -> PDF façon scan */
-function scanCanvas(img,max){const r=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*r),h=Math.round(img.naturalHeight*r);const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.drawImage(img,0,0,w,h);
-  try{const d=x.getImageData(0,0,w,h),a=d.data,H=new Uint32Array(256);for(let i=0;i<a.length;i+=4){const l=(a[i]*.299+a[i+1]*.587+a[i+2]*.114)|0;a[i]=l;H[l]++}
-    const n=w*h;let lo=0,hi=255,acc=0;for(let i=0;i<256;i++){acc+=H[i];if(acc>n*.02){lo=i;break}}acc=0;for(let i=255;i>=0;i--){acc+=H[i];if(acc>n*.25){hi=i;break}}
-    const k=255/Math.max(30,hi-lo);for(let i=0;i<a.length;i+=4){let l=(a[i]-lo)*k;l=l<0?0:l>255?255:l;l=255*Math.pow(l/255,1.15);a[i]=a[i+1]=a[i+2]=l}x.putImageData(d,0,0);
-    const R=new Uint32Array(h),C=new Uint32Array(w);for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++)if(a[(yy*w+xx)*4]>190){R[yy]++;C[xx]++}
+function scanCanvas(img,max){const r=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*r),h=Math.round(img.naturalHeight*r);const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(img,0,0,w,h);
+  try{const d=x.getImageData(0,0,w,h),a=d.data,n=w*h,L=new Uint8Array(n),H=new Uint32Array(256);for(let i=0,p=0;i<a.length;i+=4,p++){const l=(a[i]*.299+a[i+1]*.587+a[i+2]*.114)|0;L[p]=l;H[l]++}
+    /* recadrage sur la feuille (zone claire) */
+    let acc=0,paper=200;for(let i=255;i>=0;i--){acc+=H[i];if(acc>n*.3){paper=i;break}}const th=Math.max(90,paper*.78);
+    const R=new Uint32Array(h),C=new Uint32Array(w);for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++)if(L[yy*w+xx]>th){R[yy]++;C[xx]++}
     let t=0,bm=h-1,lf=0,rt=w-1;while(t<h&&R[t]<w*.45)t++;while(bm>t&&R[bm]<w*.45)bm--;while(lf<w&&C[lf]<h*.45)lf++;while(rt>lf&&C[rt]<h*.45)rt--;
-    const cw=rt-lf+1,ch=bm-t+1;if(cw>w*.35&&ch>h*.35&&(cw<w*.97||ch<h*.97)){const o=document.createElement("canvas");o.width=cw;o.height=ch;o.getContext("2d").drawImage(c,lf,t,cw,ch,0,0,cw,ch);return o}}catch(e){}
+    let X0=0,Y0=0,X1=w-1,Y1=h-1;const cw=rt-lf+1,ch=bm-t+1;if(cw>w*.35&&ch>h*.35&&(cw<w*.97||ch<h*.97)){const ix=Math.round(cw*.006),iy=Math.round(ch*.006);X0=lf+ix;Y0=t+iy;X1=rt-ix;Y1=bm-iy}
+    /* balance des blancs : la couleur du papier devient blanche, couleurs conservées */
+    let sr=0,sg=0,sb=0,k=0;for(let yy=Y0;yy<=Y1;yy+=3)for(let xx=X0;xx<=X1;xx+=3){const p=yy*w+xx;if(L[p]>=paper){const q=p*4;sr+=a[q];sg+=a[q+1];sb+=a[q+2];k++}}
+    if(k){const pr=sr/k,pg=sg/k,pb=sb/k;let lo=0;acc=0;for(let i=0;i<256;i++){acc+=H[i];if(acc>n*.01){lo=i;break}}lo=Math.min(lo,60)*.6;
+      const fr=255/Math.max(40,pr-lo),fg=255/Math.max(40,pg-lo),fb=255/Math.max(40,pb-lo);
+      for(let i=0;i<a.length;i+=4){let v0=(a[i]-lo)*fr,v1=(a[i+1]-lo)*fg,v2=(a[i+2]-lo)*fb;a[i]=v0<0?0:v0>255?255:v0;a[i+1]=v1<0?0:v1>255?255:v1;a[i+2]=v2<0?0:v2>255?255:v2}}
+    x.putImageData(d,0,0);
+    if(X0||Y0||X1<w-1||Y1<h-1){const o=document.createElement("canvas");o.width=X1-X0+1;o.height=Y1-Y0+1;o.getContext("2d").drawImage(c,X0,Y0,o.width,o.height,0,0,o.width,o.height);return o}}catch(e){}
   return c}
 async function photosToPdf(imgs){await loadJsPdf();const {jsPDF}=window.jspdf;
-  for(const [max,q] of [[1800,.72],[1500,.62],[1200,.55],[1000,.5]]){const doc=new jsPDF({unit:"mm",format:"a4",compress:true});
+  for(const [max,q] of [[2600,.88],[2400,.82],[2100,.76],[1800,.7],[1500,.62],[1200,.55]]){const doc=new jsPDF({unit:"mm",format:"a4",compress:true});
     imgs.forEach((img,i)=>{const c=scanCanvas(img,max),land=c.width>c.height*1.15;if(i)doc.addPage("a4",land?"l":"p");else if(land){doc.deletePage(1);doc.addPage("a4","l")}
       const W=land?297:210,Hh=land?210:297,m=6,sc=Math.min((W-2*m)/c.width,(Hh-2*m)/c.height),iw=c.width*sc,ih=c.height*sc;doc.addImage(c.toDataURL("image/jpeg",q),"JPEG",(W-iw)/2,(Hh-ih)/2,iw,ih,undefined,"FAST")});
     const data=doc.output("datauristring").replace(/^data:application\/pdf;filename=[^;]*;/,"data:application/pdf;");if(data.length<930000)return data}
@@ -702,7 +709,7 @@ async function addFactures(v,files,jId,garage,cat){
   let ok=0;files=[...files];
   const imgs=files.filter(f=>f.type!=="application/pdf"&&/^image\//.test(f.type||"image/"));
   if(imgs.length){try{toast("Transformation en PDF…");const L=[];for(const f of imgs)L.push(await loadImg(f));const pages=[];let chunk=[];
-      for(const im of L){chunk.push(im);if(chunk.length===4){pages.push(chunk);chunk=[]}}if(chunk.length)pages.push(chunk);
+      for(const im of L){chunk.push(im);if(chunk.length===2){pages.push(chunk);chunk=[]}}if(chunk.length)pages.push(chunk);
       for(const pg of pages){let data=await photosToPdf(pg);if(!data){toast("Document trop lourd, même compressé.");continue}
         const nm=(cat==="achat"?"Facture-achat":garage?"Facture-garage":cat?"Document":"Facture")+"-"+today()+(pages.length>1?"-"+(pages.indexOf(pg)+1):"")+".pdf";
         const p={id:newId(),vehicleId:v.id,kind:"facture",mime:"application/pdf",name:nm,full:data,thumb:shrink(pg[0],200,0.7),createdAt:Date.now(),...(jId?{jId}:{}),...(garage?{garage:true}:{}),...(cat?{cat}:{})};
