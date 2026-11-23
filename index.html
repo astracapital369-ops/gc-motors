@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="18.4";
+const APP_VERSION="18.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -594,7 +594,7 @@ const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeri
 const newId=()=>"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const stLabel=k=>(STATUTS.find(s=>s.k===k)||{}).l||k;
 const kmFmt=n=>n?new Intl.NumberFormat("fr-BE").format(n)+" km":"— km";
-function toast(msg,undo){document.querySelectorAll(".toast").forEach(x=>x.remove());const t=document.createElement("div");t.className="toast";t.textContent=msg;if(undo){const b=document.createElement("button");b.className="tundo";b.textContent="Annuler";b.onclick=()=>{t.remove();undo()};t.appendChild(b)}document.body.appendChild(t);setTimeout(()=>t.remove(),undo?6000:2800)}
+function toast(msg,undo){if(S.quiet&&!undo&&!String(msg).startsWith("✓"))return;document.querySelectorAll(".toast").forEach(x=>x.remove());const t=document.createElement("div");t.className="toast";t.textContent=msg;if(undo){const b=document.createElement("button");b.className="tundo";b.textContent="Annuler";b.onclick=()=>{t.remove();undo()};t.appendChild(b)}document.body.appendChild(t);setTimeout(()=>t.remove(),undo?6000:2800)}
 function icon(k){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[k]+'</svg>'}
 
 /* ---------- calculs ---------- */
@@ -860,19 +860,20 @@ const FG_CATS=["Assurance","Plaque Z","Annonces","Carburant / déplacements","Co
 const Z_MOTIFS=["Contrôle technique","Garage / réparation","Carrosserie","Essai client","Livraison client","Récupération après achat","Nettoyage / préparation","Autre"];
 
 /* en-tête commun des PDF */
+async function pdfCar(){if(pdfCar.d===undefined)pdfCar.d=await urlToData("logo-car.png?v=2").catch(()=>null);return pdfCar.d}
+function pdfBandeau(doc,car,H){H=H||26;const W=210;doc.setFillColor(0,0,0);doc.rect(0,0,W,H,"F");const cw=42,ch=cw*191/817;if(car)try{doc.addImage(car,"PNG",(W-cw)/2,3.6,cw,ch,"gclogo","FAST")}catch(e){}
+  const t=entNomV().toUpperCase(),cs=1.1;doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(12.5);const tw=doc.getTextWidth(t)+cs*(t.length-1);doc.text(t,(W-tw)/2,H-5.2,{charSpace:cs});doc.setTextColor(25,28,36);return H}
 async function pdfEntete(doc,titre,num,date){
   const st=S.settings,W=210,M=16,R=W-M,ink=[25,28,36],muted=[90,96,110],navy=[0,0,0];const ent=entNomV();
-  doc.setTextColor(...ink);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(PT(ent),M,18);
-  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let y=24;
+  const BH=pdfBandeau(doc,await pdfCar());
+  doc.setTextColor(...ink);doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(PT(ent),M,BH+8);
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let y=BH+13;
   String(st.entAdresse||"").split(",").map(x=>x.trim()).filter(Boolean).forEach(l=>{doc.text(PT(l),M,y);y+=4});y+=1;
   [st.entTel,st.entEmail].filter(Boolean).forEach(l=>{doc.text(PT(l),M,y);y+=4});
   const kv=(k,v)=>{if(!v)return;doc.setFont("helvetica","bold");doc.text(k,M,y);doc.setFont("helvetica","normal");doc.text(PT(v),M+12,y);y+=4};
   kv("TVA",st.entTva);kv("IBAN",st.entIban);kv("BIC",st.entBic);
-  const logo=await urlToData("mark-192.png").catch(()=>null);if(logo)doc.addImage(logo,"PNG",R-62,10,16,16);
-  doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(...navy);doc.text("GC",R-43,21);doc.setTextColor(0,0,0);doc.text("Motors",R-43+doc.getTextWidth("GC")+2.2,21);
-  
   doc.setTextColor(...ink);
-  y=Math.max(y,40)+4;
+  y=Math.max(y,BH+16)+4;
   if(titre){doc.setFont("helvetica","bold");doc.setFontSize(14);doc.text(PT(titre)+(num?" "+PT(num):""),M,y);if(date){doc.setFontSize(9);doc.setFont("helvetica","normal");doc.text("Date : "+fdNum(date),R,y,{align:"right"})}doc.setDrawColor(200,204,212);doc.line(M,y+2.5,R,y+2.5);y+=10}
   return y;
 }
@@ -994,6 +995,14 @@ function signModal(r,done){const k=r.sign.kind,v=r.sign.v,sg=((v.sigs||{})[k])||
       if(!d1&&!sg[who]&&!moi){toast("Aucune signature : signe au moins un des deux cadres.");return}
       if(d2){S.settings.maSig=d2;persistSettings()}v.sigs=v.sigs||{};v.sigs[k]={...sg,...(d1?{[who]:d1}:{}),moi,date:today()};persistVehicle(v,true);box.remove();
       const ok2=(d1||sg[who])&&moi;toast(ok2?"Les deux signatures sont posées.":(moi?"Ta signature est posée : il reste celle "+(k==="bdc"?"du client":"du vendeur")+".":"Signature "+(k==="bdc"?"du client":"du vendeur")+" posée : il reste la tienne."));done(true)}});}
+async function regenDocs(btn){const L=list().filter(v=>!v.demo);let n=0,ko=0;S.quiet=true;
+  try{for(let i=0;i<L.length;i++){const v=L[i];if(btn)btn.textContent="Mise à jour… "+(i+1)+"/"+L.length;let F=[];try{F=(await allFilesFor(v.id)).filter(x=>x.kind==="facture")}catch(e){}
+    const has=c=>F.some(x=>x.cat===c),gen=c=>F.some(x=>x.cat===c&&/^Contrat-achat-/.test(x.name||""));
+    const jobs=[];if(v.bdcNum&&has("bdc"))jobs.push(["bdc",()=>bonCommandePdf(v)]);if(v.factNum&&has("facturev"))jobs.push(["facturev",()=>facturePdf(v)]);
+    if(gen("achat"))jobs.push(["achat",()=>contratAchatPdf(v)]);if(gen("contrat"))jobs.push(["contrat",()=>contratAchatPdf(v)]);
+    for(const [cat,fn] of jobs){try{const r=await fn();if(r){await savePdfDoc(v,r,cat);n++}else ko++}catch(e){ko++}}}}
+  finally{S.quiet=false}
+  toast("✓ "+n+" document"+(n>1?"s":"")+" mis à jour avec le nouveau logo"+(ko?" ("+ko+" impossible"+(ko>1?"s":"")+")":"")+".")}
 async function savePdfDoc(v,r,cat){try{const data=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(r.blob)});
   if(data.length>950000){toast("PDF trop lourd pour être importé automatiquement.");return}
   const L=factCache[v.id]||(factCache[v.id]=await photosFor(v.id).then(()=>factCache[v.id]||[]).catch(()=>[]));
@@ -1509,10 +1518,9 @@ async function fichePdf(v){
   const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
   const W=210,M=14,R=W-M,pw=R-M;let y=0,page=1;
   const navy=[0,0,0],blue=[0,0,0],ink=[20,26,40],muted=[95,104,122],line=[217,220,227],grey=[240,242,246];
-  const logo=await urlToData("mark-192.png");
-  const header=()=>{doc.setFillColor(...navy);doc.rect(0,0,W,26,"F");if(logo)doc.addImage(logo,"PNG",M,5,16,16);
-    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(16);doc.text(T(ent),M+21,13);
-    doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(205,205,205);doc.text("Fiche du véhicule",M+21,19);
+  const car=await pdfCar();
+  const header=()=>{pdfBandeau(doc,car,26);
+    doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(205,205,205);doc.text("Fiche du véhicule",M,13);
     doc.setTextColor(255,255,255);[st.entTel,st.entEmail,st.entWeb].filter(Boolean).map(T).forEach((c,i)=>doc.text(c,R,9+i*4.5,{align:"right"}))};
   const footer=()=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(...muted);doc.text(T(ent+(st.entTva?" · TVA "+st.entTva:"")+" · Fiche du "+new Date().toLocaleDateString("fr-BE")),M,290);doc.text(String(page),R,290,{align:"right"})};
   const newPage=()=>{footer();doc.addPage();page++;header();y=34};
@@ -1621,28 +1629,25 @@ async function bonCommandePdf(v,lvl){lvl=lvl||0;const LS=[4.8,4.2,3.7][lvl],DL=[
   const W=210,M=16,R=W-M;let y;
   const ink=[25,28,36],muted=[90,96,110],line=[200,204,212],grey=[236,238,242],navy=[0,0,0];
   const ent=entNomV();
-  // en-tête vendeur
-  doc.setTextColor(...ink);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(T(ent),M,18);
-  doc.setFont("helvetica","normal");doc.setFontSize(8.5);y=24;
+  // bandeau + en-tête vendeur
+  const BH=pdfBandeau(doc,await pdfCar(),24),OY=BH-2;
+  doc.setTextColor(...ink);doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(T(ent),M,BH+8);
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);y=BH+13;
   const adr=String(st.entAdresse||"").split(",").map(x=>x.trim()).filter(Boolean);
   adr.forEach(l=>{doc.text(T(l),M,y);y+=4});y+=2;
   if(st.entTel){doc.text(T(st.entTel),M,y);y+=4}if(st.entEmail){doc.text(T(st.entEmail),M,y);y+=4}y+=2;
   const kvh=(k,val)=>{if(!val)return;doc.setFont("helvetica","bold");doc.text(k,M,y);doc.setFont("helvetica","normal");doc.text(T(val),M+12,y);y+=4};
   kvh("BCE",st.entBce||st.entTva);kvh("TVA",st.entTva);kvh("IBAN",st.entIban);kvh("BIC",st.entBic);
-  // logo
-  const logo=await urlToData("mark-192.png");if(logo)doc.addImage(logo,"PNG",R-62,10,16,16);
-  doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(...navy);doc.text("GC",R-43,21);doc.setTextColor(0,0,0);doc.text("Motors",R-43+doc.getTextWidth("GC")+2.2,21);
-  
   // bloc client
   const cname=(v.clientType==="pro"?v.clientSociete:[v.clientNom,v.clientPrenom].filter(Boolean).join(" "))||v.acheteur||"";
   const adrL=String(v.clientAdresse||"").split(",").map(x=>x.trim()).filter(Boolean);adrL.push("BELGIQUE");
   const infL=[v.clientType==="pro"&&v.clientTva?["TVA",v.clientTva]:null,v.clientTel?["Tél.",v.clientTel]:null,v.clientEmail?["E-mail",v.clientEmail]:null,v.clientNum?["Client n°",v.clientNum]:null].filter(Boolean);
   const bh=12+adrL.length*4.2+(infL.length?3+infL.length*4.4:0)+2;
-  doc.setFillColor(...grey);doc.rect(118,36,R-118,Math.max(30,bh),"F");doc.setTextColor(...ink);
-  doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.text(T(cname?(v.clientType==="pro"?String(v.clientSociete||"").toUpperCase():String(v.clientNom||"").toUpperCase()+" "+(v.clientPrenom||"")):"Client"),122,43);
-  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let cy=49;adrL.forEach(l=>{doc.text(T(l),122,cy);cy+=4.2});
+  const CY0=OY+6;doc.setFillColor(...grey);doc.rect(118,CY0,R-118,Math.max(30,bh),"F");doc.setTextColor(...ink);
+  doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.text(T(cname?(v.clientType==="pro"?String(v.clientSociete||"").toUpperCase():String(v.clientNom||"").toUpperCase()+" "+(v.clientPrenom||"")):"Client"),122,CY0+7);
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);let cy=CY0+13;adrL.forEach(l=>{doc.text(T(l),122,cy);cy+=4.2});
   if(infL.length){cy+=2.5;infL.forEach(([k,val])=>{doc.setFont("helvetica","bold");doc.setFontSize(8);doc.text(k,122,cy);doc.setFont("helvetica","normal");doc.text(doc.splitTextToSize(T(val),R-140)[0],138,cy);cy+=4.4})}
-  y=Math.max(y,36+Math.max(30,bh)+2)+6;
+  y=Math.max(y,CY0+Math.max(30,bh)+2)+6;
   // titre
   doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("Bon de commande "+T(BN),M,y);
   doc.setFontSize(8.5);doc.text("Date",R-22,y);doc.setFont("helvetica","normal");doc.text(fdNum(BD||today()),R,y,{align:"right"});
@@ -2868,6 +2873,7 @@ function vReglages(){
   h+='<div class="card"><h2>Calculs</h2><div class="form">'+i("tva","Taux de TVA (%)","21 % en Belgique, appliqué au régime de la marge")+i("margeVisee","Marge nette visée par voiture (€)","Utilisée pour le prix d'achat maximum")+i("provGarantie","Provision garantie par voiture (€)","Mise de côté pendant la garantie")+i("cotisTrim","Cotisations sociales par trimestre (€)","Mets le montant demandé par ta caisse. Par défaut : minimum 2026 à titre principal (926,48 €)")+i("tauxImpot","Impôt à réserver (% du bénéfice)","Estimation, 30 % par défaut. À ajuster avec ton comptable")+i("dureeGarantie","Durée de garantie (mois)","12 mois minimum pour un pro en occasion")+i("seuilJours","Alerte stock après (jours)")+'</div></div>';
   h+='<div class="card"><h2>Liquidités</h2><div class="form">'+i("capitalDepart","Capital de départ (€)","L\'argent que tu as mis dans l\'activité au départ")+i("ajustTreso","Apports / retraits (€)","Positif si tu remets de l\'argent, négatif si tu en retires pour toi")+'</div></div>';
   h+='<div class="card"><h2>Sauvegarde</h2><p class="note">Copie tes données pour les garder ailleurs, ou colle une sauvegarde pour la restaurer.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn small" data-act="export">Copier mes données</button><button class="btn small" data-act="import">Restaurer depuis une sauvegarde</button></div><label class="f full"><span>Zone de sauvegarde</span><textarea id="backup" placeholder="La sauvegarde apparaît ici, ou colle-la ici pour restaurer."></textarea></label></div>';
+  h+='<div class="card"><h2>Documents existants</h2><p class="note">Recrée tous les bons de commande, factures de vente et contrats d\'achat déjà enregistrés avec le logo et le bandeau actuels. Les numéros, dates, montants et signatures ne changent pas. Les documents scannés ou reçus (factures de garage, factures d\'achat de vendeurs…) ne sont pas modifiés.</p><button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" data-act="regendocs">Mettre à jour tous les documents</button></div>';
   h+='<p class="note" style="text-align:center">GC Motors · version '+APP_VERSION+'</p>';
   if((s.hiddenDemos||[]).length)h+='<div class="card"><h2>Voitures d\'exemple</h2><p class="note">Tu as supprimé '+s.hiddenDemos.length+' voiture(s) d\'exemple.</p><button class="btn small" style="margin-top:8px" data-act="showdemos">Réafficher les exemples</button></div>';
   h+='<div class="card"><h2>Rappels</h2><p class="note">TVA sur la marge = marge × 21/121. Facture avec la mention « régime de la marge – biens d\'occasion ». Garantie d\'au moins un an pour un vendeur professionnel. Ces calculs ne remplacent pas ton comptable.</p></div>';
@@ -2936,6 +2942,7 @@ document.addEventListener("click",async e=>{
   else if(act==="pdfachat"&&v){if(v.demo){toast("Ajoute d'abord la voiture à ton garage.");return}const r=await contratAchatPdf(v);if(r)apercuGen(r,"Contrat d'achat",()=>{location.hash="v-"+v.id})}
   else if(act==="annonce"&&v){annonceModal(v)}
   else if(act==="repret"&&S.repriseRet){const rr=S.repriseRet,sv=curVeh(rr.sale);S.repriseRet=null;if(!sv){render();return}location.hash="d-"+sv.id;setTimeout(()=>demanderBdc(sv,rr.vente&&sv.statut!=="vendu"),200)}
+  else if(act==="regendocs"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;try{await loadJsPdf();await regenDocs(b)}catch(e){toast("Mise à jour impossible : connexion nécessaire.")}b.disabled=false;b.textContent=t0}
   else if(act==="cgo"){S.cgo={to:b.dataset.to,m:b.dataset.m};location.hash=b.dataset.to}
   else if(act==="gorecap"){e.preventDefault();if(location.hash!=="#compta")location.hash="compta";setTimeout(()=>{const x=$("#recap");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},150)}
   else if(act==="dossiercompta"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;b.textContent="Préparation…";try{const r=await dossierCompta();if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false;b.textContent=t0}}
