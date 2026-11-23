@@ -47,7 +47,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .shell{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100%}
 nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
-.brand{display:flex;align-items:center;gap:10px;padding:0 6px 16px}
+.brand{display:flex;align-items:center;justify-content:center;gap:10px;padding:4px 6px 18px}
+.hlogo{display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1}.hlogo img{height:26px;width:auto;display:block}.hlogo span{font:800 12.5px var(--body);letter-spacing:.32em;margin-right:-.32em;color:#fff}
+.brand .hlogo{background:#000;border-radius:12px;padding:12px 16px;width:100%}.brand .hlogo img{height:30px}
 .brand svg{width:42px;height:42px;flex:none;border-radius:10px}
 .brand .wm{font-family:var(--display);font-weight:700;font-size:23px;line-height:1;letter-spacing:.02em;white-space:nowrap}
 .brand .wm em{font-style:normal;color:rgba(255,255,255,.62)}
@@ -457,7 +459,7 @@ nav.tabs{display:none}
 @media (max-width:760px){
   .shell{grid-template-columns:minmax(0,1fr)}
   nav.side{display:none}
-  .mbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:30;background:var(--brand);color:var(--brand-ink);padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top))}
+  .mbar{display:flex;align-items:center;justify-content:center;gap:10px;position:sticky;top:0;z-index:30;background:var(--brand);color:var(--brand-ink);padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top))}
   .mbar svg{width:32px;height:32px;border-radius:8px}
   .mbar .wm{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:.02em;line-height:1}
   .mbar .wm em{font-style:normal;color:rgba(255,255,255,.62)}
@@ -501,7 +503,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="18.5";
+const APP_VERSION="18.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -533,6 +535,7 @@ const LOGO_SRC=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.
 let logoN=0;
 function logo(){const n="g"+(logoN++);return LOGO_SRC.replace(/id="(bg|chrome|blue)"/g,(m,a)=>'id="'+a+n+'"').replace(/url\(#(bg|chrome|blue)\)/g,(m,a)=>"url(#"+a+n+")").replace("<svg ",'<svg aria-hidden="true" ')}
 const WORDMARK='<div class="wm"><em>GC</em> Motors</div>';
+const HLOGO=()=>'<div class="hlogo"><img src="logo-car.png?v=2" alt="" aria-hidden="true"><span>'+esc(entNomV().toUpperCase())+'</span></div>';
 const NAV=[["tableau","Tableau de bord"],["garage","Garage"],["simulateur","Simulateur"],["ventes","Ventes"],["compta","Comptabilité"],["reglages","Réglages"]];
 
 /* ---------- état ---------- */
@@ -1238,8 +1241,8 @@ window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
 
 function renderNav(view){
   const cur=(view==="fiche"||view==="details")?"garage":(view==="plaque"||view==="fraisgen")?"compta":view;
-  if(!renderNav.done){$("#mbar").innerHTML=logo()+WORDMARK;renderNav.done=1}
-  $("#side").innerHTML='<div class="brand">'+logo()+WORDMARK+'</div>'+
+  if(!renderNav.done){$("#mbar").innerHTML=HLOGO();renderNav.done=1}
+  $("#side").innerHTML='<div class="brand">'+HLOGO()+'</div>'+
     NAV.map(([k,l])=>'<a class="navlink'+(k===cur?" on":"")+'" href="#'+k+'">'+icon(k)+l+'</a>').join("")+
     '<div class="status">'+modeText()+'</div>';
   $("#tabs").innerHTML=NAV.map(([k,l])=>'<a class="'+(k===cur?"on":"")+'" href="#'+k+'">'+icon(k)+'<span>'+(k==="tableau"?"Accueil":k==="compta"?"Compta":l)+'</span></a>').join("");
