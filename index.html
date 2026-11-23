@@ -362,7 +362,7 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .data.vtab th,.data.vtab td{text-align:center!important;vertical-align:middle}.data.vtab td:first-child,.data.vtab th:first-child{text-align:left!important}
 .data.vtab td .vnum{display:inline-block;vertical-align:middle}.data.vtab td .note{display:block;font-size:11.5px}
 .data td.gar{white-space:nowrap}.data td.gar .gok,.data td.gar .gend{display:inline-block}.data td.gar small{display:block;color:var(--muted);font-size:12px;margin-top:2px}.gok,.gend{font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:10px}.gok{background:var(--good-soft);color:var(--good)}.gend{background:var(--surface-2);color:var(--muted)}
-.clbox{background:var(--surface-2);border-radius:12px;padding:12px}.clhd{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.clhd::-webkit-details-marker{display:none}.clhd b{flex:1}.clchev{color:var(--muted);transition:transform .15s}.clbox[open] .clchev{transform:rotate(180deg)}.clbox{margin-top:14px}.fphotos{margin-bottom:12px}.clg{margin-top:6px}.clg summary{display:flex;justify-content:space-between;align-items:center}.clgc{color:var(--muted);margin-left:auto;margin-right:8px}
+.clbox{background:var(--surface-2);border-radius:12px;padding:12px}.clhd{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.clhd::-webkit-details-marker{display:none}.clhd b{flex:1}.clchev{color:var(--muted);transition:transform .15s}.clbox[open] .clchev{transform:rotate(180deg)}.clbox{margin-top:14px}.vtyp{margin-top:6px}.vtyp>span{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px}.vtyp .seg{display:flex;max-width:360px}.vtyp .seg button{flex:1}.fphotos{margin-bottom:12px}.clg{margin-top:6px}.clg summary{display:flex;justify-content:space-between;align-items:center}.clgc{color:var(--muted);margin-left:auto;margin-right:8px}
 .cll{display:flex;flex-direction:column}.cll .clr{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:6px;padding:8px 10px;border-top:1px solid var(--line);font-size:13.5px}.cll .clr>span{display:block!important;width:auto!important;white-space:normal!important}.cll .seg{width:100%;display:flex!important;flex-wrap:nowrap!important;grid-template-columns:none!important}.cll .seg button{flex:1 1 0!important;min-width:0;width:auto!important;padding:7px 4px;margin:0!important;border-radius:0!important}
 .seg{display:flex;flex:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}.seg button{border:none;background:none;color:var(--muted);font:inherit;font-size:11.5px;padding:5px 7px;cursor:pointer}.seg button+button{border-left:1px solid var(--line)}
 .seg button.on.ok{background:var(--good-soft);color:var(--good);font-weight:700}.seg button.on.usure{background:var(--warn-soft);color:var(--warn);font-weight:700}.seg button.on.rep{background:var(--bad-soft);color:var(--bad);font-weight:700}
@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="16.0";
+const APP_VERSION="16.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -566,7 +566,7 @@ const foldSet=a=>{FOLDF=a};
 window.addEventListener("hashchange",()=>{FOLDF=null;FOLDD=null});
 function foldApply(){const f=foldGet();document.querySelectorAll("[data-fold]").forEach(b=>{const n=+b.dataset.fold,c=b.closest(".card");if(!c)return;const on=f.includes(n);c.classList.toggle("folded",on);b.setAttribute("aria-expanded",String(!on))});const a=document.querySelector("[data-foldall]");if(a)a.textContent=f.length>=document.querySelectorAll("[data-fold]").length?"Tout ouvrir":"Tout réduire"}
 function suiviList(v){const L=(v.journal||[]).filter(e=>e.type!=="Statut");
-  if(v.dateAchat)L.push({id:"__achat",virtual:true,t:0,date:v.dateAchat,type:"Achat du véhicule",texte:[v.prixAchat?"Prix d'achat "+eur(num(v.prixAchat)):"",v.source?"via "+v.source:"",[v.vendeurPrenom,v.vendeurNom].filter(Boolean).join(" ")?"vendeur : "+[v.vendeurPrenom,v.vendeurNom].filter(Boolean).join(" "):""].filter(Boolean).join(" · ")});
+  if(v.dateAchat)L.push({id:"__achat",virtual:true,t:0,date:v.dateAchat,type:"Achat du véhicule",texte:[v.prixAchat?"Prix d'achat "+eur(num(v.prixAchat)):"",v.source?"via "+v.source:"",vendeurNomV(v)?"vendeur : "+vendeurNomV(v):""].filter(Boolean).join(" · ")});
   return L.sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.t||0)-(a.t||0))}
 function tlItem(e,v,edit){if(e.virtual)return'<div class="tl achat"><div class="tldot"></div><div class="tlbody"><div class="tlhd"><b>'+esc(e.type)+'</b></div><div class="tlmeta"><span class="tldate">'+fdate(e.date)+'</span></div>'+(e.texte?'<div class="tltxt">'+esc(e.texte)+'</div>':'')+'<div class="jfs" data-jf="__achat" data-edit="'+(v.demo?0:1)+'">'+jFacts(v,e,!v.demo)+'</div></div></div>';const fut=e.date&&e.date>=today()&&e.type!=="Statut"&&!e.fait;
   return'<div class="tl'+(fut?" fut":"")+(e.fait?" done":"")+(e.type==="Statut"?" st":"")+'"><div class="tldot"></div><div class="tlbody">'+
@@ -928,10 +928,11 @@ async function contratAchatPdf(v){
   const sec=t=>{doc.setFont("helvetica","bold");doc.setFontSize(10.5);doc.text(PT(t),M,y);doc.setDrawColor(200,204,212);doc.line(M,y+2,R,y+2);y+=7};
   const blank=(k,val,x,w)=>{doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text(PT(k),x,y);doc.setFont("helvetica","normal");const kx=x+doc.getTextWidth(PT(k))+2;if(val)doc.text(PT(val),kx,y);else{doc.setDrawColor(150,150,150);doc.line(kx,y+0.8,x+w,y+0.8)}};
   sec("Entre le vendeur");
-  blank("Nom et prénom : ",[v.vendeurNom,v.vendeurPrenom].filter(Boolean).join(" "),M,R-M);y+=6.5;
+  if(v.vendeurType==="pro"){blank("Société / garage : ",v.vendeurSociete,M,R-M);y+=6.5;blank("N° de TVA : ",v.vendeurTva,M,R-M);y+=6.5}
+  else blank("Nom et prénom : ",[v.vendeurNom,v.vendeurPrenom].filter(Boolean).join(" "),M,R-M),y+=6.5;
   blank("Adresse : ",v.vendeurAdresse,M,R-M);y+=6.5;
   blank("Téléphone : ",v.vendeurTel,M,88);blank("E-mail : ",v.vendeurEmail,M+92,R-M-92);y+=6.5;
-  blank("N° de carte d'identité : ","",M,R-M);y+=6.5;
+  if(v.vendeurType!=="pro"){blank("N° de carte d'identité : ","",M,R-M);y+=6.5}
   doc.setFont("helvetica","italic");doc.setFontSize(8.5);doc.text("ci-après « le vendeur »",M,y);y+=8;
   sec("Et l'acheteur");
   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(PT([st.entNom||"GC Motors",st.entAdresse,st.entTva?"TVA "+st.entTva:""].filter(Boolean).join(" - ")),M,y);y+=5;
@@ -954,7 +955,7 @@ async function contratAchatPdf(v){
   doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text("Le vendeur (« lu et approuvé » + signature)",M,y);doc.text("L'acheteur (« lu et approuvé » + signature)",M+92,y);
   doc.setDrawColor(25,28,36);const sh=Math.max(14,Math.min(24,280-(y+2)));doc.rect(M,y+2,84,sh);doc.rect(M+92,y+2,R-M-92,sh);
   pdfPied(doc,1,1);
-  return{blob:doc.output("blob"),name:("Contrat-achat-"+(vnum(v).replace("#",""))+"-"+(v.vendeurNom||v.marque||"")).replace(/[^\w\-.àâäéèêëîïôöùûüç]/gi,"-")+".pdf",titre:"Contrat d'achat",doc};
+  return{blob:doc.output("blob"),name:("Contrat-achat-"+(vnum(v).replace("#",""))+"-"+((v.vendeurType==="pro"?v.vendeurSociete:v.vendeurNom)||v.marque||"")).replace(/[^\w\-.àâäéèêëîïôöùûüç]/gi,"-")+".pdf",titre:"Contrat d'achat",doc};
 }
 
 /* aperçu générique d'un PDF (résultat {blob,name,titre,doc}) */
@@ -1105,7 +1106,7 @@ async function recapPdf(annexe){
   sec("REVENUS",T.ca,[22,128,74]);
   table("Ventes",[["Date",M+1],["Facture",M+18],["Véhicule",M+38,0,52],["Client",M+92,0,30],["Prix",R-46,1],["Marge",R-22,1],["TVA marge",R-1,1]],d.ventes.map(x=>[fdNum(x.v.dateVente),x.v.factNum||"",(vnum(x.v)?vnum(x.v)+" ":"")+x.v.marque+" "+x.v.modele,[x.v.clientNom,x.v.clientPrenom].filter(Boolean).join(" "),fmtNum(x.prix),fmtNum(x.marge),fmtNum(x.tva)]));
   sec("DÉPENSES",T.achats+T.fraisV+T.fg,[196,52,52]);
-  table("Achats de véhicules",[["Date",M+1],["Véhicule",M+20,0,70],["Vendeur",M+94,0,50],["Prix",R-1,1]],d.achats.map(x=>[fdNum(x.v.dateAchat),(vnum(x.v)?vnum(x.v)+" ":"")+x.v.marque+" "+x.v.modele+(x.v.vin?" "+x.v.vin:""),[x.v.vendeurNom,x.v.vendeurPrenom].filter(Boolean).join(" "),fmtNum(x.prix)]));
+  table("Achats de véhicules",[["Date",M+1],["Véhicule",M+20,0,70],["Vendeur",M+94,0,50],["Prix",R-1,1]],d.achats.map(x=>[fdNum(x.v.dateAchat),(vnum(x.v)?vnum(x.v)+" ":"")+x.v.marque+" "+x.v.modele+(x.v.vin?" "+x.v.vin:""),vendeurNomV(x.v),fmtNum(x.prix)]));
   table("Frais sur véhicules",[["Date",M+1],["Véhicule",M+20,0,50],["Détail",M+74,0,76],["Montant",R-1,1]],d.fraisV.map(x=>[fdNum(x.e.date),(vnum(x.v)?vnum(x.v)+" ":"")+x.v.marque+" "+x.v.modele,x.e.type+(x.e.texte?" - "+x.e.texte:""),fmtNum(num(x.e.montant))]));
   table("Frais généraux",[["Date",M+1],["Catégorie",M+20,0,40],["Détail",M+64,0,86],["Montant",R-1,1]],d.fg.map(f=>[fdNum(f.date),f.cat,f.libelle||"",fmtNum(num(f.montant))]));
   if(annexe){const cols=[["N°",M+1],["Type",M+10,0,44],["Véhicule",M+56,0,62],["Pièce",M+120,0,60]];let n=0;
@@ -1141,7 +1142,7 @@ async function dossierCompta(){
       const ach=F.filter(x=>!x.jId&&!x.garage&&!x.cat),ct=F.filter(x=>x.cat==="contrat");
       ach.forEach(f=>G.achat.push({type:"Facture d'achat",veh,det:f.name||"",f}));
       if(!ach.length)manques.push({type:"Facture d'achat",veh,det:"pas encore ajoutée"});
-      ct.forEach(f=>G.achat.push({type:"Contrat d'achat signé",veh,det:[v.vendeurPrenom,v.vendeurNom].filter(Boolean).join(" "),f}));
+      ct.forEach(f=>G.achat.push({type:"Contrat d'achat signé",veh,det:vendeurNomV(v),f}));
       if(!ct.length)manques.push({type:"Contrat d'achat signé",veh,det:"pas encore ajouté"});
     }
     F.filter(x=>x.jId||x.garage).forEach(f=>{const e=(v.journal||[]).find(j=>j.id===f.jId);const dt=e?e.date:dOf(f);if(inQ(dt))G.garage.push({type:"Facture de garage",veh,det:(e?e.type+(e.texte?" - "+e.texte:"")+" · "+fdNum(e.date)+(num(e.montant)?" · "+fmtNum(num(e.montant))+" €":""):(f.name||"")),f})});
@@ -1181,7 +1182,7 @@ async function dossierCompta(){
 function recapCsv(){const {y,q}=S.rq,d=recapData(y,q);const c=x=>'"'+String(x??"").replace(/"/g,'""')+'"',n=x=>String((Math.round(x*100)/100).toFixed(2)).replace(".",",");
   const L=[["Type","Date","N° véhicule","Véhicule","VIN","Tiers","Pièce","Détail","Montant","Marge","TVA marge"].map(c).join(";")];
   d.ventes.forEach(x=>L.push(["Vente",x.v.dateVente,vnum(x.v),x.v.marque+" "+x.v.modele,x.v.vin,[x.v.clientNom,x.v.clientPrenom].filter(Boolean).join(" "),x.v.factNum||x.v.bdcNum||"","",n(x.prix),n(x.marge),n(x.tva)].map((v,i)=>i>=8?v:c(v)).join(";")));
-  d.achats.forEach(x=>L.push(["Achat",x.v.dateAchat,vnum(x.v),x.v.marque+" "+x.v.modele,x.v.vin,[x.v.vendeurNom,x.v.vendeurPrenom].filter(Boolean).join(" "),"","",n(x.prix),"",""].map((v,i)=>i>=8?v:c(v)).join(";")));
+  d.achats.forEach(x=>L.push(["Achat",x.v.dateAchat,vnum(x.v),x.v.marque+" "+x.v.modele,x.v.vin,vendeurNomV(x.v)+(x.v.vendeurType==="pro"&&x.v.vendeurTva?" ("+x.v.vendeurTva+")":""),"","",n(x.prix),"",""].map((v,i)=>i>=8?v:c(v)).join(";")));
   d.fraisV.forEach(x=>L.push(["Frais véhicule",x.e.date,vnum(x.v),x.v.marque+" "+x.v.modele,x.v.vin,"","",x.e.type+(x.e.texte?" - "+x.e.texte:""),n(num(x.e.montant)),"",""].map((v,i)=>i>=8?v:c(v)).join(";")));
   d.fg.forEach(f=>L.push(["Frais général",f.date,"","","","",f.cat,f.libelle||"",n(num(f.montant)),"",""].map((v,i)=>i>=8?v:c(v)).join(";")));
   const blob=new Blob(["﻿"+L.join("\r\n")],{type:"text/csv;charset=utf-8"}),name="Recap-T"+(q+1)+"-"+y+".csv";
@@ -1380,6 +1381,7 @@ function carCard(v){
 
 /* ---------- fiche ---------- */
 function curVeh(id){return list().find(v=>v.id===id)}
+function vendeurNomV(v){return v.vendeurType==="pro"?(v.vendeurSociete||""):[v.vendeurPrenom,v.vendeurNom].filter(Boolean).join(" ")}
 function vFiche(r){
   const v=curVeh(r.id);
   if(!v)return'<div class="card empty">Cette voiture n\'existe plus. <a href="#garage">Retour au garage</a></div>';
@@ -1420,7 +1422,10 @@ function vFiche(r){
      '<button class="btn primary" style="margin-top:10px" data-act="jadd">+ Ajouter au suivi</button></div>')+
      (J.length?'<div class="timeline">'+J.map(e=>tlItem(e,v,!v.demo)).join("")+'</div>':'<p class="note" style="margin-top:12px">Aucune entrée pour l\'instant : ajoute ici les réparations, l\'entretien, le CT…</p>')+
      '<div class="row total" style="display:flex;justify-content:space-between;margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-weight:600"><span>Total des frais</span><span class="num" id="vfraistotal">'+eur(fraisTotal(v))+'</span></div></div>';
-  h+='<div class="card">'+step(5,"Achat")+'<div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full" style="margin-top:6px;font-size:13px;color:var(--ink);font-weight:600">Vendeur</div>'+inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")+inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+
+  h+='<div class="card">'+step(5,"Achat")+'<div class="form">'+inp("prixAchat",v.statut==="reperage"?"Prix demandé (€)":"Prix d'achat (€)","number")+inp("dateAchat","Date d'achat","date")+inp("source","Source","text",{ph:"2ememain, AutoScout24, reprise…"})+'<div class="f full"><div class="calc" id="achatbox"></div></div>'+'<div class="f full vtyp"><span>Vendeur</span><div class="seg">'+[["part","Particulier"],["pro","Professionnel"]].map(([k,l])=>'<button type="button" class="'+((v.vendeurType||"part")===k?"on ok":"")+'" data-vtype="'+k+'"'+dis+'>'+l+'</button>').join("")+'</div></div>'+
+      (v.vendeurType==="pro"?inp("vendeurSociete","Nom du garage","text",{full:true,ph:"ex. Garage Dupont SRL"})+inp("vendeurTva","Numéro de TVA","text",{ph:"BE0123.456.789"})+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email")
+        :inp("vendeurPrenom","Prénom")+inp("vendeurNom","Nom")+inp("vendeurTel","Téléphone","tel",{ph:"+32 …"})+inp("vendeurEmail","E-mail","email"))+
+      inp("vendeurAdresse","Adresse","text",{full:true,ph:"Rue, numéro, code postal, ville"})+'</div>'+
      (v.demo?"":'<h3 class="subh">Contrat d\'achat</h3><div id="contratbox">'+contratBox(v)+'</div>')+'<h3 class="subh">Facture d\'achat</h3><div id="factlist">'+factList(v)+'</div>'+(v.demo?"":'<input id="factinput" type="file" accept="image/*,application/pdf" multiple hidden>')+'</div>';
   h+='<div class="card">'+step(6,"Vente")+'<div class="subl">Prix de vente conseillé</div>'+'<div id="estbox">'+bandesHtml(v)+'</div>'+
      '<div class="estlinks"><span class="note">Comparer :</span><a href="'+asUrl(v)+'" target="_blank" rel="noopener">AutoScout24</a><a href="'+dmUrl(v)+'" target="_blank" rel="noopener">2ememain</a></div>'+
@@ -2958,6 +2963,7 @@ document.addEventListener("change",async e=>{const t=e.target;if(!t.dataset||!t.
     else{const img=await loadImg(f);p={...base,mime:"image/jpeg",name:f.name||"Facture",full:shrink(img,2200,0.85),thumb:shrink(img,200,0.7)}}
     await savePhoto(p);(fgFiles=fgFiles||[]).push(p);ok++}catch(err){toast("La facture n'a pas pu être ajoutée.")}}
   refreshFgFiles();if(ok)toast(ok>1?ok+" factures ajoutées.":"Facture ajoutée.")});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-vtype]");if(!b)return;e.preventDefault();const v=curVeh(route().id);if(!v||v.demo)return;const t=b.dataset.vtype;if((v.vendeurType||"part")===t)return;v.vendeurType=t;persistVehicle(v,true);const y0=scrollY;render();scrollTo(0,y0)},true);
 document.addEventListener("click",e=>{const o=e.target.closest("[data-fgopen],[data-fgfdel]");if(!o)return;e.preventDefault();e.stopPropagation();
   if(o.dataset.fgopen){const f=(fgFiles||[]).find(x=>x.id===o.dataset.fgopen);if(f)openFacture(f);return}
   const id=o.dataset.fgfdel;modal("Supprimer cette facture ?","Le fichier sera retiré de cette dépense.","Supprimer",async()=>{try{await deletePhoto(id)}catch(err){toast("Suppression impossible.");return}fgFiles=(fgFiles||[]).filter(x=>x.id!==id);refreshFgFiles();toast("Facture supprimée.")})},true);
