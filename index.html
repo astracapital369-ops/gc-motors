@@ -511,7 +511,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="20.5";
+const APP_VERSION="20.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1026,11 +1026,12 @@ async function regenDocs(btn){const L=list().filter(v=>!v.demo);let n=0,ko=0;S.q
   toast("✓ "+n+" document"+(n>1?"s":"")+" mis à jour avec le nouveau logo"+(ko?" ("+ko+" impossible"+(ko>1?"s":"")+")":"")+".")}
 async function savePdfDoc(v,r,cat){try{const data=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(r.blob)});
   if(data.length>950000){toast("PDF trop lourd pour être importé automatiquement.");return}
-  const L=factCache[v.id]||(factCache[v.id]=await photosFor(v.id).then(()=>factCache[v.id]||[]).catch(()=>[]));
+  if(!factCache[v.id]&&isDb()&&photoCol){try{await photosFor(v.id,"cache")}catch(e){}}
+  if(!factCache[v.id]){try{await photosFor(v.id)}catch(e){}factCache[v.id]=factCache[v.id]||[]}
   const CAx=/^Contrat-achat-/,same=f=>f.cat===cat&&(cat!=="achat"||CAx.test(r.name||"")===CAx.test(f.name||""));
-  for(const old of (factCache[v.id]||[]).filter(same)){try{await deletePhoto(old.id)}catch(e){}}
-  factCache[v.id]=(factCache[v.id]||[]).filter(f=>!same(f));
-  const p={id:newId(),vehicleId:v.id,kind:"facture",cat,mime:"application/pdf",name:r.name,full:data,createdAt:Date.now()};await savePhoto(p);factCache[v.id].push(p);
+  const olds=factCache[v.id].filter(same);factCache[v.id]=factCache[v.id].filter(f=>!same(f));
+  const p={id:newId(),vehicleId:v.id,kind:"facture",cat,mime:"application/pdf",name:r.name,full:data,createdAt:Date.now()};factCache[v.id].push(p);
+  savePhoto(p).then(()=>olds.forEach(o=>deletePhoto(o.id).catch(()=>{}))).catch(()=>toast("Envoi du document impossible : réessaie avec du réseau."));
   if(route().id===v.id)refreshFacts(v);toast(cat==="contrat"?"Contrat d'achat signé ajouté aux documents.":cat==="bdc"?"Bon de commande importé dans les documents.":cat==="achat"?(v.repriseFor?"Contrat de reprise":"Contrat d'achat")+" ajouté aux documents de "+vnum(v)+".":"Facture importée dans les documents.")}catch(e){toast("Import dans les documents impossible.")}}
 async function apercuGen(r,label,onEdit,saveTo,next){
   if(!r)return;lastPdf=r;const ov=$("#overlay");
@@ -2743,7 +2744,7 @@ function achatModal(ev){const ov=$("#overlay");loadJsPdf().catch(()=>{});loadPdf
         vendeurTel:g("tel"),vendeurEmail:g("email"),vendeurAdresse:g("adr")};
       let nv;if(ev){nv=ev;if(nv.source&&!/^Achat à un/.test(nv.source))delete F.source;Object.assign(nv,F);if(nv.sigs&&nv.sigs.contrat)delete nv.sigs.contrat;persistVehicle(nv,true);ov.innerHTML="";toast("Contrat mis à jour.")}
       else{nv={id:newId(),annee:"",km:"",statut:"achete",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],journal:[],createdAt:Date.now(),...F};
-      migrateFrais(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);
+      migrateFrais(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);factCache[nv.id]=factCache[nv.id]||[];
       ov.innerHTML="";toast("Voiture ajoutée au garage : "+vnum(nv)+" "+nv.marque+" "+nv.modele)}
       const mk=async()=>{const r=await contratAchatPdf(nv);if(!r)return null;r.alsoSave=null;r.doneLabel=ev?"Enregistrer":"Ajouter le véhicule";r.regen=async()=>{const r2=await mk();if(r2)savePdfDoc(nv,r2,"achat");return r2};return r};
       const r=await mk();if(!r){location.hash="v-"+nv.id;return}savePdfDoc(nv,r,"achat");
