@@ -510,7 +510,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="19.5";
+const APP_VERSION="19.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -988,7 +988,7 @@ async function contratAchatPdf(v){
 }
 
 /* aperçu générique d'un PDF (résultat {blob,name,titre,doc}) */
-function sigImg(doc,sg,x,y,w,h){if(!sg||!sg.d)return;try{const pad=1.5,bw=w-2*pad,bh=h-2*pad,ar=(sg.w||3)/(sg.h||1);let iw=bw,ih=bw/ar;if(ih>bh){ih=bh;iw=bh*ar}doc.addImage(sg.d,"PNG",x+(w-iw)/2,y+(h-ih)/2,iw,ih)}catch(e){}}
+function sigImg(doc,sg,x,y,w,h){if(!sg||!sg.d)return;try{const pad=1.5,bw=w-2*pad,bh=h-2*pad,ar=(sg.w||3)/(sg.h||1);let iw=bw,ih=bw/ar;if(ih>bh){ih=bh;iw=bh*ar}doc.addImage(sg.d,"PNG",x+(w-iw)/2,y+(h-ih)/2,iw,ih,"sg"+sg.d.length+sg.d.slice(-16).replace(/\W/g,""),"FAST")}catch(e){}}
 function sigPad(el){const c=document.createElement("canvas");el.appendChild(c);const dpr=window.devicePixelRatio||1,W=el.clientWidth||300,H=150;c.width=W*dpr;c.height=H*dpr;c.style.width=W+"px";c.style.height=H+"px";
   const x=c.getContext("2d");x.scale(dpr,dpr);x.lineWidth=2.4;x.lineCap="round";x.lineJoin="round";x.strokeStyle="#10131a";x.fillStyle="#10131a";let draw=false,used=false,lx=0,ly=0,minX=1e9,minY=1e9,maxX=0,maxY=0;
   const pos=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
@@ -997,7 +997,7 @@ function sigPad(el){const c=document.createElement("canvas");el.appendChild(c);c
   c.addEventListener("pointermove",e=>{if(!draw)return;e.preventDefault();const[a,b]=pos(e);x.beginPath();x.moveTo(lx,ly);x.lineTo(a,b);x.stroke();lx=a;ly=b;mark(a,b)});
   const up=()=>{draw=false};c.addEventListener("pointerup",up);c.addEventListener("pointercancel",up);
   return{used:()=>used,clear:()=>{x.clearRect(0,0,W,H);used=false;minX=minY=1e9;maxX=maxY=0},
-    data:()=>{if(!used)return null;const m=6,sx=Math.max(0,minX-m),sy=Math.max(0,minY-m),sw=Math.max(4,Math.min(W,maxX+m)-sx),sh=Math.max(4,Math.min(H,maxY+m)-sy);const o=document.createElement("canvas");o.width=Math.round(sw*dpr);o.height=Math.round(sh*dpr);o.getContext("2d").drawImage(c,sx*dpr,sy*dpr,sw*dpr,sh*dpr,0,0,o.width,o.height);return{d:o.toDataURL("image/png"),w:o.width,h:o.height}}}}
+    data:()=>{if(!used)return null;const m=6,sx=Math.max(0,minX-m),sy=Math.max(0,minY-m),sw=Math.max(4,Math.min(W,maxX+m)-sx),sh=Math.max(4,Math.min(H,maxY+m)-sy);const k=Math.min(dpr,500/sw),o=document.createElement("canvas");o.width=Math.max(1,Math.round(sw*k));o.height=Math.max(1,Math.round(sh*k));o.getContext("2d").drawImage(c,sx*dpr,sy*dpr,sw*dpr,sh*dpr,0,0,o.width,o.height);return{d:o.toDataURL("image/png"),w:o.width,h:o.height}}}}
 function signModal(r,done){const k=r.sign.kind,v=r.sign.v,sg=((v.sigs||{})[k])||{},who=k==="bdc"?"client":"vendeur",mine=S.settings.maSig;
   const autre=k==="bdc"?"Signature du client":"Signature du vendeur ("+(vendeurNomV(v)||"particulier")+")";
   const ov=$("#overlay");
