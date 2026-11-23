@@ -501,7 +501,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="16.8";
+const APP_VERSION="16.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1629,7 +1629,7 @@ async function bonCommandePdf(v,lvl){lvl=lvl||0;const LS=[4.8,4.2,3.7][lvl],DL=[
   doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("Description",M,y);doc.line(M,y+2,R,y+2);y+=7;
   doc.setFont("helvetica","normal");doc.setFontSize(DF);
   const docsRemis=(v.bdcDocs&&v.bdcDocs.length?v.bdcDocs:["Certificat d'immatriculation (2 volets)","Certificat de conformité","Contrôle technique","Car-Pass"]);
-  doc.text("Documents remis avec le véhicule à la livraison :",M,y);y+=DL+0.5;if(lvl>=2){doc.text(T(docsRemis.join(" · ")),M+3,y);y+=DL}else docsRemis.forEach(d=>{doc.circle(M+3,y-1.1,0.6,"F");doc.text(T(d),M+6,y);y+=DL});y+=lvl?1:2;
+  doc.text("Documents remis avec le véhicule à la livraison :",M,y);y+=DL+0.5;{const half=Math.ceil(docsRemis.length/2),cx=(R-M)/2;docsRemis.forEach((d,i)=>{const col=i<half?0:1,row=col?i-half:i,yy=y+row*DL,x=M+col*cx;doc.circle(x+3,yy-1.1,0.6,"F");doc.text(T(d),x+6,yy)});y+=half*DL}y+=lvl?1:2;
   if(!(v.clientType==="pro"&&!garMois(v))){doc.splitTextToSize(T(st.bdcConditions||BDC_CONDITIONS_DEF),R-M).forEach(l=>{doc.text(l,M,y);y+=DL});y+=lvl?1:2}
   const bl=(k,val)=>{doc.setFont("helvetica","bold");doc.text(T(k),M,y);const w=doc.getTextWidth(T(k))+2;doc.setFont("helvetica","normal");const ls=doc.splitTextToSize(T(val),R-M-w);ls.forEach((l,i)=>doc.text(l,M+w,y+i*DL));y+=ls.length*DL+(lvl?0.5:1)};
   bl("Caractéristiques spécifiques essentielles : ",v.bdcSpec||"aucune");
@@ -1656,7 +1656,7 @@ async function bonCommandePdf(v,lvl){lvl=lvl||0;const LS=[4.8,4.2,3.7][lvl],DL=[
   const tx=R-56,tw=56;let ty=by;
   doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.text("Sous-total",tx+2,ty);doc.text("€ "+fmtNum(tot),R-2,ty,{align:"right"});ty+=3;
   const box=(lab,val,bold,shade)=>{if(shade){doc.setFillColor(...grey);doc.rect(tx,ty,tw,7,"F")}doc.setDrawColor(...ink);doc.rect(tx,ty,tw,7);doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(bold?9:7.5);doc.text(T(lab),tx+2,ty+4.7);doc.text(T(val),R-2,ty+4.7,{align:"right"});ty+=7};
-  box(v.reprise&&v.reprise.on&&num(v.reprise.prix)?"Total net (après reprise)":"Total","€ "+fmtNum(tot),true,false);
+  box(v.reprise&&v.reprise.on&&num(v.reprise.prix)?"Total net":"Total","€ "+fmtNum(tot),true,false);
   acomptes.forEach(a=>box("Acompte"+(a.mode&&a.mode!=="Acompte"?" "+a.mode.replace(" bancaire","").toLowerCase():"")+(a.date?" ("+fdNum(a.date)+")":""),"€ -"+fmtNum(num(a.montant)),false,false));
   box("Montant à payer","€ "+fmtNum(reste),true,true);
   // signatures
