@@ -55,6 +55,7 @@ nav a{text-decoration:none;opacity:.8}nav a:hover{opacity:1}
 @media(max-width:860px){.hgrid{padding-top:36px;padding-bottom:40px}.hero p.lead{font-size:16px}}
 /* sections */
 section{padding:52px 0}
+.why{overflow-x:clip}
 .sh{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px;flex-wrap:wrap}
 .sh h2{font-family:"Archivo Black",Inter,sans-serif;font-size:clamp(26px,3.4vw,38px);line-height:1.1}
 .sh p{color:var(--muted);margin-top:6px}
@@ -320,15 +321,23 @@ body.page-car .fwa{display:none!important}
 @media(max-width:700px){.incx{padding:34px 0 36px}.incrow{grid-template-columns:1fr 1fr;row-gap:28px}.incit{padding:0 10px}.incit:nth-child(3){border-left:0}}
 @media(prefers-reduced-motion:reduce){.incx .incic svg{stroke-dashoffset:0}}
 .hgrid>div{width:100%}.hero .hacts,.hero .hstats{justify-self:stretch;width:100%}.hero .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:38px}.hstats b{font-size:clamp(20px,2.6vw,30px)}.hstats div{text-align:center;line-height:1.35;justify-self:center;white-space:nowrap}.hstats b{margin-bottom:4px}
-/* avantages reprise */
-.rpa{margin-top:46px}
-.rpgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.rpi{position:relative;background:#000;color:#fff;border-radius:var(--r);padding:26px 22px 24px;text-align:center;overflow:hidden;transition:transform .3s}
-.rpi:hover{transform:translateY(-4px)}
-.rpn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);font-family:"Archivo Black",Inter,sans-serif;font-size:18px;margin-bottom:14px;transition:background .3s,color .3s}
-.rpi:hover .rpn{background:#fff;color:#000}
-.rpi h3{font-size:17px;margin-bottom:6px}.rpi p{color:#a9a9ad;font-size:14.5px}
-@media(max-width:860px){.rpgrid{grid-template-columns:1fr}}
+/* avantages reprise : bandeau noir pleine largeur */
+.rpa{background:#0a0a0b;color:#fff;width:100vw;margin-left:calc(50% - 50vw);margin-top:52px;margin-bottom:-52px;padding:56px 0 60px;text-align:center}
+.rpt{font-family:"Archivo Black",Inter,sans-serif;font-size:clamp(26px,3.4vw,38px);line-height:1.1}
+.rps{color:#a9a9ad;max-width:560px;margin:10px auto 36px;font-size:16px}
+.rpgrid{display:grid;grid-template-columns:repeat(3,1fr)}
+.rpi{padding:4px 28px;border-left:1px solid rgba(255,255,255,.12)}
+.rpi:first-child{border-left:0}
+.rpn{display:block;font-family:"Archivo Black",Inter,sans-serif;font-size:44px;line-height:1;margin-bottom:14px;color:transparent;-webkit-text-stroke:1.2px rgba(255,255,255,.55)}
+.rpi h3{font-size:19px;font-weight:700;margin-bottom:8px;letter-spacing:-.005em}
+.rpi p{color:#a9a9ad;font-size:15px;line-height:1.5;max-width:260px;margin:0 auto}
+.rpa.rv .rpi{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
+.rpa.in .rpi{opacity:1;transform:none}.rpa.in .rpi:nth-child(2){transition-delay:.12s}.rpa.in .rpi:nth-child(3){transition-delay:.24s}
+.rpcta{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:40px}
+.rpcta span{color:#8d8d92;font-size:13px}
+.rphome{max-width:640px;margin:26px auto 0;background:#fff;color:var(--ink);border-radius:20px;padding:24px;text-align:left;animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.rphome .rpg{grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.rpgrid{grid-template-columns:1fr;row-gap:30px}.rpi{border-left:0;padding:0 10px}.rpi:not(:first-child){padding-top:30px;border-top:1px solid rgba(255,255,255,.12)}.rpa{padding:44px 0 48px;margin-bottom:-38px}.rphome{padding:18px}.rphome .rpg{grid-template-columns:1fr 1fr}}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -427,12 +436,17 @@ header.scrolled .hbar{height:58px}
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div><h3>Voitures vérifiées</h3><p>Chaque voiture est inspectée et préparée avant la vente. Les défauts connus sont signalés.</p></div>
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></div><h3>Reprise possible</h3><p>Votre ancienne voiture peut être reprise et déduite du prix. Demandez une estimation.</p></div>
   </div>
-  <div class="rpa">
-    <div class="sh rv"><div><h2>Les avantages de la reprise</h2><p>Vous changez de voiture ? Nous reprenons l'ancienne, et son prix est déduit de votre achat.</p></div></div>
-    <div class="rpgrid">
-      <div class="rpi rv d1"><span class="rpn">1</span><h3>Pas de prise de tête</h3><p>Pas d'annonce à publier, pas de visites ni d'appels d'inconnus : vous gagnez du temps.</p></div>
-      <div class="rpi rv d2"><span class="rpn">2</span><h3>Aucun frais à prévoir</h3><p>Pas de contrôle technique, de révision ni de réparation à payer avant de la céder.</p></div>
-      <div class="rpi rv d3"><span class="rpn">3</span><h3>Reprise immédiate</h3><p>Votre véhicule est repris le jour même de votre achat. Vous repartez au volant de la nouvelle.</p></div>
+  <div class="rpa rv">
+    <div class="wrap">
+      <h2 class="rpt">Les avantages de la reprise</h2>
+      <p class="rps">Vous changez de voiture ? Nous reprenons l'ancienne et son prix est déduit de votre achat.</p>
+      <div class="rpgrid">
+        <div class="rpi"><span class="rpn">01</span><h3>Pas de prise de tête</h3><p>Ni annonce, ni visites, ni négociation : on s'occupe de tout.</p></div>
+        <div class="rpi"><span class="rpn">02</span><h3>Aucun frais à prévoir</h3><p>Pas de contrôle technique, d'entretien ni de réparation à payer.</p></div>
+        <div class="rpi"><span class="rpn">03</span><h3>Reprise immédiate</h3><p>Votre voiture est reprise le jour de votre achat.</p></div>
+      </div>
+      <div class="rpcta"><button type="button" class="btn b-white hgo" data-rphome aria-expanded="false">Estimer ma reprise gratuitement<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><span>Estimation instantanée, sans engagement</span></div>
+      <div class="rphome" id="rphome" hidden><div id="rpformH"></div></div>
     </div>
   </div>
 </div></section>
@@ -557,7 +571,7 @@ function renderAnnonce(id){const c=CARS.find(x=>x.id===id);const box=$("#annonce
   const trk=$("#atrk");if(trk){const n=(c.photos||[]).length,upd=()=>{const i=Math.round(trk.scrollLeft/trk.clientWidth);$("#agc").textContent=(i+1)+" / "+n;document.querySelectorAll("#athb img").forEach((t,k)=>{t.classList.toggle("on",k===i);if(k===i)t.scrollIntoView({block:"nearest",inline:"nearest"})})};trk.addEventListener("scroll",()=>requestAnimationFrame(upd),{passive:true})}}
 $("#annonce").addEventListener("click",e=>{const g=e.target.closest("[data-ag]"),t=e.target.closest("[data-at]"),lb=e.target.closest("[data-lb]"),sh=e.target.closest("[data-share]"),cd=e.target.closest(".card"),trk=$("#atrk");
   if(cd){location.hash="v-"+cd.dataset.id;return}
-  const ro=e.target.closest("[data-rpopen]");if(ro&&curCar){const bx=$("#reprise"),op=bx.hidden;bx.hidden=!op;ro.setAttribute("aria-expanded",op);document.querySelector(".anside").classList.toggle("rpon",op);if(op){if(!$("#rpform").innerHTML)rpInit(curCar);setTimeout(()=>bx.scrollIntoView({behavior:"smooth",block:"nearest"}),60)}return}
+  const ro=e.target.closest("[data-rpopen]");if(ro&&curCar){const bx=$("#reprise"),op=bx.hidden;bx.hidden=!op;ro.setAttribute("aria-expanded",op);document.querySelector(".anside").classList.toggle("rpon",op);if(op){const rf=$("#annonce #rpform");if(!rf.innerHTML||RPR!==rf)rpInit(curCar,rf,"rp");setTimeout(()=>bx.scrollIntoView({behavior:"smooth",block:"nearest"}),60)}return}
   if(g&&trk){trk.scrollBy({left:trk.clientWidth*Number(g.dataset.ag),behavior:"smooth"});return}
   if(t&&trk){trk.scrollTo({left:trk.clientWidth*Number(t.dataset.at),behavior:"smooth"});return}
   if(lb){const i=lb.dataset.lb==="0"&&trk?Math.round(trk.scrollLeft/trk.clientWidth):Number(lb.dataset.lb);openLb(i);return}
@@ -571,9 +585,10 @@ let lbX=null;$("#ov").addEventListener("touchstart",e=>{lbX=e.touches[0].clientX
 document.addEventListener("keydown",e=>{if(!$("#ov").classList.contains("on"))return;if(e.key==="Escape")closeLb();if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const n=curCar.photos.length;lbI=(lbI+(e.key==="ArrowRight"?1:-1)+n)%n;lbDraw()}});
 /* reprise : estimation gratuite */
 let estP=null;function loadEstim(){if(window.GCE)return Promise.resolve();if(estP)return estP;estP=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="estim.js?v=1";sc.onload=res;sc.onerror=()=>{estP=null;rej()};document.head.appendChild(sc)});return estP}
-const RP={};
-function rpInit(c){const box=$("#rpform");loadEstim().then(()=>rpForm(c)).catch(()=>{box.innerHTML='<p class="note">Estimation indisponible pour le moment. Contactez-nous pour une offre de reprise.</p>'})}
-function rpForm(c){const G=window.GCE,box=$("#rpform");if(!box)return;const yNow=new Date().getFullYear();
+const RP={};let RPR=null,RPC=null,RPK="rp";
+const rpQ=sel=>RPR?RPR.querySelector(sel):null;
+function rpInit(c,root,key){RPR=root||$("#rpform");RPC=c||null;RPK=key||"rp";const box=RPR;loadEstim().then(()=>rpForm(c)).catch(()=>{box.innerHTML='<p class="note">Estimation indisponible pour le moment. Contactez-nous pour une offre de reprise.</p>'})}
+function rpForm(c){const G=window.GCE,box=RPR;if(!box)return;const yNow=new Date().getFullYear();
   const brands=Object.keys(G.CATALOGUE).sort((a,b)=>a.localeCompare(b,"fr"));
   const mods=RP.b?Object.keys(G.CATALOGUE[RP.b].m).sort((a,b)=>a.localeCompare(b,"fr")):[];
   const mot=RP.b&&RP.m?G.moteursDe(RP.b,RP.m):null,years=RP.b&&RP.m?G.anneesDe(RP.b,RP.m):Array.from({length:30},(_,i)=>yNow-i);
@@ -588,23 +603,24 @@ function rpForm(c){const G=window.GCE,box=$("#rpform");if(!box)return;const yNow
    '<label class="w2">État général<select data-rp="s">'+opt(G.ETATS.map(x=>[x[0],x[1]+" · "+x[2].toLowerCase()]),RP.s||"bon")+'</select></label>'+
    '</div><button class="btn b-black rpgo" data-rpgo>Estimer gratuitement</button><div id="rpres"></div>';
   if(RP.done)rpCalc(c)}
-document.addEventListener("change",e=>{const t=e.target.closest("[data-rp]");if(!t||!curCar)return;const k=t.dataset.rp;RP[k]=t.value;
+document.addEventListener("change",e=>{const t=e.target.closest("[data-rp]");if(!t||!RPR||!RPR.contains(t))return;const k=t.dataset.rp;RP[k]=t.value;
   if(k==="b"){RP.m="";RP.e="";RP.y=""}if(k==="m"){RP.e="";RP.y=""}if(k==="e"&&RP.b&&RP.m){const x=window.GCE.moteursDe(RP.b,RP.m);}
-  RP.done=false;if(k==="b"||k==="m")rpForm(curCar);else{const r=$("#rpres");if(r)r.innerHTML=""}});
-document.addEventListener("input",e=>{const t=e.target.closest('[data-rp="k"]');if(t){RP.k=t.value;RP.done=false;const r=$("#rpres");if(r)r.innerHTML=""}});
-document.addEventListener("click",e=>{if(e.target.closest("[data-rpgo]")&&curCar){if(!RP.b||!RP.m||!RP.y||!RP.k){const r=$("#rpres");r.innerHTML='<p class="rperr">Indique la marque, le modèle, l\'année et le kilométrage.</p>';return}RP.done=true;rpCalc(curCar)}});
+  RP.done=false;if(k==="b"||k==="m")rpForm(RPC);else{const r=rpQ("#rpres");if(r)r.innerHTML=""}});
+document.addEventListener("input",e=>{const t=e.target.closest('[data-rp="k"]');if(t&&RPR&&RPR.contains(t)){RP.k=t.value;RP.done=false;const r=rpQ("#rpres");if(r)r.innerHTML=""}});
+document.addEventListener("click",e=>{const g=e.target.closest("[data-rpgo]");if(g&&RPR&&RPR.contains(g)){if(!RP.b||!RP.m||!RP.y||!RP.k){const r=rpQ("#rpres");r.innerHTML='<p class="rperr">Indique la marque, le modèle, l\'année et le kilométrage.</p>';return}RP.done=true;rpCalc(RPC)}});
 function rpCalc(c){const G=window.GCE,mot=G.moteursDe(RP.b,RP.m),me=mot&&RP.e!==""&&RP.e!=null?mot.e[Number(RP.e)]:null;
   const est=G.estimer({brand:RP.b,model:RP.m,annee:Number(RP.y),km:Number(RP.k),carburant:me?G.FUEL[me[1]]:"Essence",coef:me?me[2]:1,boite:RP.g||"Manuelle",etat:RP.s||"bon",options:[],entretien:true,proprios:2});
-  const r=$("#rpres");if(!est){r.innerHTML='<p class="rperr">Pas d\'estimation automatique pour ce modèle : envoyez-nous la demande, on vous répond rapidement.</p>'+rpSend(c,null);return}
+  const r=rpQ("#rpres");if(!est){r.innerHTML='<p class="rperr">Pas d\'estimation automatique pour ce modèle : envoyez-nous la demande, on vous répond rapidement.</p>'+rpSend(c,null);return}
   const marge=Number(INFO.marge)||1000,tva=Number(INFO.tvaTaux)||21,frais=150+({excellent:0,bon:150,moyen:500,rafraichir:1200}[RP.s||"bon"]||150);
   const off=rev=>Math.round(Math.max(0,rev-(marge+frais)*(100+tva)/100)/50)*50;
   const lo=off(est.bas*0.92),hi=Math.max(off(est.bas),lo);
   if(hi<400){r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>Sur inspection</b><p>Pour cette voiture, nous préférons la voir avant de vous faire une offre.</p></div>'+rpSend(c,null);return}
-  r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>'+fE.format(lo)+' – '+fE.format(hi)+'</b><p>Prix indicatif, confirmé après inspection de la voiture (état, entretien, Car-Pass). Une fois déduit du prix de cette voiture, il resterait environ <strong>'+fE.format(Math.max(0,(c.prix||0)-hi))+'</strong> à payer.</p></div>'+rpSend(c,[lo,hi])}
+  r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>'+fE.format(lo)+' – '+fE.format(hi)+'</b><p>Prix indicatif, confirmé après inspection de la voiture (état, entretien, Car-Pass).'+(c?' Une fois déduit du prix de cette voiture, il resterait environ <strong>'+fE.format(Math.max(0,(c.prix||0)-hi))+'</strong> à payer.':' Le montant est déduit du prix de la voiture que vous achetez chez nous.')+'</p></div>'+rpSend(c,[lo,hi])}
 function rpSend(c,rg){const me=(()=>{const G=window.GCE,m=G.moteursDe(RP.b,RP.m);return m&&RP.e!==""&&RP.e!=null?m.e[Number(RP.e)][0]:""})();
-  const t="Bonjour, je suis intéressé(e) par la "+title(c)+(c.annee?" de "+c.annee:"")+(c.prix?" à "+eur(c.prix):"")+" et je souhaite faire reprendre ma voiture :\n- "+RP.b+" "+RP.m+(me?" "+me:"")+"\n- Année : "+RP.y+"\n- Kilométrage : "+fN.format(Number(RP.k))+" km\n- Boîte : "+(RP.g||"Manuelle")+"\n- État : "+((window.GCE.ETATS.find(x=>x[0]===(RP.s||"bon"))||[])[1]||"")+(rg?"\nEstimation du site : "+fE.format(rg[0])+" – "+fE.format(rg[1]):"")+"\nPouvez-vous me faire une offre ?";
-  SEND.rp=()=>{return{subject:"Rendez-vous achat + reprise · "+title(c),text:t.replace("Pouvez-vous me faire une offre ?","Je souhaiterais convenir d'un rendez-vous pour voir la "+title(c)+" et faire évaluer ma voiture.\nLien de l'annonce : "+location.href+"\nMerci de me recontacter.")}};
-  return '<div style="margin-top:12px">'+sendHtml("rp","Envoyer ma demande")+'</div><p class="note">Votre demande comprend la voiture qui vous intéresse et l\'estimation de la vôtre : nous vous recontactons pour convenir d\'un rendez-vous.</p>'}
+  const t=(c?"Bonjour, je suis intéressé(e) par la "+title(c)+(c.annee?" de "+c.annee:"")+(c.prix?" à "+eur(c.prix):"")+" et je souhaite faire reprendre ma voiture :":"Bonjour, je souhaite faire reprendre ma voiture :")+"\n- "+RP.b+" "+RP.m+(me?" "+me:"")+"\n- Année : "+RP.y+"\n- Kilométrage : "+fN.format(Number(RP.k))+" km\n- Boîte : "+(RP.g||"Manuelle")+"\n- État : "+((window.GCE.ETATS.find(x=>x[0]===(RP.s||"bon"))||[])[1]||"")+(rg?"\nEstimation du site : "+fE.format(rg[0])+" – "+fE.format(rg[1]):"")+"\nPouvez-vous me faire une offre ?";
+  SEND[RPK]=()=>c?{subject:"Rendez-vous achat + reprise · "+title(c),text:t.replace("Pouvez-vous me faire une offre ?","Je souhaiterais convenir d'un rendez-vous pour voir la "+title(c)+" et faire évaluer ma voiture.\nLien de l'annonce : "+location.href+"\nMerci de me recontacter.")}:{subject:"Demande de reprise de ma voiture",text:t};
+  return '<div style="margin-top:12px">'+sendHtml(RPK,"Envoyer ma demande")+'</div><p class="note">'+(c?'Votre demande comprend la voiture qui vous intéresse et l\'estimation de la vôtre : nous vous recontactons pour convenir d\'un rendez-vous.':'Nous vous recontactons rapidement avec une offre ferme.')+'</p>'}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-rphome]");if(!b)return;const bx=$("#rphome"),op=bx.hidden;bx.hidden=!op;b.setAttribute("aria-expanded",op);if(op){const rf=$("#rpformH");if(!rf.innerHTML||RPR!==rf)rpInit(null,rf,"rph");setTimeout(()=>bx.scrollIntoView({behavior:"smooth",block:"nearest"}),80)}});
 $("#grid").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)location.hash="v-"+c.dataset.id});
 $("#aptrack").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)location.hash="v-"+c.dataset.id});
 $("#aptrack").addEventListener("scroll",()=>requestAnimationFrame(apArrows),{passive:true});
