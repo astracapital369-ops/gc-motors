@@ -382,14 +382,16 @@ header .logo.go img{animation:lggo .75s cubic-bezier(.6,0,.3,1)}header .logo:act
 @keyframes lggo{0%{transform:none;opacity:1}40%{transform:translateX(70px) skewX(-14deg);opacity:0}41%{transform:translateX(-70px) skewX(-14deg);opacity:0}100%{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){header .logo img{animation:none!important}}
 #pgwipe{position:fixed;inset:0;z-index:90;pointer-events:none;background:#0a0a0b;transform:translateX(101%);visibility:hidden}
-#pgwipe:after{content:"";position:absolute;top:0;bottom:0;width:4px;background:var(--blue);box-shadow:0 0 24px 4px rgba(47,123,255,.6)}
-#pgwipe.fw:after{right:-4px}#pgwipe.bw:after{left:-4px}
-#pgwipe.pgin{visibility:visible}#pgwipe.pgin.fw{animation:wipefw .6s cubic-bezier(.7,0,.25,1) forwards}#pgwipe.pgin.bw{animation:wipebw .6s cubic-bezier(.7,0,.25,1) forwards}
-@keyframes wipefw{0%{transform:translateX(0)}100%{transform:translateX(-101%)}}
-@keyframes wipebw{0%{transform:translateX(0)}100%{transform:translateX(101%)}}
+#pgwipe:after{content:"";position:absolute;top:0;bottom:0;width:3px;background:var(--blue);box-shadow:0 0 26px 5px rgba(47,123,255,.55)}
+#pgwipe img{position:absolute;top:50%;width:min(260px,46vw);height:auto;margin-top:calc(min(260px,46vw) * -.12);filter:drop-shadow(0 0 14px rgba(47,123,255,.45))}
+#pgwipe.fw:after{left:-3px}#pgwipe.fw img{left:28px}
+#pgwipe.bw:after{right:-3px}#pgwipe.bw img{right:28px;transform:scaleX(-1)}
+#pgwipe.pgin{visibility:visible}#pgwipe.pgin.fw{animation:wipefw .85s cubic-bezier(.55,0,.25,1) forwards}#pgwipe.pgin.bw{animation:wipebw .85s cubic-bezier(.55,0,.25,1) forwards}
+@keyframes wipefw{0%{transform:translateX(0)}100%{transform:translateX(101%)}}
+@keyframes wipebw{0%{transform:translateX(0)}100%{transform:translateX(-101%)}}
 main.pgin.fw{animation:slfw .7s cubic-bezier(.2,.8,.2,1)}main.pgin.bw{animation:slbw .7s cubic-bezier(.2,.8,.2,1)}
-@keyframes slfw{0%{opacity:0;transform:translateX(80px)}35%{opacity:0}100%{opacity:1;transform:none}}
-@keyframes slbw{0%{opacity:0;transform:translateX(-80px)}35%{opacity:0}100%{opacity:1;transform:none}}
+@keyframes slfw{0%{opacity:0;transform:translateX(-60px)}35%{opacity:0}100%{opacity:1;transform:none}}
+@keyframes slbw{0%{opacity:0;transform:translateX(60px)}35%{opacity:0}100%{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){main.pgin,#pgwipe.pgin{animation:none;visibility:hidden}}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
@@ -533,7 +535,7 @@ header.scrolled .hbar{height:58px}
 </style>
 </head>
 <body>
-<div id="pgwipe" aria-hidden="true"></div>
+<div id="pgwipe" aria-hidden="true"><img src="logo-car.png" alt=""></div>
 <header><div class="wrap hbar">
   <button type="button" class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
