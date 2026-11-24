@@ -328,9 +328,9 @@ body.page-car .fwa{display:none!important}
 .rpgrid{display:grid;grid-template-columns:repeat(3,1fr)}
 .rpi{padding:4px 28px;border-left:1px solid rgba(255,255,255,.12)}
 .rpi:first-child{border-left:0}
-.rpn{display:block;font-family:"Archivo Black",Inter,sans-serif;font-size:44px;line-height:1;margin-bottom:14px;color:transparent;-webkit-text-stroke:1.2px rgba(255,255,255,.55)}
-.rpi h3{font-size:19px;font-weight:700;margin-bottom:8px;letter-spacing:-.005em}
-.rpi p{color:#a9a9ad;font-size:15px;line-height:1.5;max-width:260px;margin:0 auto}
+.rpn{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:#fff;color:#000;font-family:"Archivo Black",Inter,sans-serif;font-size:17px;line-height:1;margin-bottom:16px}
+.rpi h3{font-size:clamp(21px,2.2vw,25px);font-weight:800;margin-bottom:8px;letter-spacing:-.01em;line-height:1.2}
+.rpi p{color:#9a9a9f;font-size:14px;line-height:1.5;max-width:260px;margin:0 auto}
 .rpa.rv .rpi{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
 .rpa.in .rpi{opacity:1;transform:none}.rpa.in .rpi:nth-child(2){transition-delay:.12s}.rpa.in .rpi:nth-child(3){transition-delay:.24s}
 .rpcta{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:40px}
@@ -452,9 +452,9 @@ header.scrolled .hbar{height:58px}
       <h2 class="rpt">Les avantages de la reprise</h2>
       <p class="rps">Vous changez de voiture ? Nous reprenons l'ancienne et son prix est déduit de votre achat.</p>
       <div class="rpgrid">
-        <div class="rpi"><span class="rpn">01</span><h3>Pas de prise de tête</h3><p>Ni annonce, ni visites, ni négociation : on s'occupe de tout.</p></div>
-        <div class="rpi"><span class="rpn">02</span><h3>Aucun frais à prévoir</h3><p>Pas de contrôle technique, d'entretien ni de réparation à payer.</p></div>
-        <div class="rpi"><span class="rpn">03</span><h3>Reprise immédiate</h3><p>Votre voiture est reprise le jour de votre achat.</p></div>
+        <div class="rpi"><span class="rpn">1</span><h3>Pas de prise de tête</h3><p>Ni annonce, ni visites, ni négociation : on s'occupe de tout.</p></div>
+        <div class="rpi"><span class="rpn">2</span><h3>Aucun frais à prévoir</h3><p>Pas de contrôle technique, d'entretien ni de réparation à payer.</p></div>
+        <div class="rpi"><span class="rpn">3</span><h3>Reprise immédiate</h3><p>Votre voiture est reprise le jour de votre achat.</p></div>
       </div>
       <div class="rpcta"><button type="button" class="btn b-white hgo" data-rphome aria-expanded="false">Estimer ma reprise gratuitement<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><span>Estimation instantanée, sans engagement</span></div>
       <div class="rphome" id="rphome" hidden><div id="rpformH"></div></div>
