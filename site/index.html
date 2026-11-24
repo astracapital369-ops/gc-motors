@@ -391,7 +391,7 @@ header.scrolled .hbar{height:58px}
     <h1><span class="ln" style="animation-delay:0.20s">Des</span> <span class="ln" style="animation-delay:0.27s">occasions</span> <span class="ln" style="animation-delay:0.34s">vérifiées,</span> <span class="ln" style="animation-delay:0.41s">garanties</span> <span class="ln" style="animation-delay:0.48s">et</span> <span class="ln" style="animation-delay:0.55s">prêtes</span> <span class="ln" style="animation-delay:0.62s">à</span> <span class="ln" style="animation-delay:0.69s">rouler.</span></h1>
     <p class="lead">Chaque voiture est contrôlée, préparée et vendue avec son contrôle technique, son Car-Pass et une garantie de <span class="gmo">12</span> mois. Simple, clair, sans mauvaise surprise.</p>
     <div class="hacts"><a class="btn b-white hgo" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
-    <div class="hstats"><div><b><span id="pct">100</span> %</b>voitures contrôlées</div><div><b><span class="gmo">12</span> mois</b>de garantie</div><div><b>Reprise</b>estimation gratuite</div></div>
+    <div class="hstats"><div><b>Essai</b>sur rendez-vous</div><div><b><span class="gmo">12</span> mois</b>de garantie</div><div><b>Reprise</b>estimation gratuite</div></div>
   </div>
   </div></div>
 <div class="marq" aria-hidden="true"><div><span>Garantie 12 mois</span><span>Contrôle technique</span><span>Car-Pass fourni</span><span>Voitures vérifiées</span><span>Reprise possible</span><span>Essai sur rendez-vous</span><span>Garantie 12 mois</span><span>Contrôle technique</span><span>Car-Pass fourni</span><span>Voitures vérifiées</span><span>Reprise possible</span><span>Essai sur rendez-vous</span></div></div>
@@ -472,7 +472,7 @@ function cardHtml(c,i){const ph=c.photos&&c.photos[0];return'<button class="card
 
 function renderGrid(){const b=$("#fbrand").value,so=$("#fsort").value;let L=CARS.filter(c=>!b||c.marque===b);
   const k={"prix-asc":(a,z)=>(a.prix||9e9)-(z.prix||9e9),"prix-desc":(a,z)=>(z.prix||0)-(a.prix||0),"km-asc":(a,z)=>(a.km||9e9)-(z.km||9e9),"annee-desc":(a,z)=>(z.annee||0)-(a.annee||0),recent:(a,z)=>(z.updatedAt||0)-(a.updatedAt||0)}[so];L=L.slice().sort(k);
-  if(!counted){counted=true;setTimeout(()=>countUp($("#pct"),100),900)}$("#subcount").textContent=CARS.length?CARS.length+" voiture"+(CARS.length>1?"s":"")+" disponible"+(CARS.length>1?"s":"")+" · photos et prix à jour":"Notre stock change souvent.";
+  $("#subcount").textContent=CARS.length?CARS.length+" voiture"+(CARS.length>1?"s":"")+" disponible"+(CARS.length>1?"s":"")+" · photos et prix à jour":"Notre stock change souvent.";
   $("#grid").innerHTML=L.length?L.map(cardHtml).join(""):'<div class="empty" style="grid-column:1/-1"><h3>Aucune voiture en vente pour le moment</h3><p>De nouvelles voitures arrivent régulièrement. Dites-nous ce que vous cherchez, on vous prévient.</p><div class="hacts">'+(INFO.whatsapp?'<a class="btn b-wa" href="'+waLink()+'" target="_blank" rel="noopener">'+ICON.wa+'WhatsApp</a>':'')+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+'</div></div>'}
 
 function renderPreview(){const t=$("#aptrack");const L=CARS.slice().sort((a,z)=>(z.updatedAt||0)-(a.updatedAt||0)).slice(0,10);
