@@ -251,7 +251,7 @@ body.lock{overflow:hidden}
 .ov.lb .dx{position:fixed}
 .angrid>*{min-width:0}
 @media(max-width:960px){.angrid{grid-template-columns:minmax(0,1fr)}.anside{position:static}.others .car-track .card{flex-basis:calc((100% - 20px)/2)}}
-@media(max-width:640px){.an{padding-top:12px;padding-bottom:100px}.agal{border-radius:14px;margin:0 -20px;border-radius:0}.athumbs{display:none}.anprice-m{display:block}.techg{grid-template-columns:1fr}.incg{grid-template-columns:1fr}.rpg{grid-template-columns:1fr 1fr}.rpg .w2{grid-column:span 2}.others .car-track .card{flex-basis:82%}.pbox .pval,.pbox small,.pbox .pnote{display:none}.dbar{display:flex}.gfull{display:none}}
+@media(max-width:640px){.an{padding-top:12px;padding-bottom:100px}.agal{border-radius:14px;margin:0 -20px;border-radius:0}.athumbs{display:none}.anprice-m{display:block}.techg{grid-template-columns:1fr}.incg{grid-template-columns:1fr}.rpg{grid-template-columns:1fr 1fr}.rpg .w2{grid-column:span 2}.others .car-track .card{flex-basis:82%}.pbox .pval,.pbox>small,.pbox .pnote,.pbox .pdiv{display:none}.dbar{display:flex}.gfull{display:none}}
 body:not(.page-car) .dbar{display:none!important}
 body.page-car .fwa{display:none!important}
 /* calendrier */
@@ -273,7 +273,13 @@ body.page-car .fwa{display:none!important}
 .pdiv{height:1px;background:var(--line);margin:6px 0 4px}
 .pq{font-size:15px;margin-bottom:2px}
 .walink{display:block;text-align:center;font-size:13.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:4px 0}.walink:hover{color:var(--ink)}
-.rplink{display:flex;align-items:center;gap:10px;margin-top:4px;padding:12px 14px;border-radius:12px;background:var(--soft);font-size:14px;font-weight:600;text-decoration:none;color:var(--ink);transition:background .15s}.rplink:hover{background:#ececee}.rplink svg{width:18px;height:18px}
+.rplink{display:flex;align-items:center;gap:12px;margin-top:4px;padding:13px 14px;border-radius:12px;background:var(--soft);font:600 14.5px Inter,sans-serif;text-align:left;color:var(--ink);border:0;cursor:pointer;width:100%;transition:background .15s}.rplink:hover{background:#ececee}.rplink>svg{width:20px;height:20px;flex:none}
+.rplink span{flex:1}.rplink small{display:block;font-weight:500;font-size:12.5px;color:var(--muted);margin-top:2px}
+.rplink .rpchev{width:18px;height:18px;transition:transform .25s}.rplink[aria-expanded="true"] .rpchev{transform:rotate(180deg)}
+.anside .rprise{background:none;padding:4px 0 0;border-radius:0;animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.rpintro{color:var(--muted);font-size:13.5px;margin-bottom:10px}
+.anside .rpg{grid-template-columns:1fr 1fr}.anside .rpg .w2{grid-column:span 2}
+.anside.rpon{position:static}
 .dbar .btn{flex:1}
 .dbar .btn svg{width:18px;height:18px}
 .stoast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#111;color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:all .3s;z-index:90}
@@ -495,17 +501,17 @@ function annonceHtml(c){const P=c.photos||[],g=c.garantie||INFO.garantie||12;
     '<div class="ablock rv"><h2>Caractéristiques</h2><div class="techg">'+tech.map(r=>'<div><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("")+'</div></div>'+
     (c.options&&c.options.length?'<details class="ablock eqd rv"><summary><h2>Équipements et options</h2><span class="cnt2">'+c.options.length+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><ul class="eqg">'+c.options.map(o=>'<li>'+esc(o)+'</li>').join("")+'</ul></details>':'')+
     '<div class="ablock rv"><h2>Inclus avec cette voiture</h2><ul class="incg"><li><div><b>Garantie '+g+' mois</b><span>Par écrit, sur le bon de commande</span></div></li><li><div><b>Contrôle technique « vente »</b><span>Récent, prêt pour l\'immatriculation</span></div></li><li><div><b>Car-Pass</b><span>Historique du kilométrage</span></div></li><li><div><b>Préparation complète</b><span>Nettoyage et vérifications avant livraison</span></div></li></ul></div>'+
-    '<div class="ablock rprise rv" id="reprise"><div class="rph">'+IC.swap+'<div><h2>Reprise de votre véhicule possible</h2><p>Facultatif : estimez gratuitement votre voiture actuelle. Le montant serait déduit du prix de la '+esc(title(c))+'.</p></div></div><div id="rpform"><p class="note">Chargement…</p></div></div>'+
-   '</div><aside class="anside"><div class="pbox"><small>Prix</small><div class="pval">'+eur(c.prix)+'</div><p class="pnote">TVA comprise · régime de la marge</p><div class="pdiv"></div><b class="pq">Cette voiture vous intéresse ?</b><div class="pbtns">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler · '+esc(INFO.tel)+'</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'Envoyer un e-mail</a>':'')+'</div>'+(INFO.whatsapp?'<a class="walink" href="'+waLink(c)+'" target="_blank" rel="noopener">ou écrire sur WhatsApp</a>':'')+'<a class="rplink" href="#reprise">'+IC.swap+'Reprise de votre véhicule possible</a></div></aside></div>'+
+   '</div><aside class="anside"><div class="pbox"><small>Prix</small><div class="pval">'+eur(c.prix)+'</div><p class="pnote">TVA comprise · régime de la marge</p><div class="pdiv"></div><b class="pq">Cette voiture vous intéresse ?</b><div class="pbtns">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler · '+esc(INFO.tel)+'</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'Envoyer un e-mail</a>':'')+'</div>'+(INFO.whatsapp?'<a class="walink" href="'+waLink(c)+'" target="_blank" rel="noopener">ou écrire sur WhatsApp</a>':'')+'<button type="button" class="rplink" data-rpopen aria-expanded="false">'+IC.swap+'<span>Reprise de votre véhicule possible<small>Estimation gratuite et instantanée du prix de reprise</small></span><svg class="rpchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="rprise" id="reprise" hidden><p class="rpintro">Le montant serait déduit du prix de la '+esc(title(c))+'.</p><div id="rpform"></div></div></div></aside></div>'+
    (others.length?'<div class="ablock others rv"><h2>Autres voitures qui pourraient vous plaire</h2><div class="car-track" id="otrack">'+others.map(cardHtml).join("")+'</div></div>':'')+
    '</div><div class="dbar">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'E-mail</a>':'')+'</div>'}
 function renderAnnonce(id){const c=CARS.find(x=>x.id===id);const box=$("#annonce");curCar=c||null;
   if(!c){box.innerHTML='<div class="wrap an"><div class="empty"><h3>'+(CARS.length||loaded?"Cette voiture n'est plus en vente":"Chargement…")+'</h3>'+(CARS.length||loaded?'<p>Elle vient peut-être d\'être vendue. Découvrez nos autres occasions.</p><div class="hacts"><a class="btn b-black" href="#occasions">Voir nos occasions</a></div>':'')+'</div></div>';return}
   document.title=title(c)+(c.annee?" "+c.annee:"")+" · "+(INFO.nom||"GC Motor's");
-  box.innerHTML=annonceHtml(c);reveal();rpInit(c);
+  box.innerHTML=annonceHtml(c);reveal();
   const trk=$("#atrk");if(trk){const n=(c.photos||[]).length,upd=()=>{const i=Math.round(trk.scrollLeft/trk.clientWidth);$("#agc").textContent=(i+1)+" / "+n;document.querySelectorAll("#athb img").forEach((t,k)=>{t.classList.toggle("on",k===i);if(k===i)t.scrollIntoView({block:"nearest",inline:"nearest"})})};trk.addEventListener("scroll",()=>requestAnimationFrame(upd),{passive:true})}}
 $("#annonce").addEventListener("click",e=>{const g=e.target.closest("[data-ag]"),t=e.target.closest("[data-at]"),lb=e.target.closest("[data-lb]"),sh=e.target.closest("[data-share]"),cd=e.target.closest(".card"),trk=$("#atrk");
   if(cd){location.hash="v-"+cd.dataset.id;return}
+  const ro=e.target.closest("[data-rpopen]");if(ro&&curCar){const bx=$("#reprise"),op=bx.hidden;bx.hidden=!op;ro.setAttribute("aria-expanded",op);document.querySelector(".anside").classList.toggle("rpon",op);if(op){if(!$("#rpform").innerHTML)rpInit(curCar);setTimeout(()=>bx.scrollIntoView({behavior:"smooth",block:"nearest"}),60)}return}
   if(g&&trk){trk.scrollBy({left:trk.clientWidth*Number(g.dataset.ag),behavior:"smooth"});return}
   if(t&&trk){trk.scrollTo({left:trk.clientWidth*Number(t.dataset.at),behavior:"smooth"});return}
   if(lb){const i=lb.dataset.lb==="0"&&trk?Math.round(trk.scrollLeft/trk.clientWidth):Number(lb.dataset.lb);openLb(i);return}
