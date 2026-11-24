@@ -106,6 +106,8 @@ section{padding:52px 0}
 .back{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;text-decoration:none;color:var(--muted);margin-bottom:14px}.back:hover{color:var(--ink)}
 body.page-occ .hero,body.page-occ .marq,body.page-occ #apercu,body.page-occ #pourquoi,body.page-car .hero,body.page-car .marq,body.page-car #apercu,body.page-car #pourquoi,body.page-car #voitures{display:none}
 body:not(.page-car) #annonce{display:none}
+body:not(.page-est) #estpage{display:none}
+body.page-est .hero,body.page-est .marq,body.page-est #apercu,body.page-est #pourquoi,body.page-est #voitures{display:none}
 body:not(.page-occ) #voitures{display:none}
 /* why */
 .why{background:var(--soft)}
@@ -376,7 +378,7 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .dnav a span{font-size:12px;font-weight:600;color:#77777d;letter-spacing:.1em}
 .dnav a:hover{color:#bdbdc2}
 .drawer.on .dnav a{opacity:1;transform:none}
-.drawer.on .dnav a:nth-child(1){transition-delay:.1s}.drawer.on .dnav a:nth-child(2){transition-delay:.17s}.drawer.on .dnav a:nth-child(3){transition-delay:.24s}
+.drawer.on .dnav a:nth-child(1){transition-delay:.1s}.drawer.on .dnav a:nth-child(2){transition-delay:.17s}.drawer.on .dnav a:nth-child(3){transition-delay:.24s}.drawer.on .dnav a:nth-child(4){transition-delay:.31s}
 .dfoot{margin-top:auto;display:flex;flex-direction:column;gap:6px}.dfoot a{color:#9a9a9f;text-decoration:none;font-size:14px}.dfoot a:hover{color:#fff}
 /* ===== touche de bleu ===== */
 :root{--blue:#2f7bff;--blue-l:#2f7bff}
@@ -391,7 +393,6 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .inck:after{background:var(--blue)}
 .eqg li:before,.incg li:before{background-color:var(--blue)}
 .eql li:before{background:var(--blue)}
-.burger span:nth-child(2){background:var(--blue-l)}
 .dnav a span{color:var(--blue-l)}
 .marq span:after{background:var(--blue-l);opacity:1}
 .price span,.crumb a:hover{color:var(--blue)}
@@ -410,6 +411,16 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .pchip small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#bdbdc2;font-weight:600}
 .pchip b{font-size:clamp(22px,2.6vw,30px);font-weight:800;line-height:1.05;letter-spacing:-.01em}
 @media(max-width:640px){.pchip{left:12px;bottom:12px;padding:8px 13px 9px;border-radius:12px}}
+/* page estimation de reprise */
+.estp{padding-top:28px}
+.estp .back{display:flex;justify-content:center;width:max-content;margin:0 auto 8px}
+.estgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:26px;align-items:start;max-width:980px;margin:10px auto 0}
+.estcard{border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 14px 40px rgba(0,0,0,.06);background:#fff}
+.estcard .rpg{grid-template-columns:repeat(3,1fr)}
+.estadv{list-style:none;padding:0;display:flex;flex-direction:column;gap:12px}
+.estadv li{display:flex;flex-direction:column;gap:2px;padding:16px 18px;border-radius:16px;background:#0a0a0b;color:#fff}
+.estadv b{font-size:16px}.estadv span{color:#a9a9ad;font-size:14px}
+@media(max-width:860px){.estgrid{grid-template-columns:minmax(0,1fr)}.estcard{padding:18px}.estcard .rpg{grid-template-columns:1fr 1fr}}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -475,7 +486,7 @@ header.scrolled .hbar{height:58px}
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
   <span class="hsp"></span>
 </div></header>
-<div class="drawer" id="drawer" aria-hidden="true"><div class="dpanel"><button type="button" class="dclose" aria-label="Fermer le menu">×</button><nav class="dnav"><a href="#top" data-nav="home"><span>01</span>Accueil</a><a href="#occasions" data-nav="occ"><span>02</span>Nos occasions</a><a href="#contact" data-nav="contact"><span>03</span>Contact</a></nav><div class="dfoot" id="dfoot"></div></div></div>
+<div class="drawer" id="drawer" aria-hidden="true"><div class="dpanel"><button type="button" class="dclose" aria-label="Fermer le menu">×</button><nav class="dnav"><a href="#top" data-nav="home"><span>01</span>Accueil</a><a href="#occasions" data-nav="occ"><span>02</span>Nos occasions</a><a href="#estimation" data-nav="est"><span>03</span>Estimation de reprise</a><a href="#contact" data-nav="contact"><span>04</span>Contact</a></nav><div class="dfoot" id="dfoot"></div></div></div>
 
 <main id="top">
 <div class="hero"><span class="glow"></span><div class="wrap hgrid">
@@ -526,6 +537,14 @@ header.scrolled .hbar{height:58px}
 </div></section>
 
 <div id="annonce"></div>
+<section id="estpage" class="estp"><div class="wrap">
+  <a class="back" href="#top">← Accueil</a>
+  <div class="sh"><div><h2>Estimation de reprise</h2><p>Estimez gratuitement votre voiture en 30 secondes. Si vous achetez chez nous, le montant est déduit de votre nouvelle voiture.</p></div></div>
+  <div class="estgrid">
+    <div class="estcard" id="rpformE"></div>
+    <ul class="estadv"><li><b>Pas de prise de tête</b><span>Ni annonce, ni visites, ni appels d'inconnus.</span></li><li><b>Aucun frais à prévoir</b><span>Pas de contrôle technique ni de réparation à payer.</span></li><li><b>Reprise immédiate</b><span>Votre voiture est reprise le jour de votre achat.</span></li></ul>
+  </div>
+</div></section>
 <section class="contact" id="contact"><div class="wrap cgrid">
   <div class="rv"><h2>Une voiture vous intéresse&nbsp;?</h2><p>Appelez, écrivez sur WhatsApp ou envoyez un e-mail : réponse rapide. Visites et essais sur rendez-vous.</p></div>
   <div class="clist rv d2" id="clist"></div>
@@ -576,6 +595,7 @@ $("#burger").addEventListener("click",()=>drawer(!$("#drawer").classList.contain
 $("#drawer").addEventListener("click",e=>{if(e.target.id==="drawer"||e.target.closest(".dclose")){drawer(false);return}const a=e.target.closest("[data-nav]");if(!a)return;e.preventDefault();drawer(false);const n=a.dataset.nav;
   if(n==="home"){history.pushState(null,"",location.pathname);showPage();scrollTo({top:0,behavior:"smooth"})}
   else if(n==="occ"){location.hash="occasions"}
+  else if(n==="est"){location.hash="estimation"}
   else setTimeout(()=>$("#contact").scrollIntoView({behavior:"smooth"}),50)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")drawer(false)});
 function specs(c){return[c.annee,km(c.km),c.carburant,c.boite].filter(Boolean)}
@@ -592,7 +612,7 @@ function renderPreview(){const t=$("#aptrack");const L=CARS.slice().sort((a,z)=>
   $("#apL").parentElement.style.visibility=L.length>1?"":"hidden";apArrows()}
 function apArrows(){const t=$("#aptrack");$("#apL").disabled=t.scrollLeft<8;$("#apR").disabled=t.scrollLeft+t.clientWidth>=t.scrollWidth-8}
 function apStep(d){const t=$("#aptrack"),c=t.querySelector(".card");const w=c?c.getBoundingClientRect().width+20:t.clientWidth;t.scrollBy({left:d*w,behavior:"smooth"})}
-let lastOcc=null,loaded=false;function showPage(){const h=location.hash,m=h.match(/^#v-(.+)$/),pg=m?"car:"+m[1]:h==="#occasions"?"occ":"home";closeLb();
+let lastOcc=null,loaded=false;function showPage(){const h=location.hash,m=h.match(/^#v-(.+)$/),pg=m?"car:"+m[1]:h==="#occasions"?"occ":h==="#estimation"?"est":"home";closeLb();document.body.classList.toggle("page-est",pg==="est");if(pg==="est"){const rf=$("#rpformE");if(!rf.innerHTML||RPR!==rf)rpInit(null,rf,"rpe")}
   document.body.classList.toggle("page-occ",pg==="occ");document.body.classList.toggle("page-car",!!m);if(m)renderAnnonce(m[1]);else{curCar=null;document.title=(INFO.nom||"GC Motor's")+" · Voitures d'occasion vérifiées et garanties"}
   if(lastOcc!==null&&pg!==lastOcc)scrollTo({top:0,behavior:"instant"});lastOcc=pg;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
 function fillBrands(){const s=$("#fbrand"),cur=s.value,B=[...new Set(CARS.map(c=>c.marque).filter(Boolean))].sort();s.innerHTML='<option value="">Toutes les marques</option>'+B.map(b=>'<option'+(b===cur?" selected":"")+'>'+esc(b)+'</option>').join("");s.style.display=B.length>1?"":"none"}
@@ -706,7 +726,7 @@ $("#aptrack").addEventListener("scroll",()=>requestAnimationFrame(apArrows),{pas
 $("#apL").addEventListener("click",()=>apStep(-1));$("#apR").addEventListener("click",()=>apStep(1));
 window.addEventListener("resize",apArrows);
 window.addEventListener("hashchange",showPage);
-document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car"))){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
+document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car")||document.body.classList.contains("page-est"))){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
 showPage();
 $("#fbrand").addEventListener("change",renderGrid);$("#fsort").addEventListener("change",renderGrid);
 
