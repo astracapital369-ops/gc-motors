@@ -512,7 +512,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="21.7";
+const APP_VERSION="21.8";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1551,7 +1551,7 @@ function vFiche(r){
   h+='<div class="card">'+step(2,"Détails véhicule")+'<div class="form">'+sel("statut","Statut",STATUTS.map(s=>[s.k,s.l]))+(v.demo?'<label class="f">Marque<input value="'+esc(v.marque)+'" disabled></label>':brandPicker("veh",vb==="__autre"?"Autre marque":vb))+
      (vb==="__autre"?inp("marque","Marque (texte)")+inp("modele","Modèle","text",{ph:"ex. Ypsilon"}):
        vsel("modele","Modèle",(v.modele&&!vModels.includes(v.modele)?[[v.modele,v.modele]]:[]).concat(vModels),vb?"Choisir le modèle":"Choisis d'abord la marque",v.modele)+
-       vsel("moteur","Motorisation",vMot?vMot.e.map(e=>[e[0],motLab(e,vMot.gen)]):[],vMot?"Non précisée (facultatif)":"Choisis d'abord le modèle",v.moteur||""))+
+       vsel("moteur","Motorisation",vMot?motAn(vMot,v.annee,v.moteur).map(e=>[e[0],motLab(e,vMot.gen)]):[],vMot?"Non précisée (facultatif)":"Choisis d'abord le modèle",v.moteur||""))+
      (v.moteur&&vb!=="__autre"?"":sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<div class="f full yr"><span>Année</span><div class="yrrow"><input data-field="annee" type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+esc(v.annee??"")+'" placeholder="ex. 2015" aria-label="Année"'+dis+'></div></div>'+
@@ -2644,6 +2644,7 @@ const FUEL={E:"Essence",D:"Diesel",H:"Hybride",El:"Électrique",G:"GPL"};
 const MOTEURS_GENERIQUES=[["Essence","E",1],["Diesel","D",1],["Hybride","H",1],["Hybride rechargeable","H",1.04],["Électrique","El",1],["GPL","G",1]];
 const MOT_ORD={E:0,H:1,D:2,El:3,G:4},MOT_CACHE={};
 function motTri(x){const n=l=>{const a=l.match(/\b(\d)[.,](\d)\b/);return a?+(a[1]+"."+a[2]):99},p=l=>{const a=l.match(/(\d+)(?:\/\d+)*\s*(?:-\d+\s*)?ch/);return a?+a[1]:0};return{...x,e:x.e.map((e,i)=>[e,i]).sort((A,B)=>{const a=A[0],b=B[0];return (MOT_ORD[a[1]]-MOT_ORD[b[1]])||(a[1]==="El"?A[1]-B[1]:(n(a[0])-n(b[0]))||((a[3]||0)-(b[3]||0))||(p(a[0])-p(b[0]))||A[1]-B[1])}).map(z=>z[0])}}
+function motAn(x,an,cur){an=num(an);return x.e.filter(e=>e[0]===cur||!an||!e[3]||(an>=e[3]&&an<=(e[4]||9999)))}
 function motLab(e,gen){if(gen)return e[0];return e[0]+" · "+FUEL[e[1]]+(e[3]?" · "+e[3]+(e[4]?(e[4]===e[3]?"":"–"+e[4]):"–auj."):"")}
 function moteursDe(b,m){const k=b+"|"+m;if(MOTEURS[k])return MOT_CACHE[k]||(MOT_CACHE[k]=motTri(MOTEURS[k]));const c=CATALOGUE[b]&&CATALOGUE[b].m[m];if(!c)return null;return{y:[c[2]||1995].concat(c[3]?[c[3]]:[]),e:MOTEURS_GENERIQUES,gen:true}}
 function anneesDe(b,m,mo){const yNow=new Date().getFullYear(),x=moteursDe(b,m),e=x&&mo?x.e.find(q=>q[0]===mo):null;let a=x?x.y[0]:1995,z=x&&x.y[1]?x.y[1]:yNow;if(e&&e[3]){a=Math.max(a,e[3]);z=Math.min(z,e[4]||yNow)}const out=[];for(let y=z;y>=a;y--)out.push(y);return out}
@@ -2931,7 +2932,7 @@ function vSim(){
   h+='<div class="card">'+step(1,"Véhicule")+'<div class="form">'+brandPicker("sim",s.brand==="Autre"?"Autre marque":s.brand)+
      (s.brand==="Autre"?'<label class="f">Marque et modèle<input data-simtxt="libre" value="'+esc(s.libre||"")+'" placeholder="ex. Lancia Ypsilon"></label><label class="f">Prix neuf approximatif (€)<input data-simtxt="prixNeuf" type="number" inputmode="decimal" value="'+esc(s.prixNeuf)+'" placeholder="ex. 16000"></label>'+sel("carburant","Carburant",["Essence","Diesel","Hybride","Électrique","GPL"]):
       sel("model","Modèle",s.brand?Object.keys(CATALOGUE[s.brand].m):[],s.brand?"Choisir le modèle":"Choisis d'abord la marque")+
-      sel("moteur","Motorisation",mot?mot.e.map(e=>[e[0],motLab(e,mot.gen)]):[],s.model?"Toutes motorisations (facultatif)":"Choisis d'abord le modèle"))+
+      sel("moteur","Motorisation",mot?motAn(mot,s.anneeMin,s.moteur).map(e=>[e[0],motLab(e,mot.gen)]):[],s.model?"Toutes motorisations (facultatif)":"Choisis d'abord le modèle"))+
      sel("boite","Boîte de vitesses",["Manuelle","Automatique"])+
      '<label class="f full">Année<input data-simyear1 type="number" inputmode="numeric" min="1990" max="'+yNow+'" value="'+s.anneeMin+'" aria-label="Année"></label>'+
      '<div class="f full yr"><span>Kilométrage</span><div class="kmrow"><input type="range" min="0" max="300000" step="1000" value="'+s.kmMin+'" data-simkm1 aria-label="Kilométrage"><input class="num" data-simkmn type="number" inputmode="numeric" step="1000" value="'+s.kmMin+'" aria-label="Kilométrage exact"></div></div>'+

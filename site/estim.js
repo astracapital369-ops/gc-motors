@@ -723,6 +723,7 @@ const FUEL={E:"Essence",D:"Diesel",H:"Hybride",El:"Électrique",G:"GPL"};
 const MOTEURS_GENERIQUES=[["Essence","E",1],["Diesel","D",1],["Hybride","H",1],["Hybride rechargeable","H",1.04],["Électrique","El",1],["GPL","G",1]];
 const MOT_ORD={E:0,H:1,D:2,El:3,G:4},MOT_CACHE={};
 function motTri(x){const n=l=>{const a=l.match(/\b(\d)[.,](\d)\b/);return a?+(a[1]+"."+a[2]):99},p=l=>{const a=l.match(/(\d+)(?:\/\d+)*\s*(?:-\d+\s*)?ch/);return a?+a[1]:0};return{...x,e:x.e.map((e,i)=>[e,i]).sort((A,B)=>{const a=A[0],b=B[0];return (MOT_ORD[a[1]]-MOT_ORD[b[1]])||(a[1]==="El"?A[1]-B[1]:(n(a[0])-n(b[0]))||((a[3]||0)-(b[3]||0))||(p(a[0])-p(b[0]))||A[1]-B[1])}).map(z=>z[0])}}
+function motAn(x,an,cur){an=num(an);return x.e.filter(e=>e[0]===cur||!an||!e[3]||(an>=e[3]&&an<=(e[4]||9999)))}
 function motLab(e,gen){if(gen)return e[0];return e[0]+" · "+FUEL[e[1]]+(e[3]?" · "+e[3]+(e[4]?(e[4]===e[3]?"":"–"+e[4]):"–auj."):"")}
 function moteursDe(b,m){const k=b+"|"+m;if(MOTEURS[k])return MOT_CACHE[k]||(MOT_CACHE[k]=motTri(MOTEURS[k]));const c=CATALOGUE[b]&&CATALOGUE[b].m[m];if(!c)return null;return{y:[c[2]||1995].concat(c[3]?[c[3]]:[]),e:MOTEURS_GENERIQUES,gen:true}}
 function anneesDe(b,m,mo){const yNow=new Date().getFullYear(),x=moteursDe(b,m),e=x&&mo?x.e.find(q=>q[0]===mo):null;let a=x?x.y[0]:1995,z=x&&x.y[1]?x.y[1]:yNow;if(e&&e[3]){a=Math.max(a,e[3]);z=Math.min(z,e[4]||yNow)}const out=[];for(let y=z;y>=a;y--)out.push(y);return out}
