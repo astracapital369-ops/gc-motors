@@ -46,9 +46,8 @@ nav a{text-decoration:none;opacity:.8}nav a:hover{opacity:1}
 .hgrid{display:grid;grid-template-columns:1fr;justify-items:start;text-align:left;gap:0;padding-top:64px;padding-bottom:30px;position:relative;z-index:1}
 .kick{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#bdbdbf;margin-bottom:12px}
 .hero h1{max-width:820px;font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:clamp(32px,5vw,58px);line-height:1.1;letter-spacing:-.03em;margin-bottom:22px}
-.hero h1 .gr{display:inline;opacity:0;color:#fff;text-shadow:0 0 18px rgba(255,255,255,.28),0 0 42px rgba(255,255,255,.14);animation:fadein 1s ease .45s forwards,glowp 4s ease-in-out 1.6s infinite}
+.hero h1 .gr{display:inline;opacity:0;color:#fff;animation:fadein 1s ease .45s forwards}
 @keyframes fadein{to{opacity:1}}
-@keyframes glowp{50%{text-shadow:0 0 24px rgba(255,255,255,.42),0 0 60px rgba(255,255,255,.2)}}
 @media(prefers-reduced-motion:reduce){.hero h1 .gr{animation:none;opacity:1;transform:none}}
 .hero p.lead{font-size:17px;line-height:1.65;color:#a3a3a8;max-width:520px;margin:0 0 30px;font-weight:400}
 .hacts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
