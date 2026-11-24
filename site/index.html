@@ -84,6 +84,20 @@ section{padding:76px 0}
 .empty .hacts{justify-content:center;margin-top:20px}
 .skel{border-radius:var(--r);background:linear-gradient(90deg,#f1f1f2 0%,#fafafa 50%,#f1f1f2 100%);background-size:200% 100%;animation:sk 1.2s infinite;height:380px}
 @keyframes sk{to{background-position:-200% 0}}
+/* aperçu carrousel */
+.ctrl{display:flex;gap:10px;align-items:center}
+.arr{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:border-color .15s,opacity .15s}
+.arr:hover{border-color:var(--ink)}.arr:disabled{opacity:.35;cursor:default}
+.car-track{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:4px 2px 18px;scroll-padding-left:2px}
+.car-track::-webkit-scrollbar{display:none}
+.car-track .card{flex:0 0 calc((100% - 40px)/3);scroll-snap-align:start}
+@media(max-width:960px){.car-track .card{flex-basis:calc((100% - 20px)/2)}}
+@media(max-width:600px){.car-track .card{flex-basis:82%}.ctrl .arr{display:none}}
+.seeall{display:flex;justify-content:center;margin-top:18px}
+.seeall .btn svg{width:18px;height:18px;transition:transform .15s}.seeall .btn:hover svg{transform:translateX(3px)}
+.back{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;text-decoration:none;color:var(--muted);margin-bottom:14px}.back:hover{color:var(--ink)}
+body.page-occ .hero,body.page-occ #apercu,body.page-occ #pourquoi{display:none}
+body:not(.page-occ) #voitures{display:none}
 /* why */
 .why{background:var(--soft)}
 .wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
@@ -150,7 +164,7 @@ body.lock{overflow:hidden}
 <body>
 <header><div class="wrap hbar">
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
-  <nav><a class="nl" href="#voitures">Voitures</a><a class="nl" href="#pourquoi">Pourquoi nous</a><a class="nl" href="#contact">Contact</a><a class="btn b-white hcall" id="hcall" href="#contact"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>Appeler</a></nav>
+  <nav><a class="nl" href="#occasions">Nos occasions</a><a class="nl" href="#pourquoi">Pourquoi nous</a><a class="nl" href="#contact">Contact</a><a class="btn b-white hcall" id="hcall" href="#contact"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>Appeler</a></nav>
 </div></header>
 
 <main id="top">
@@ -159,14 +173,21 @@ body.lock{overflow:hidden}
     <span class="kick">Voitures d'occasion · Belgique</span>
     <h1>Des occasions vérifiées, garanties et prêtes à rouler.</h1>
     <p class="lead">Chaque voiture est contrôlée, préparée et vendue avec son contrôle technique, son Car-Pass et une garantie de <span class="gmo">12</span> mois. Simple, clair, sans mauvaise surprise.</p>
-    <div class="hacts"><a class="btn b-white" href="#voitures">Voir les voitures</a><a class="btn b-ghost" id="hwa" href="#contact" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.1z"/></svg>WhatsApp</a></div>
+    <div class="hacts"><a class="btn b-white" href="#occasions">Voir nos occasions</a><a class="btn b-ghost" id="hwa" href="#contact" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.1z"/></svg>WhatsApp</a></div>
     <div class="hstats"><div><b id="nbcars">—</b>voitures en vente</div><div><b><span class="gmo">12</span> mois</b>de garantie</div><div><b>Car-Pass</b>fourni</div></div>
   </div>
   <div class="hcar"><img src="logo-car.png" alt="Silhouette de voiture GC Motor's"></div>
 </div></div>
 
+<section id="apercu"><div class="wrap">
+  <div class="sh"><div><h2>Nos occasions du moment</h2><p id="apsub">Un aperçu de notre stock.</p></div><div class="ctrl"><button class="arr" id="apL" aria-label="Voitures précédentes">‹</button><button class="arr" id="apR" aria-label="Voitures suivantes">›</button></div></div>
+  <div class="car-track" id="aptrack"><div class="skel" style="flex:0 0 300px"></div><div class="skel" style="flex:0 0 300px"></div><div class="skel" style="flex:0 0 300px"></div></div>
+  <div class="seeall"><a class="btn b-black" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+</div></section>
+
 <section id="voitures"><div class="wrap">
-  <div class="sh"><div><h2>Voitures en vente</h2><p id="subcount">Chargement du stock…</p></div>
+  <a class="back" href="#top">← Accueil</a>
+  <div class="sh"><div><h2>Nos occasions</h2><p id="subcount">Chargement du stock…</p></div>
     <div class="filters"><select id="fbrand" aria-label="Filtrer par marque"><option value="">Toutes les marques</option></select><select id="fsort" aria-label="Trier"><option value="recent">Plus récentes en ligne</option><option value="prix-asc">Prix croissant</option><option value="prix-desc">Prix décroissant</option><option value="km-asc">Kilométrage croissant</option><option value="annee-desc">Année la plus récente</option></select></div></div>
   <div class="grid" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
 </div></section>
@@ -228,6 +249,13 @@ function renderGrid(){const b=$("#fbrand").value,so=$("#fsort").value;let L=CARS
   $("#nbcars").textContent=CARS.length;$("#subcount").textContent=CARS.length?CARS.length+" voiture"+(CARS.length>1?"s":"")+" disponible"+(CARS.length>1?"s":"")+" · photos et prix à jour":"Notre stock change souvent.";
   $("#grid").innerHTML=L.length?L.map(cardHtml).join(""):'<div class="empty" style="grid-column:1/-1"><h3>Aucune voiture en vente pour le moment</h3><p>De nouvelles voitures arrivent régulièrement. Dites-nous ce que vous cherchez, on vous prévient.</p><div class="hacts">'+(INFO.whatsapp?'<a class="btn b-wa" href="'+waLink()+'" target="_blank" rel="noopener">'+ICON.wa+'WhatsApp</a>':'')+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+'</div></div>'}
 
+function renderPreview(){const t=$("#aptrack");const L=CARS.slice().sort((a,z)=>(z.updatedAt||0)-(a.updatedAt||0)).slice(0,10);
+  $("#apsub").textContent=CARS.length?CARS.length+" voiture"+(CARS.length>1?"s":"")+" disponible"+(CARS.length>1?"s":"")+" en ce moment.":"Notre stock change souvent.";
+  t.innerHTML=L.length?L.map(cardHtml).join(""):'<div class="empty" style="flex:1"><h3>Aucune voiture en vente pour le moment</h3><p>De nouvelles voitures arrivent régulièrement. Contactez-nous pour nous dire ce que vous cherchez.</p></div>';
+  $("#apL").parentElement.style.visibility=L.length>1?"":"hidden";apArrows()}
+function apArrows(){const t=$("#aptrack");$("#apL").disabled=t.scrollLeft<8;$("#apR").disabled=t.scrollLeft+t.clientWidth>=t.scrollWidth-8}
+function apStep(d){const t=$("#aptrack"),c=t.querySelector(".card");const w=c?c.getBoundingClientRect().width+20:t.clientWidth;t.scrollBy({left:d*w,behavior:"smooth"})}
+let lastOcc=null;function showPage(){const occ=location.hash==="#occasions";document.body.classList.toggle("page-occ",occ);if(lastOcc!==null&&occ!==lastOcc&&!$("#ov").classList.contains("on"))scrollTo({top:0,behavior:"instant"});lastOcc=occ;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
 function fillBrands(){const s=$("#fbrand"),cur=s.value,B=[...new Set(CARS.map(c=>c.marque).filter(Boolean))].sort();s.innerHTML='<option value="">Toutes les marques</option>'+B.map(b=>'<option'+(b===cur?" selected":"")+'>'+esc(b)+'</option>').join("");s.style.display=B.length>1?"":"none"}
 
 function openCar(id,push){const c=CARS.find(x=>x.id===id);if(!c)return;const P=c.photos||[];const ov=$("#ov");
@@ -244,19 +272,26 @@ $("#ov").addEventListener("click",e=>{if(e.target.id==="ov"||e.target.closest(".
   const g=e.target.closest("[data-g]"),t=e.target.closest("[data-t]"),trk=$("#trk");if(!trk)return;
   if(g)trk.scrollBy({left:trk.clientWidth*Number(g.dataset.g),behavior:"smooth"});if(t)trk.scrollTo({left:trk.clientWidth*Number(t.dataset.t),behavior:"smooth"})});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCar()});
-window.addEventListener("popstate",()=>{const m=location.hash.match(/^#v-(.+)$/);if(m)openCar(m[1],false);else closeCar(false)});
+window.addEventListener("popstate",()=>{const m=location.hash.match(/^#v-(.+)$/);if(m)openCar(m[1],false);else{closeCar(false);showPage()}});
 $("#grid").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)openCar(c.dataset.id)});
+$("#aptrack").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)openCar(c.dataset.id)});
+$("#aptrack").addEventListener("scroll",()=>requestAnimationFrame(apArrows),{passive:true});
+$("#apL").addEventListener("click",()=>apStep(-1));$("#apR").addEventListener("click",()=>apStep(1));
+window.addEventListener("resize",apArrows);
+window.addEventListener("hashchange",()=>{if(!location.hash.startsWith("#v-"))showPage()});
+document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&document.body.classList.contains("page-occ")){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
+showPage();
 $("#fbrand").addEventListener("change",renderGrid);$("#fsort").addEventListener("change",renderGrid);
 
 applyInfo();
 try{
   if(!window.FIREBASE_CONFIG)throw new Error("config");
   firebase.initializeApp(window.FIREBASE_CONFIG);const db=firebase.firestore();
-  db.collection("vitrine_info").limit(1).onSnapshot(s=>{if(s.docs[0]){INFO={...INFO,...s.docs[0].data()};applyInfo();renderGrid()}},()=>{});
+  db.collection("vitrine_info").limit(1).onSnapshot(s=>{if(s.docs[0]){INFO={...INFO,...s.docs[0].data()};applyInfo();renderGrid();renderPreview()}},()=>{});
   let first=true;
-  db.collection("vitrine").onSnapshot(s=>{CARS=s.docs.map(d=>({...d.data(),id:d.id}));fillBrands();renderGrid();
-    if(first){first=false;const m=location.hash.match(/^#v-(.+)$/);if(m)openCar(m[1],false)}},()=>{CARS=[];renderGrid()});
-}catch(e){CARS=[];renderGrid()}
+  db.collection("vitrine").onSnapshot(s=>{CARS=s.docs.map(d=>({...d.data(),id:d.id}));fillBrands();renderGrid();renderPreview();
+    if(first){first=false;const m=location.hash.match(/^#v-(.+)$/);if(m)openCar(m[1],false)}},()=>{CARS=[];renderGrid();renderPreview()});
+}catch(e){CARS=[];renderGrid();renderPreview()}
 })();
 </script>
 </body>
