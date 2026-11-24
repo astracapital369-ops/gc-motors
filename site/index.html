@@ -302,7 +302,8 @@ body.page-car .fwa{display:none!important}
 .eql li{display:flex;gap:8px;align-items:center}.eql li:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink);flex:none}
 /* bloc « Inclus » épuré sur fond noir */
 .incx{background:#0a0a0b;color:#fff;width:100vw;margin-left:calc(50% - 50vw);margin-top:40px;padding:42px 0 44px}
-.inck{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#8d8d92;margin-bottom:26px;text-align:center}
+.inck{font-family:"Archivo Black",Inter,sans-serif;font-size:clamp(22px,2.8vw,30px);line-height:1.15;color:#fff;margin-bottom:30px;text-align:center;letter-spacing:.01em}
+.inck:after{content:"";display:block;width:44px;height:3px;border-radius:2px;background:#fff;margin:14px auto 0;transform:scaleX(0);transition:transform .8s cubic-bezier(.2,.8,.2,1) .2s}.incx.in .inck:after{transform:none}
 .incrow{display:grid;grid-template-columns:repeat(4,1fr)}
 .incit{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:0 18px;border-left:1px solid rgba(255,255,255,.12)}
 .incit:first-child{border-left:0}
