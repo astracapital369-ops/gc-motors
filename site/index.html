@@ -320,6 +320,15 @@ body.page-car .fwa{display:none!important}
 @media(max-width:700px){.incx{padding:34px 0 36px}.incrow{grid-template-columns:1fr 1fr;row-gap:28px}.incit{padding:0 10px}.incit:nth-child(3){border-left:0}}
 @media(prefers-reduced-motion:reduce){.incx .incic svg{stroke-dashoffset:0}}
 .hgrid>div{width:100%}.hero .hacts,.hero .hstats{justify-self:stretch;width:100%}.hero .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:38px}.hstats b{font-size:clamp(20px,2.6vw,30px)}.hstats div{text-align:center;line-height:1.35;justify-self:center;white-space:nowrap}.hstats b{margin-bottom:4px}
+/* avantages reprise */
+.rpa{margin-top:46px}
+.rpgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.rpi{position:relative;background:#000;color:#fff;border-radius:var(--r);padding:26px 22px 24px;text-align:center;overflow:hidden;transition:transform .3s}
+.rpi:hover{transform:translateY(-4px)}
+.rpn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);font-family:"Archivo Black",Inter,sans-serif;font-size:18px;margin-bottom:14px;transition:background .3s,color .3s}
+.rpi:hover .rpn{background:#fff;color:#000}
+.rpi h3{font-size:17px;margin-bottom:6px}.rpi p{color:#a9a9ad;font-size:14.5px}
+@media(max-width:860px){.rpgrid{grid-template-columns:1fr}}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -417,6 +426,14 @@ header.scrolled .hbar{height:58px}
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><h3>Contrôle technique et Car-Pass</h3><p>Contrôle technique « vente » récent et Car-Pass fournis : l'historique du kilométrage est clair.</p></div>
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div><h3>Voitures vérifiées</h3><p>Chaque voiture est inspectée et préparée avant la vente. Les défauts connus sont signalés.</p></div>
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></div><h3>Reprise possible</h3><p>Votre ancienne voiture peut être reprise et déduite du prix. Demandez une estimation.</p></div>
+  </div>
+  <div class="rpa">
+    <div class="sh rv"><div><h2>Les avantages de la reprise</h2><p>Vous changez de voiture ? Nous reprenons l'ancienne, et son prix est déduit de votre achat.</p></div></div>
+    <div class="rpgrid">
+      <div class="rpi rv d1"><span class="rpn">1</span><h3>Pas de prise de tête</h3><p>Pas d'annonce à publier, pas de visites ni d'appels d'inconnus : vous gagnez du temps.</p></div>
+      <div class="rpi rv d2"><span class="rpn">2</span><h3>Aucun frais à prévoir</h3><p>Pas de contrôle technique, de révision ni de réparation à payer avant de la céder.</p></div>
+      <div class="rpi rv d3"><span class="rpn">3</span><h3>Reprise immédiate</h3><p>Votre véhicule est repris le jour même de votre achat. Vous repartez au volant de la nouvelle.</p></div>
+    </div>
   </div>
 </div></section>
 
