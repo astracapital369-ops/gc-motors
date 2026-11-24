@@ -402,7 +402,7 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .sendb,.rpgo{background:var(--blue)}.sendb:hover,.rpgo:hover{background:#1f66e5}
 .rplink>svg{color:var(--blue)}
 .fact svg{color:var(--blue)}
-.card{border:1px solid rgba(47,123,255,.35)}.card:hover{border-color:rgba(47,123,255,.7);box-shadow:0 18px 40px rgba(47,123,255,.14)}
+.card{border:2px solid rgba(47,123,255,.45)}.card:hover{border-color:rgba(47,123,255,.7);box-shadow:0 18px 40px rgba(47,123,255,.14)}
 .tag,.badges span:first-child{background:#000;animation:hop 3.2s ease-in-out infinite}
 .badges span:first-child{display:inline-block}
 @keyframes hop{0%,72%,100%{transform:translateY(0)}78%{transform:translateY(-4px)}84%{transform:translateY(0)}89%{transform:translateY(-2px)}94%{transform:translateY(0)}}
@@ -421,6 +421,12 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .estadv li{display:flex;flex-direction:column;gap:2px;padding:16px 18px;border-radius:16px;background:#0a0a0b;color:#fff}
 .estadv b{font-size:16px}.estadv span{color:#a9a9ad;font-size:14px}
 @media(max-width:860px){.estgrid{grid-template-columns:minmax(0,1fr)}.estcard{padding:18px}.estcard .rpg{grid-template-columns:1fr 1fr}}
+.cpc{left:12px;bottom:12px;padding:7px 12px;border-radius:12px;animation:none}
+.cpc b{font-size:19px}
+.cgo{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-weight:700;font-size:15px;color:#000}
+.cgo svg{width:18px;height:18px;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.card:hover .cgo svg{transform:translateX(5px)}
+.cgo span{transition:letter-spacing .25s}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -599,7 +605,7 @@ $("#drawer").addEventListener("click",e=>{if(e.target.id==="drawer"||e.target.cl
   else setTimeout(()=>$("#contact").scrollIntoView({behavior:"smooth"}),50)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")drawer(false)});
 function specs(c){return[c.annee,km(c.km),c.carburant,c.boite].filter(Boolean)}
-function cardHtml(c,i){const ph=c.photos&&c.photos[0];return'<button class="card pop" style="animation-delay:'+Math.min(i||0,8)*70+'ms" data-id="'+esc(c.id)+'"><div class="ph">'+(ph?'<img loading="lazy" src="'+ph+'" alt="'+esc(title(c))+'">':'<div class="nop"><img src="logo-car.png" alt=""></div>')+'<span class="tag">Garantie '+(c.garantie||INFO.garantie||12)+' mois</span>'+(c.photos&&c.photos.length>1?'<span class="cnt">'+c.photos.length+' photos</span>':'')+'</div><div class="bd"><h3>'+esc(title(c))+(c.moteur?'<small>'+esc(c.moteur)+'</small>':'')+'</h3><div class="specs">'+specs(c).map(s=>'<span>'+esc(s)+'</span>').join("")+'</div><div class="price"><b>'+eur(c.prix)+'</b><span>Voir la voiture</span></div></div></button>'}
+function cardHtml(c,i){const ph=c.photos&&c.photos[0];return'<button class="card pop" style="animation-delay:'+Math.min(i||0,8)*70+'ms" data-id="'+esc(c.id)+'"><div class="ph">'+(ph?'<img loading="lazy" src="'+ph+'" alt="'+esc(title(c))+'">':'<div class="nop"><img src="logo-car.png" alt=""></div>')+'<span class="tag">Garantie '+(c.garantie||INFO.garantie||12)+' mois</span>'+(c.photos&&c.photos.length>1?'<span class="cnt">'+c.photos.length+' photos</span>':'')+'<div class="pchip cpc"><b>'+eur(c.prix)+'</b></div></div><div class="bd"><h3>'+esc(title(c))+(c.moteur?'<small>'+esc(c.moteur)+'</small>':'')+'</h3><div class="specs">'+specs(c).map(s=>'<span>'+esc(s)+'</span>').join("")+'</div><div class="cgo"><span>Voir la voiture</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div></button>'}
 
 function renderGrid(){const b=$("#fbrand").value,so=$("#fsort").value;let L=CARS.filter(c=>!b||c.marque===b);
   const k={"prix-asc":(a,z)=>(a.prix||9e9)-(z.prix||9e9),"prix-desc":(a,z)=>(z.prix||0)-(a.prix||0),"km-asc":(a,z)=>(a.km||9e9)-(z.km||9e9),"annee-desc":(a,z)=>(z.annee||0)-(a.annee||0),recent:(a,z)=>(z.updatedAt||0)-(a.updatedAt||0)}[so];L=L.slice().sort(k);
