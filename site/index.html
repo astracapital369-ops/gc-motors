@@ -96,7 +96,8 @@ section{padding:52px 0}
 .seeall{display:flex;justify-content:center;margin-top:6px}
 .seeall .btn svg{width:18px;height:18px;transition:transform .15s}.seeall .btn:hover svg{transform:translateX(3px)}
 .back{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;text-decoration:none;color:var(--muted);margin-bottom:14px}.back:hover{color:var(--ink)}
-body.page-occ .hero,body.page-occ .marq,body.page-occ #apercu,body.page-occ #pourquoi{display:none}
+body.page-occ .hero,body.page-occ .marq,body.page-occ #apercu,body.page-occ #pourquoi,body.page-car .hero,body.page-car .marq,body.page-car #apercu,body.page-car #pourquoi,body.page-car #voitures{display:none}
+body:not(.page-car) #annonce{display:none}
 body:not(.page-occ) #voitures{display:none}
 /* why */
 .why{background:var(--soft)}
@@ -181,6 +182,77 @@ body.lock{overflow:hidden}
 .cmenu .ic{width:38px;height:38px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
 .cmenu .ic svg{width:18px;height:18px}
 .cmenu a.wa .ic{background:var(--wa)}
+/* bouton accueil */
+.hgo{padding:15px 28px;font-size:16px;box-shadow:0 0 0 0 rgba(255,255,255,.5),0 0 28px rgba(255,255,255,.28);animation:hglow 2.8s ease-in-out infinite}
+.hgo svg{transition:transform .2s}.hgo:hover svg{transform:translateX(4px)}
+@keyframes hglow{50%{box-shadow:0 0 0 6px rgba(255,255,255,.06),0 0 40px rgba(255,255,255,.42)}}
+/* ===== annonce ===== */
+#annonce{background:#fff}
+.an{padding-top:20px;padding-bottom:40px}
+.crumb{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);margin-bottom:14px}
+.crumb a{font-weight:600;color:var(--ink);text-decoration:none}.crumb a:hover{text-decoration:underline}
+.angrid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:28px;align-items:start}
+.agal{position:relative;border-radius:18px;overflow:hidden;background:#111}
+.atrack{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}.atrack::-webkit-scrollbar{display:none}
+.atrack img{flex:0 0 100%;width:100%;aspect-ratio:16/10;object-fit:cover;scroll-snap-align:center;cursor:zoom-in}
+.gfull{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:10px;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer}
+.anop{aspect-ratio:16/10;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:#888;font-size:14px}.anop img{width:45%;opacity:.5}
+.athumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.athumbs::-webkit-scrollbar{display:none}
+.athumbs img{width:92px;height:62px;object-fit:cover;border-radius:10px;opacity:.55;cursor:pointer;flex:none;transition:opacity .2s,outline-color .2s;outline:2px solid transparent;outline-offset:-2px}
+.athumbs img.on,.athumbs img:hover{opacity:1}.athumbs img.on{outline-color:#000}
+.anhead{margin-top:22px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.badges span{font-size:12px;font-weight:600;background:#000;color:#fff;padding:5px 10px;border-radius:999px}
+.badges span+span{background:var(--soft);color:var(--ink)}
+.anhead h1{font-size:clamp(26px,3.4vw,36px);line-height:1.15;font-weight:800;letter-spacing:-.01em}
+.ansub{color:var(--muted);font-size:16px;margin-top:4px}
+.anprice-m{display:none;font-size:28px;font-weight:800;margin-top:8px}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:20px}
+.fact{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.fact svg{width:22px;height:22px;margin-bottom:6px}.fact small{color:var(--muted);font-size:12px}.fact b{font-size:15px}
+.ablock{margin-top:30px}
+.ablock h2{font-size:20px;font-weight:800;margin-bottom:12px}
+.desc{color:#2b2d31;font-size:15.5px;line-height:1.65}
+.techg{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;border-top:1px solid var(--line)}
+.techg div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}.techg span{color:var(--muted)}.techg b{text-align:right}
+.eqg{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 18px}
+.eqg li,.incg li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+.eqg li:before,.incg li:before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:#000 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat}
+.incg{list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.incg li{border:1px solid var(--line);border-radius:14px;padding:14px;flex-direction:row}.incg li b{display:block}.incg li span{display:block;color:var(--muted);font-size:13px}
+.rprise{background:var(--soft);border-radius:18px;padding:22px}
+.rph{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}.rph>svg{width:42px;height:42px;padding:9px;border-radius:12px;background:#000;color:#fff;flex:none}
+.rph h2{margin:0 0 2px}.rph p{color:var(--muted);font-size:14.5px}
+.rpg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rpg label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:#444}
+.rpg .w2{grid-column:span 2}
+.rpg select,.rpg input{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:11px 12px;font:500 15px Inter,sans-serif;color:var(--ink);width:100%;min-width:0}
+.rpg select:disabled{opacity:.5}
+.rpgo{margin-top:14px;width:100%}
+.rperr{color:#b42318;font-size:14px;margin-top:12px}
+.rpres{margin-top:16px;background:#000;color:#fff;border-radius:16px;padding:18px 20px;animation:pop .4s cubic-bezier(.2,.8,.2,1)}
+.rpres small{color:#aaa;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em}.rpres b{display:block;font-size:30px;font-weight:800;margin:4px 0 6px}.rpres p{color:#cfcfd2;font-size:14px}.rpres strong{color:#fff}
+.rpsend{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.rpsend .btn{flex:1 1 200px}
+.rprise .note,#annonce .note{color:var(--muted);font-size:13px;margin-top:8px}
+.anside{position:sticky;top:84px;display:flex;flex-direction:column;gap:14px}
+.pbox{border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 14px 40px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:10px}
+.pbox small{color:var(--muted);font-size:13px}.pval{font-size:34px;font-weight:800;line-height:1.05}.pnote{color:var(--muted);font-size:12.5px;margin-bottom:6px}
+.pbtns{display:flex;flex-direction:column;gap:8px}.pbtns .btn{width:100%;padding:14px}
+.essai{display:flex;align-items:center;gap:10px;padding:11px 4px;border:0;border-top:1px solid var(--line);background:none;font:600 14.5px Inter,sans-serif;color:var(--ink);text-decoration:none;cursor:pointer;width:100%;text-align:left}
+.essai svg{width:18px;height:18px}.essai:hover{text-decoration:underline}
+.sellerbox{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:16px}
+.sellerbox img{width:64px;height:44px;object-fit:contain;background:#000;border-radius:10px;padding:6px}
+.sellerbox b{display:block}.sellerbox span{display:block;color:var(--muted);font-size:13px}
+.others .car-track .card{flex-basis:calc((100% - 40px)/3)}
+/* plein écran */
+.ov.lb{background:#000;align-items:center;justify-content:center;padding:0;z-index:80}
+.lbimg{max-width:100vw;max-height:100vh;object-fit:contain}
+.ov.lb .gcount{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);right:auto}
+.ov.lb .gnav{position:fixed}
+.ov.lb .dx{position:fixed}
+@media(max-width:960px){.angrid{grid-template-columns:1fr}.anside{position:static}.others .car-track .card{flex-basis:calc((100% - 20px)/2)}}
+@media(max-width:640px){.an{padding-top:12px;padding-bottom:100px}.agal{border-radius:14px;margin:0 -20px;border-radius:0}.athumbs{display:none}.anprice-m{display:block}.techg{grid-template-columns:1fr}.incg{grid-template-columns:1fr}.rpg{grid-template-columns:1fr 1fr}.rpg .w2{grid-column:span 2}.others .car-track .card{flex-basis:82%}.pbox .pval,.pbox small,.pbox .pnote{display:none}.dbar{display:flex}.gfull{display:none}}
+body:not(.page-car) .dbar{display:none!important}
+body.page-car .fwa{display:none!important}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -252,7 +324,7 @@ header.scrolled .hbar{height:58px}
     <span class="kick">Voitures d'occasion · Belgique</span>
     <h1><span class="ln" style="animation-delay:0.20s">Des</span> <span class="ln" style="animation-delay:0.27s">occasions</span> <span class="ln" style="animation-delay:0.34s">vérifiées,</span> <span class="ln" style="animation-delay:0.41s">garanties</span> <span class="ln" style="animation-delay:0.48s">et</span> <span class="ln" style="animation-delay:0.55s">prêtes</span> <span class="ln" style="animation-delay:0.62s">à</span> <span class="ln" style="animation-delay:0.69s">rouler.</span></h1>
     <p class="lead">Chaque voiture est contrôlée, préparée et vendue avec son contrôle technique, son Car-Pass et une garantie de <span class="gmo">12</span> mois. Simple, clair, sans mauvaise surprise.</p>
-    <div class="hacts"><a class="btn b-white" href="#occasions">Voir nos occasions</a><a class="btn b-ghost" id="hwa" href="#contact" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.1z"/></svg>WhatsApp</a></div>
+    <div class="hacts"><a class="btn b-white hgo" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
     <div class="hstats"><div><b id="nbcars">—</b>voitures en vente</div><div><b><span class="gmo">12</span> mois</b>de garantie</div><div><b>Car-Pass</b>fourni</div></div>
   </div>
   </div></div>
@@ -281,6 +353,7 @@ header.scrolled .hbar{height:58px}
   </div>
 </div></section>
 
+<div id="annonce"></div>
 <section class="contact" id="contact"><div class="wrap cgrid">
   <div class="rv"><h2>Une voiture vous intéresse&nbsp;?</h2><p>Appelez, écrivez sur WhatsApp ou envoyez un e-mail : réponse rapide. Visites et essais sur rendez-vous.</p></div>
   <div class="clist rv d2" id="clist"></div>
@@ -315,7 +388,7 @@ const mailLink=c=>INFO.email?"mailto:"+INFO.email+"?subject="+encodeURIComponent
 
 function applyInfo(){const n=INFO.nom||"GC Motor's";$("#hname").textContent=n;document.title=n+" · Voitures d'occasion vérifiées et garanties";
   document.querySelectorAll(".gmo").forEach(e=>e.textContent=INFO.garantie||12);
-  $("#hwa").href=waLink();$("#fwa").href=waLink();$("#fwa").classList.toggle("on",!!INFO.whatsapp);$("#hwa").style.display=INFO.whatsapp?"":"none";
+  $("#fwa").href=waLink();$("#fwa").classList.toggle("on",!!INFO.whatsapp);
   const it=(cls,href,ic,lab,val,ext)=>'<a class="ci '+cls+'" href="'+href+'"'+(ext?' target="_blank" rel="noopener"':'')+'><span class="ic">'+ic+'</span><span><small>'+lab+'</small><b>'+esc(val)+'</b></span></a>';
   $("#clist").innerHTML=(INFO.tel?it("",telLink(),ICON.tel,"Appeler",INFO.tel):"")+(INFO.whatsapp?it("wa",waLink(),ICON.wa,"WhatsApp","Écrire un message",1):"")+(INFO.email?it("",mailLink(),ICON.mail,"E-mail",INFO.email):"")+(INFO.adresse?it("","https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(INFO.adresse),ICON.pin,"Adresse · sur rendez-vous",INFO.adresse,1):"")||'<p>Coordonnées bientôt disponibles.</p>';
   buildMenu();$("#fname").textContent="© "+new Date().getFullYear()+" "+n;$("#ftva").textContent=INFO.tva?"TVA "+INFO.tva:""}
@@ -342,31 +415,113 @@ function renderPreview(){const t=$("#aptrack");const L=CARS.slice().sort((a,z)=>
   $("#apL").parentElement.style.visibility=L.length>1?"":"hidden";apArrows()}
 function apArrows(){const t=$("#aptrack");$("#apL").disabled=t.scrollLeft<8;$("#apR").disabled=t.scrollLeft+t.clientWidth>=t.scrollWidth-8}
 function apStep(d){const t=$("#aptrack"),c=t.querySelector(".card");const w=c?c.getBoundingClientRect().width+20:t.clientWidth;t.scrollBy({left:d*w,behavior:"smooth"})}
-let lastOcc=null;function showPage(){const occ=location.hash==="#occasions";document.body.classList.toggle("page-occ",occ);if(lastOcc!==null&&occ!==lastOcc&&!$("#ov").classList.contains("on"))scrollTo({top:0,behavior:"instant"});lastOcc=occ;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
+let lastOcc=null,loaded=false;function showPage(){const h=location.hash,m=h.match(/^#v-(.+)$/),pg=m?"car:"+m[1]:h==="#occasions"?"occ":"home";closeLb();
+  document.body.classList.toggle("page-occ",pg==="occ");document.body.classList.toggle("page-car",!!m);if(m)renderAnnonce(m[1]);else{curCar=null;document.title=(INFO.nom||"GC Motor's")+" · Voitures d'occasion vérifiées et garanties"}
+  if(lastOcc!==null&&pg!==lastOcc)scrollTo({top:0,behavior:"instant"});lastOcc=pg;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
 function fillBrands(){const s=$("#fbrand"),cur=s.value,B=[...new Set(CARS.map(c=>c.marque).filter(Boolean))].sort();s.innerHTML='<option value="">Toutes les marques</option>'+B.map(b=>'<option'+(b===cur?" selected":"")+'>'+esc(b)+'</option>').join("");s.style.display=B.length>1?"":"none"}
 
-function openCar(id,push){const c=CARS.find(x=>x.id===id);if(!c)return;const P=c.photos||[];const ov=$("#ov");
-  const rows=[["Année",c.annee],["Première immatriculation",c.premiereImmat],["Kilométrage",km(c.km)],["Carburant",c.carburant],["Boîte de vitesses",c.boite],["Motorisation",c.moteur],["Puissance",c.puissance?c.puissance+" kW ("+Math.round(c.puissance*1.36)+" ch)":""],["Cylindrée",c.cylindree?fN.format(c.cylindree)+" cm³":""],["Couleur",c.couleur]].filter(r=>r[1]);
-  ov.innerHTML='<div class="dt"><button class="dx" aria-label="Fermer">×</button><div class="gal">'+(P.length?'<div class="track" id="trk">'+P.map((p,i)=>'<img src="'+p+'" alt="'+esc(title(c))+' photo '+(i+1)+'">').join("")+'</div>'+(P.length>1?'<button class="gnav p" data-g="-1" aria-label="Photo précédente">‹</button><button class="gnav n" data-g="1" aria-label="Photo suivante">›</button><span class="gcount" id="gc">1 / '+P.length+'</span>':''):'<div style="aspect-ratio:16/9;display:flex;align-items:center;justify-content:center"><img src="logo-car.png" alt="" style="width:50%;opacity:.5"></div>')+'</div>'+(P.length>1?'<div class="thumbs" id="thb">'+P.map((p,i)=>'<img src="'+p+'" data-t="'+i+'" class="'+(i?"":"on")+'" alt="">').join("")+'</div>':'')+
-   '<div class="dbody"><div><h2>'+esc(title(c))+(c.moteur?'<small>'+esc(c.moteur)+'</small>':'')+'</h2><table class="tbl">'+rows.map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>').join("")+'</table>'+(c.options&&c.options.length?'<div class="eq"><h3>Équipements</h3><div>'+c.options.map(o=>'<span>'+esc(o)+'</span>').join("")+'</div></div>':'')+'</div>'+
-   '<div class="dside"><div class="dbox"><div class="dnote">Prix</div><div class="dprice">'+eur(c.prix)+'</div><div class="dnote">TVA comprise (régime de la marge)</div>'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.whatsapp?'<a class="btn b-wa" href="'+waLink(c)+'" target="_blank" rel="noopener">'+ICON.wa+'WhatsApp</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'E-mail</a>':'')+'</div>'+
-   '<div class="dbox"><ul class="inc"><li>Garantie '+(c.garantie||INFO.garantie||12)+' mois</li><li>Contrôle technique « vente » récent</li><li>Car-Pass fourni</li><li>Reprise de votre voiture possible</li></ul></div></div></div></div>'+
-   '<div class="dbar">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.whatsapp?'<a class="btn b-wa" href="'+waLink(c)+'" target="_blank" rel="noopener">'+ICON.wa+'WhatsApp</a>':'')+(!INFO.tel&&!INFO.whatsapp&&INFO.email?'<a class="btn b-black" href="'+mailLink(c)+'">E-mail</a>':'')+'</div>';
-  ov.classList.add("on");document.body.classList.add("lock");ov.scrollTop=0;if(push!==false)history.pushState({car:id},"","#v-"+id);
-  const trk=$("#trk");if(trk){const upd=()=>{const i=Math.round(trk.scrollLeft/trk.clientWidth);const g=$("#gc");if(g)g.textContent=(i+1)+" / "+P.length;document.querySelectorAll("#thb img").forEach((t,k)=>t.classList.toggle("on",k===i))};trk.addEventListener("scroll",()=>requestAnimationFrame(upd),{passive:true})}}
-function closeCar(back){const ov=$("#ov");if(!ov.classList.contains("on"))return;ov.classList.remove("on");ov.innerHTML="";document.body.classList.remove("lock");if(back!==false&&location.hash.startsWith("#v-"))history.back()}
-$("#ov").addEventListener("click",e=>{if(e.target.id==="ov"||e.target.closest(".dx")){closeCar();return}
-  const g=e.target.closest("[data-g]"),t=e.target.closest("[data-t]"),trk=$("#trk");if(!trk)return;
-  if(g)trk.scrollBy({left:trk.clientWidth*Number(g.dataset.g),behavior:"smooth"});if(t)trk.scrollTo({left:trk.clientWidth*Number(t.dataset.t),behavior:"smooth"})});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCar()});
-window.addEventListener("popstate",()=>{const m=location.hash.match(/^#v-(.+)$/);if(m)openCar(m[1],false);else{closeCar(false);showPage()}});
-$("#grid").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)openCar(c.dataset.id)});
-$("#aptrack").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)openCar(c.dataset.id)});
+/* ===== page annonce ===== */
+let curCar=null,lbI=0;
+const IC={cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+ road:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M4.9 19.1A10 10 0 1 1 19.1 19.1"/><path d="M12 12l4-4"/></svg>',
+ fuel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M4 11h11"/><path d="M15 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/></svg>',
+ gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><path d="M6 8v8M12 8v8M18 8v4H6"/></svg>',
+ bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+ user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+ drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s7 7.5 7 12a7 7 0 0 1-14 0c0-4.5 7-12 7-12z"/></svg>',
+ share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
+ key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M17 6l3 3M15 8l2 2"/></svg>',
+ swap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>'};
+const ch=c=>c.puissance?Math.round(c.puissance*1.36):0;
+function autoDesc(c){const t=title(c),bits=[];
+  bits.push((c.annee?t+" de "+c.annee:t)+(c.moteur?", motorisation "+c.moteur:"")+(c.boite?" avec boîte "+c.boite.toLowerCase():"")+".");
+  if(c.km)bits.push("Elle affiche "+fN.format(c.km)+" km"+(c.entretien?", avec un carnet d'entretien suivi":"")+".");
+  if(c.options&&c.options.length)bits.push("Bien équipée : "+c.options.slice(0,5).join(", ").toLowerCase()+(c.options.length>5?" et plus encore":"")+".");
+  bits.push("Vendue contrôlée, préparée, avec contrôle technique « vente », Car-Pass et garantie "+(c.garantie||INFO.garantie||12)+" mois. Reprise de votre véhicule possible.");
+  return bits.join(" ")}
+function annonceHtml(c){const P=c.photos||[],g=c.garantie||INFO.garantie||12;
+  const facts=[[IC.cal,"Année",c.premiereImmat||c.annee],[IC.road,"Kilométrage",km(c.km)],[IC.fuel,"Carburant",c.carburant],[IC.gear,"Boîte",c.boite],[IC.bolt,"Puissance",c.puissance?ch(c)+" ch ("+c.puissance+" kW)":""],[IC.user,"Propriétaires",c.proprios?(c.proprios>=3?"3 et +":c.proprios):""],[IC.drop,"Couleur",c.couleur]].filter(f=>f[2]);
+  const tech=[["Marque",c.marque],["Modèle",c.modele],["Motorisation",c.moteur],["Année",c.annee],["1re immatriculation",c.premiereImmat],["Kilométrage",km(c.km)],["Carburant",c.carburant],["Boîte de vitesses",c.boite],["Puissance",c.puissance?c.puissance+" kW · "+ch(c)+" ch":""],["Cylindrée",c.cylindree?fN.format(c.cylindree)+" cm³":""],["Couleur",c.couleur],["Carnet d'entretien",c.entretien===true?"Oui":c.entretien===false?"Incomplet":""],["Garantie",g+" mois"]].filter(r=>r[1]);
+  const others=CARS.filter(x=>x.id!==c.id).sort((a,z)=>Math.abs((a.prix||0)-(c.prix||0))-Math.abs((z.prix||0)-(c.prix||0))).slice(0,6);
+  const cBtns=cls=>(INFO.tel?'<a class="btn b-black '+cls+'" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.whatsapp?'<a class="btn b-wa '+cls+'" href="'+waLink(c)+'" target="_blank" rel="noopener">'+ICON.wa+'WhatsApp</a>':'')+(INFO.email?'<a class="btn b-line '+cls+'" href="'+mailLink(c)+'">'+ICON.mail+'E-mail</a>':'');
+  return '<div class="wrap an">'+
+   '<nav class="crumb"><a href="#occasions">← Nos occasions</a><span>/</span><span>'+esc(c.marque||"")+'</span></nav>'+
+   '<div class="angrid"><div class="anmain">'+
+    '<div class="agal">'+(P.length?'<div class="atrack" id="atrk">'+P.map((p,i)=>'<img src="'+p+'" data-lb="'+i+'" alt="'+esc(title(c))+' photo '+(i+1)+'"'+(i?' loading="lazy"':'')+'>').join("")+'</div>'+(P.length>1?'<button class="gnav p" data-ag="-1" aria-label="Photo précédente">‹</button><button class="gnav n" data-ag="1" aria-label="Photo suivante">›</button>':'')+'<span class="gcount" id="agc">1 / '+P.length+'</span><button class="gfull" data-lb="0" aria-label="Plein écran">⤢</button>':'<div class="anop"><img src="logo-car.png" alt=""><span>Photos bientôt disponibles</span></div>')+'</div>'+
+    (P.length>1?'<div class="athumbs" id="athb">'+P.map((p,i)=>'<img src="'+p+'" data-at="'+i+'" class="'+(i?"":"on")+'" alt="" loading="lazy">').join("")+'</div>':'')+
+    '<div class="anhead rv"><div class="badges"><span>Garantie '+g+' mois</span><span>Car-Pass</span><span>Contrôle technique</span></div><h1>'+esc(title(c))+'</h1>'+(c.moteur?'<p class="ansub">'+esc(c.moteur)+'</p>':'')+'<div class="anprice-m">'+eur(c.prix)+'</div></div>'+
+    '<div class="facts rv">'+facts.map(f=>'<div class="fact">'+f[0]+'<small>'+f[1]+'</small><b>'+esc(f[2])+'</b></div>').join("")+'</div>'+
+    '<div class="ablock rv"><h2>Description</h2><p class="desc">'+esc(c.description||autoDesc(c)).replace(/\n/g,"<br>")+'</p></div>'+
+    '<div class="ablock rv"><h2>Caractéristiques</h2><div class="techg">'+tech.map(r=>'<div><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("")+'</div></div>'+
+    (c.options&&c.options.length?'<div class="ablock rv"><h2>Équipements</h2><ul class="eqg">'+c.options.map(o=>'<li>'+esc(o)+'</li>').join("")+'</ul></div>':'')+
+    '<div class="ablock rv"><h2>Inclus avec cette voiture</h2><ul class="incg"><li><div><b>Garantie '+g+' mois</b><span>Par écrit, sur le bon de commande</span></div></li><li><div><b>Contrôle technique « vente »</b><span>Récent, prêt pour l\'immatriculation</span></div></li><li><div><b>Car-Pass</b><span>Historique du kilométrage</span></div></li><li><div><b>Préparation complète</b><span>Nettoyage et vérifications avant livraison</span></div></li></ul></div>'+
+    '<div class="ablock rprise rv" id="reprise"><div class="rph">'+IC.swap+'<div><h2>Reprise de votre voiture</h2><p>Estimation gratuite et immédiate. Le montant est déduit du prix de la '+esc(title(c))+'.</p></div></div><div id="rpform"><p class="note">Chargement…</p></div></div>'+
+   '</div><aside class="anside"><div class="pbox"><small>Prix</small><div class="pval">'+eur(c.prix)+'</div><p class="pnote">TVA comprise · régime de la marge</p><div class="pbtns">'+cBtns("")+'</div>'+
+    (INFO.whatsapp?'<a class="essai" href="https://wa.me/'+waNum(INFO.whatsapp)+'?text='+encodeURIComponent("Bonjour, je voudrais réserver un essai de la "+title(c)+(c.annee?" de "+c.annee:"")+". Quelles sont vos disponibilités ?")+'" target="_blank" rel="noopener">'+IC.key+'Réserver un essai</a>':'')+
+    '<a class="essai" href="#reprise">'+IC.swap+'Estimer ma reprise</a><button class="essai" data-share>'+IC.share+'Partager l\'annonce</button></div>'+
+    '<div class="sellerbox"><img src="logo-car.png" alt=""><div><b>'+esc(INFO.nom||"GC Motor's")+'</b><span>Négociant professionnel'+(INFO.adresse?" · "+esc(INFO.adresse.split(",").pop().trim()):"")+'</span>'+(INFO.tva?'<span>TVA '+esc(INFO.tva)+'</span>':'')+'</div></div></aside></div>'+
+   (others.length?'<div class="ablock others rv"><h2>Autres voitures qui pourraient vous plaire</h2><div class="car-track" id="otrack">'+others.map(cardHtml).join("")+'</div></div>':'')+
+   '</div><div class="dbar">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.whatsapp?'<a class="btn b-wa" href="'+waLink(c)+'" target="_blank" rel="noopener">'+ICON.wa+'WhatsApp</a>':'')+(!INFO.tel&&!INFO.whatsapp&&INFO.email?'<a class="btn b-black" href="'+mailLink(c)+'">'+ICON.mail+'E-mail</a>':'')+'</div>'}
+function renderAnnonce(id){const c=CARS.find(x=>x.id===id);const box=$("#annonce");curCar=c||null;
+  if(!c){box.innerHTML='<div class="wrap an"><div class="empty"><h3>'+(CARS.length||loaded?"Cette voiture n'est plus en vente":"Chargement…")+'</h3>'+(CARS.length||loaded?'<p>Elle vient peut-être d\'être vendue. Découvrez nos autres occasions.</p><div class="hacts"><a class="btn b-black" href="#occasions">Voir nos occasions</a></div>':'')+'</div></div>';return}
+  document.title=title(c)+(c.annee?" "+c.annee:"")+" · "+(INFO.nom||"GC Motor's");
+  box.innerHTML=annonceHtml(c);reveal();rpInit(c);
+  const trk=$("#atrk");if(trk){const n=(c.photos||[]).length,upd=()=>{const i=Math.round(trk.scrollLeft/trk.clientWidth);$("#agc").textContent=(i+1)+" / "+n;document.querySelectorAll("#athb img").forEach((t,k)=>{t.classList.toggle("on",k===i);if(k===i)t.scrollIntoView({block:"nearest",inline:"nearest"})})};trk.addEventListener("scroll",()=>requestAnimationFrame(upd),{passive:true})}}
+$("#annonce").addEventListener("click",e=>{const g=e.target.closest("[data-ag]"),t=e.target.closest("[data-at]"),lb=e.target.closest("[data-lb]"),sh=e.target.closest("[data-share]"),cd=e.target.closest(".card"),trk=$("#atrk");
+  if(cd){location.hash="v-"+cd.dataset.id;return}
+  if(g&&trk){trk.scrollBy({left:trk.clientWidth*Number(g.dataset.ag),behavior:"smooth"});return}
+  if(t&&trk){trk.scrollTo({left:trk.clientWidth*Number(t.dataset.at),behavior:"smooth"});return}
+  if(lb){const i=lb.dataset.lb==="0"&&trk?Math.round(trk.scrollLeft/trk.clientWidth):Number(lb.dataset.lb);openLb(i);return}
+  if(sh&&curCar){const url=location.href,tt=title(curCar)+" · "+eur(curCar.prix);if(navigator.share)navigator.share({title:tt,url}).catch(()=>{});else if(navigator.clipboard){navigator.clipboard.writeText(url);sh.lastChild.textContent="Lien copié ✓";setTimeout(()=>sh.lastChild.textContent="Partager l'annonce",2000)}}});
+/* plein écran photos */
+function openLb(i){if(!curCar||!(curCar.photos||[]).length)return;lbI=i;const ov=$("#ov");ov.className="ov lb on";document.body.classList.add("lock");lbDraw()}
+function lbDraw(){const P=curCar.photos;$("#ov").innerHTML='<button class="dx" aria-label="Fermer">×</button><img class="lbimg" src="'+P[lbI]+'" alt=""><span class="gcount">'+(lbI+1)+' / '+P.length+'</span>'+(P.length>1?'<button class="gnav p" data-lg="-1" aria-label="Précédente">‹</button><button class="gnav n" data-lg="1" aria-label="Suivante">›</button>':'')}
+function closeLb(){const ov=$("#ov");if(!ov.classList.contains("on"))return;ov.className="ov";ov.innerHTML="";document.body.classList.remove("lock")}
+$("#ov").addEventListener("click",e=>{const g=e.target.closest("[data-lg]");if(g){const n=curCar.photos.length;lbI=(lbI+Number(g.dataset.lg)+n)%n;lbDraw();return}if(e.target.closest(".dx")||e.target.id==="ov")closeLb()});
+let lbX=null;$("#ov").addEventListener("touchstart",e=>{lbX=e.touches[0].clientX},{passive:true});$("#ov").addEventListener("touchend",e=>{if(lbX==null||!curCar)return;const d=e.changedTouches[0].clientX-lbX;lbX=null;if(Math.abs(d)>50){const n=curCar.photos.length;lbI=(lbI+(d<0?1:-1)+n)%n;lbDraw()}});
+document.addEventListener("keydown",e=>{if(!$("#ov").classList.contains("on"))return;if(e.key==="Escape")closeLb();if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const n=curCar.photos.length;lbI=(lbI+(e.key==="ArrowRight"?1:-1)+n)%n;lbDraw()}});
+/* reprise : estimation gratuite */
+let estP=null;function loadEstim(){if(window.GCE)return Promise.resolve();if(estP)return estP;estP=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="estim.js?v=1";sc.onload=res;sc.onerror=()=>{estP=null;rej()};document.head.appendChild(sc)});return estP}
+const RP={};
+function rpInit(c){const box=$("#rpform");loadEstim().then(()=>rpForm(c)).catch(()=>{box.innerHTML='<p class="note">Estimation indisponible pour le moment. Contactez-nous pour une offre de reprise.</p>'})}
+function rpForm(c){const G=window.GCE,box=$("#rpform");if(!box)return;const yNow=new Date().getFullYear();
+  const brands=Object.keys(G.CATALOGUE).sort((a,b)=>a.localeCompare(b,"fr"));
+  const mods=RP.b?Object.keys(G.CATALOGUE[RP.b].m).sort((a,b)=>a.localeCompare(b,"fr")):[];
+  const mot=RP.b&&RP.m?G.moteursDe(RP.b,RP.m):null,years=RP.b&&RP.m?G.anneesDe(RP.b,RP.m):Array.from({length:30},(_,i)=>yNow-i);
+  const opt=(arr,cur,ph)=>(ph?'<option value="">'+ph+'</option>':'')+arr.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(v)+'"'+(String(cur)===String(v)?" selected":"")+'>'+esc(l)+'</option>'}).join("");
+  box.innerHTML='<div class="rpg">'+
+   '<label>Marque<select data-rp="b">'+opt(brands,RP.b,"Choisir")+'</select></label>'+
+   '<label>Modèle<select data-rp="m"'+(RP.b?"":" disabled")+'>'+opt(mods,RP.m,RP.b?"Choisir":"Choisir la marque")+'</select></label>'+
+   '<label>Motorisation<select data-rp="e"'+(mot?"":" disabled")+'>'+opt(mot?mot.e.map((x,i)=>[i,mot.gen?x[0]:x[0]+" · "+G.FUEL[x[1]]]):[],RP.e,mot?"Choisir":"Choisir le modèle")+'</select></label>'+
+   '<label>Année<select data-rp="y">'+opt(years,RP.y,"Choisir")+'</select></label>'+
+   '<label>Kilométrage<input data-rp="k" type="number" inputmode="numeric" placeholder="ex. 120000" value="'+esc(RP.k||"")+'"></label>'+
+   '<label>Boîte<select data-rp="g">'+opt(["Manuelle","Automatique"],RP.g||"Manuelle")+'</select></label>'+
+   '<label class="w2">État général<select data-rp="s">'+opt(G.ETATS.map(x=>[x[0],x[1]+" · "+x[2].toLowerCase()]),RP.s||"bon")+'</select></label>'+
+   '</div><button class="btn b-black rpgo" data-rpgo>Estimer gratuitement</button><div id="rpres"></div>';
+  if(RP.done)rpCalc(c)}
+document.addEventListener("change",e=>{const t=e.target.closest("[data-rp]");if(!t||!curCar)return;const k=t.dataset.rp;RP[k]=t.value;
+  if(k==="b"){RP.m="";RP.e="";RP.y=""}if(k==="m"){RP.e="";RP.y=""}if(k==="e"&&RP.b&&RP.m){const x=window.GCE.moteursDe(RP.b,RP.m);}
+  RP.done=false;if(k==="b"||k==="m")rpForm(curCar);else{const r=$("#rpres");if(r)r.innerHTML=""}});
+document.addEventListener("input",e=>{const t=e.target.closest('[data-rp="k"]');if(t){RP.k=t.value;RP.done=false;const r=$("#rpres");if(r)r.innerHTML=""}});
+document.addEventListener("click",e=>{if(e.target.closest("[data-rpgo]")&&curCar){if(!RP.b||!RP.m||!RP.y||!RP.k){const r=$("#rpres");r.innerHTML='<p class="rperr">Indique la marque, le modèle, l\'année et le kilométrage.</p>';return}RP.done=true;rpCalc(curCar)}});
+function rpCalc(c){const G=window.GCE,mot=G.moteursDe(RP.b,RP.m),me=mot&&RP.e!==""&&RP.e!=null?mot.e[Number(RP.e)]:null;
+  const est=G.estimer({brand:RP.b,model:RP.m,annee:Number(RP.y),km:Number(RP.k),carburant:me?G.FUEL[me[1]]:"Essence",coef:me?me[2]:1,boite:RP.g||"Manuelle",etat:RP.s||"bon",options:[],entretien:true,proprios:2});
+  const r=$("#rpres");if(!est){r.innerHTML='<p class="rperr">Pas d\'estimation automatique pour ce modèle : envoyez-nous la demande, on vous répond rapidement.</p>'+rpSend(c,null);return}
+  const marge=Number(INFO.marge)||1000,tva=Number(INFO.tvaTaux)||21,frais=150+({excellent:0,bon:150,moyen:500,rafraichir:1200}[RP.s||"bon"]||150);
+  const off=rev=>Math.round(Math.max(0,rev-(marge+frais)*(100+tva)/100)/50)*50;
+  const lo=off(est.bas*0.92),hi=Math.max(off(est.bas),lo);
+  if(hi<400){r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>Sur inspection</b><p>Pour cette voiture, nous préférons la voir avant de vous faire une offre.</p></div>'+rpSend(c,null);return}
+  r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>'+fE.format(lo)+' – '+fE.format(hi)+'</b><p>Prix indicatif, confirmé après inspection de la voiture (état, entretien, Car-Pass). Montant déduit du prix de la '+esc(title(c))+' : il resterait environ <strong>'+fE.format(Math.max(0,(c.prix||0)-hi))+'</strong> à payer.</p></div>'+rpSend(c,[lo,hi])}
+function rpSend(c,rg){const me=(()=>{const G=window.GCE,m=G.moteursDe(RP.b,RP.m);return m&&RP.e!==""&&RP.e!=null?m.e[Number(RP.e)][0]:""})();
+  const t="Bonjour, je suis intéressé(e) par la "+title(c)+(c.annee?" de "+c.annee:"")+(c.prix?" à "+eur(c.prix):"")+" et je souhaite faire reprendre ma voiture :\n- "+RP.b+" "+RP.m+(me?" "+me:"")+"\n- Année : "+RP.y+"\n- Kilométrage : "+fN.format(Number(RP.k))+" km\n- Boîte : "+(RP.g||"Manuelle")+"\n- État : "+((window.GCE.ETATS.find(x=>x[0]===(RP.s||"bon"))||[])[1]||"")+(rg?"\nEstimation du site : "+fE.format(rg[0])+" – "+fE.format(rg[1]):"")+"\nPouvez-vous me faire une offre ?";
+  return '<div class="rpsend">'+(INFO.whatsapp?'<a class="btn b-wa" href="https://wa.me/'+waNum(INFO.whatsapp)+'?text='+encodeURIComponent(t)+'" target="_blank" rel="noopener">'+ICON.wa+'Envoyer ma demande</a>':'')+(INFO.email?'<a class="btn b-line" href="mailto:'+INFO.email+'?subject='+encodeURIComponent("Demande de reprise · "+title(c))+'&body='+encodeURIComponent(t)+'">'+ICON.mail+'Par e-mail</a>':'')+'</div><p class="note">Ajoutez quelques photos de votre voiture dans la conversation pour une offre plus précise.</p>'}
+$("#grid").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)location.hash="v-"+c.dataset.id});
+$("#aptrack").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)location.hash="v-"+c.dataset.id});
 $("#aptrack").addEventListener("scroll",()=>requestAnimationFrame(apArrows),{passive:true});
 $("#apL").addEventListener("click",()=>apStep(-1));$("#apR").addEventListener("click",()=>apStep(1));
 window.addEventListener("resize",apArrows);
-window.addEventListener("hashchange",()=>{if(!location.hash.startsWith("#v-"))showPage()});
-document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&document.body.classList.contains("page-occ")){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
+window.addEventListener("hashchange",showPage);
+document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car"))){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
 showPage();
 $("#fbrand").addEventListener("change",renderGrid);$("#fsort").addEventListener("change",renderGrid);
 
@@ -389,10 +544,9 @@ applyInfo();
 try{
   if(!window.FIREBASE_CONFIG)throw new Error("config");
   firebase.initializeApp(window.FIREBASE_CONFIG);const db=firebase.firestore();
-  db.collection("vitrine_info").limit(1).onSnapshot(s=>{if(s.docs[0]){INFO={...INFO,...s.docs[0].data()};applyInfo();renderGrid();renderPreview()}},()=>{});
-  let first=true;
-  db.collection("vitrine").onSnapshot(s=>{CARS=s.docs.map(d=>({...d.data(),id:d.id}));fillBrands();renderGrid();renderPreview();
-    if(first){first=false;const m=location.hash.match(/^#v-(.+)$/);if(m)openCar(m[1],false)}},()=>{CARS=[];renderGrid();renderPreview()});
+  db.collection("vitrine_info").limit(1).onSnapshot(s=>{if(s.docs[0]){INFO={...INFO,...s.docs[0].data()};applyInfo();renderGrid();renderPreview();if(curCar)renderAnnonce(curCar.id)}},()=>{});
+  db.collection("vitrine").onSnapshot(s=>{CARS=s.docs.map(d=>({...d.data(),id:d.id}));loaded=true;fillBrands();renderGrid();renderPreview();
+    const m=location.hash.match(/^#v-(.+)$/);if(m&&(!curCar||!$("#rpres")||!$("#rpres").innerHTML))renderAnnonce(m[1])},()=>{CARS=[];loaded=true;renderGrid();renderPreview()});
 }catch(e){CARS=[];renderGrid();renderPreview()}
 })();
 </script>
