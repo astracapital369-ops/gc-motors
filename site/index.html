@@ -358,6 +358,26 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 @media(max-width:700px){.rpa:before,body.page-car .contact:before,body.page-occ .contact:before{height:36px}.incx:before,.incx:after{height:30px}.rpa{margin-top:80px!important}.incx{margin-top:60px}}
 .hstats br.mb{display:none}@media(max-width:520px){.hstats br.mb{display:inline}.hero .hstats div{white-space:nowrap!important}}
 .hero .kick{display:block;text-align:center;width:100%}
+/* en-tête : menu + logo centré */
+.hbar{display:grid;grid-template-columns:48px 1fr 48px;align-items:center}
+.hbar .logo{justify-self:center}
+.burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
+.burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
+.burger span:nth-child(2){width:70%}
+.burger:hover span:nth-child(2){width:100%}
+.burger.x span:nth-child(1){transform:translateY(8px) rotate(45deg)}.burger.x span:nth-child(2){opacity:0}.burger.x span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+.drawer{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,0);pointer-events:none;transition:background .3s}
+.drawer.on{background:rgba(0,0,0,.55);pointer-events:auto}
+.dpanel{position:absolute;top:0;left:0;bottom:0;width:min(360px,86vw);background:#0a0a0b;color:#fff;padding:24px 28px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.drawer.on .dpanel{transform:none}
+.dclose{align-self:flex-end;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:none;color:#fff;font-size:24px;cursor:pointer}
+.dnav{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:40px;font-size:inherit}
+.dnav a{display:flex;align-items:baseline;gap:14px;padding:12px 0;font-size:28px;font-weight:800;letter-spacing:-.02em;text-decoration:none;color:#fff;border-bottom:1px solid rgba(255,255,255,.08);opacity:0;transform:translateX(-14px);transition:opacity .4s,transform .4s,color .2s}
+.dnav a span{font-size:12px;font-weight:600;color:#77777d;letter-spacing:.1em}
+.dnav a:hover{color:#bdbdc2}
+.drawer.on .dnav a{opacity:1;transform:none}
+.drawer.on .dnav a:nth-child(1){transition-delay:.1s}.drawer.on .dnav a:nth-child(2){transition-delay:.17s}.drawer.on .dnav a:nth-child(3){transition-delay:.24s}
+.dfoot{margin-top:auto;display:flex;flex-direction:column;gap:6px}.dfoot a{color:#9a9a9f;text-decoration:none;font-size:14px}.dfoot a:hover{color:#fff}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -419,9 +439,11 @@ header.scrolled .hbar{height:58px}
 </head>
 <body>
 <header><div class="wrap hbar">
+  <button type="button" class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
-  <nav><a class="nl" href="#occasions">Nos occasions</a><a class="nl" href="#pourquoi">Pourquoi nous</a><a class="nl" href="#contact">Contact</a><div class="cwrap"><button class="btn b-white hcall" id="hcontact" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 0 1-12.3 7.6L3 21l1.4-5.7A8.5 8.5 0 1 1 21 12z"/></svg>Contact<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="cmenu" id="cmenu" role="menu"></div></div></nav>
+  <span class="hsp"></span>
 </div></header>
+<div class="drawer" id="drawer" aria-hidden="true"><div class="dpanel"><button type="button" class="dclose" aria-label="Fermer le menu">×</button><nav class="dnav"><a href="#top" data-nav="home"><span>01</span>Accueil</a><a href="#occasions" data-nav="occ"><span>02</span>Nos occasions</a><a href="#contact" data-nav="contact"><span>03</span>Contact</a></nav><div class="dfoot" id="dfoot"></div></div></div>
 
 <main id="top">
 <div class="hero"><span class="glow"></span><div class="wrap hgrid">
@@ -512,13 +534,16 @@ function applyInfo(){const n=INFO.nom||"GC Motor's";$("#hname").textContent=n;do
   buildMenu();$("#fname").textContent="© "+new Date().getFullYear()+" "+n;$("#ftva").textContent=INFO.tva?"TVA "+INFO.tva:""}
 
 
-function buildMenu(){const it=(cls,href,ic,l,sub,ext)=>'<a class="'+cls+'" role="menuitem" href="'+href+'"'+(ext?' target="_blank" rel="noopener"':'')+'><span class="ic">'+ic+'</span><span>'+l+'<small>'+esc(sub)+'</small></span></a>';
-  $("#cmenu").innerHTML=(INFO.tel?it("",telLink(),ICON.tel,"Appeler",INFO.tel):"")+(INFO.email?it("",mailLink(),ICON.mail,"E-mail",INFO.email):"")+(INFO.whatsapp?it("wa",waLink(),ICON.wa,"WhatsApp","Écrire un message",1):"")||'<a href="#contact"><span class="ic">'+ICON.mail+'</span><span>Nous contacter<small>Coordonnées en bas de page</small></span></a>'}
-function menu(open){const m=$("#cmenu"),b=$("#hcontact");const o=open==null?!m.classList.contains("on"):open;m.classList.toggle("on",o);b.setAttribute("aria-expanded",o)}
-$("#hcontact").addEventListener("click",e=>{e.stopPropagation();menu()});
-document.addEventListener("click",e=>{if(!e.target.closest(".cwrap"))menu(false);else if(e.target.closest(".cmenu a"))setTimeout(()=>menu(false),100)});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")menu(false)});
-addEventListener("scroll",()=>menu(false),{passive:true});
+function buildMenu(){const f=$("#dfoot");if(f)f.innerHTML=(INFO.tel?'<a href="'+telLink()+'">'+esc(INFO.tel)+'</a>':'')+(INFO.email?'<a href="'+mailLink()+'">'+esc(INFO.email)+'</a>':'')}
+
+/* menu (3 barres) */
+function drawer(o){const d=$("#drawer"),b=$("#burger");d.classList.toggle("on",o);d.setAttribute("aria-hidden",!o);b.setAttribute("aria-expanded",o);b.classList.toggle("x",o);document.body.classList.toggle("lock",o)}
+$("#burger").addEventListener("click",()=>drawer(!$("#drawer").classList.contains("on")));
+$("#drawer").addEventListener("click",e=>{if(e.target.id==="drawer"||e.target.closest(".dclose")){drawer(false);return}const a=e.target.closest("[data-nav]");if(!a)return;e.preventDefault();drawer(false);const n=a.dataset.nav;
+  if(n==="home"){history.pushState(null,"",location.pathname);showPage();scrollTo({top:0,behavior:"smooth"})}
+  else if(n==="occ"){location.hash="occasions"}
+  else setTimeout(()=>$("#contact").scrollIntoView({behavior:"smooth"}),50)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")drawer(false)});
 function specs(c){return[c.annee,km(c.km),c.carburant,c.boite].filter(Boolean)}
 function cardHtml(c,i){const ph=c.photos&&c.photos[0];return'<button class="card pop" style="animation-delay:'+Math.min(i||0,8)*70+'ms" data-id="'+esc(c.id)+'"><div class="ph">'+(ph?'<img loading="lazy" src="'+ph+'" alt="'+esc(title(c))+'">':'<div class="nop"><img src="logo-car.png" alt=""></div>')+'<span class="tag">Garantie '+(c.garantie||INFO.garantie||12)+' mois</span>'+(c.photos&&c.photos.length>1?'<span class="cnt">'+c.photos.length+' photos</span>':'')+'</div><div class="bd"><h3>'+esc(title(c))+(c.moteur?'<small>'+esc(c.moteur)+'</small>':'')+'</h3><div class="specs">'+specs(c).map(s=>'<span>'+esc(s)+'</span>').join("")+'</div><div class="price"><b>'+eur(c.prix)+'</b><span>Voir la voiture</span></div></div></button>'}
 
