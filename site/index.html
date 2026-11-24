@@ -397,7 +397,7 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .rdvd button.on,.rdvt button.on{background:var(--blue);border-color:var(--blue)}
 .rpres small{color:var(--blue-l)}
 .ci .ic{background:#fff}
-.sendb,.rpgo{background:var(--blue)}.sendb:hover,.rpgo:hover{background:#1f66e5}
+.sendb{background:var(--blue)}.sendb:hover{background:#1f66e5}
 .rplink>svg{color:var(--blue)}
 .fact svg{color:var(--blue)}
 .card{border:2px solid rgba(47,123,255,.45);border-radius:0}.card .ph{border-radius:0}.card:hover{border-color:rgba(47,123,255,.7);box-shadow:0 18px 40px rgba(47,123,255,.14)}
@@ -414,7 +414,7 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .esth{background:#0a0a0b;color:#fff;text-align:center;padding:56px 0 130px}
 .esth .kick{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#fff;margin-bottom:14px}.esth .kick i{font-style:normal;color:var(--blue)}
 .esth h1{font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:clamp(30px,4.6vw,52px);letter-spacing:-.03em;line-height:1.1}
-.esth p{color:#a3a3a8;font-size:17px;line-height:1.6;max-width:560px;margin:14px auto 0}
+.esth p{color:#a3a3a8;font-size:17px;line-height:1.6;max-width:560px;margin:24px auto 0}
 .estpills{display:flex;flex-wrap:wrap;justify-content:center;gap:22px;margin-top:24px}
 .estpills span{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;padding:4px 8px}.estpills svg{width:17px;height:17px;color:var(--blue);flex:none}
 @media(max-width:700px){.estpills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.estpills span{flex-direction:column;gap:6px;padding:4px 2px;font-size:12px;line-height:1.25;text-align:center}.estpills svg{width:20px;height:20px}}
@@ -423,7 +423,14 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .estcard .rpg select,.estcard .rpg input{padding:13px 14px}
 .estcard .rpgo{padding:15px;font-size:16px;margin-top:18px}
 .estcard .note{color:var(--muted);font-size:13px;margin-top:10px}
-@media(max-width:700px){.esth{padding:40px 0 110px}.esth p{font-size:15.5px}.estcard{padding:18px;margin-top:-80px;border-radius:18px}.estcard .rpg{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.esth h1{font-size:clamp(23px,7.2vw,30px)}.esth{padding:40px 0 110px}.esth p{font-size:15.5px}.estcard{padding:18px;margin-top:-80px;border-radius:18px}.estcard .rpg{grid-template-columns:1fr 1fr}}
+/* cartes : prix sur photo, lien centré */
+.cpc{left:12px;bottom:12px;padding:7px 12px;border-radius:12px;animation:none}
+.cpc b{font-size:19px}
+.cgo{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-weight:700;font-size:15px;color:#000}
+.cgo svg{width:18px;height:18px;flex:none;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.card:hover .cgo svg{transform:translateX(5px)}
+em.bl{font-style:normal;color:var(--blue);font-weight:600}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -522,16 +529,16 @@ header.scrolled .hbar{height:58px}
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></div><h3>Garantie <span class="gmo">12</span> mois</h3><p>Toutes nos voitures sont vendues avec la <em class="bl">garantie légale</em>, par écrit, sur le bon de commande.</p></div>
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><h3>Contrôle technique et Car-Pass</h3><p>Contrôle technique « vente » récent et Car-Pass fournis : <em class="bl">l'historique du kilométrage</em> est clair.</p></div>
     <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div><h3>Voitures vérifiées</h3><p>Chaque voiture est <em class="bl">inspectée et préparée</em> avant la vente. Les défauts connus sont signalés.</p></div>
-    <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></div><h3>Rachat ou reprise</h3><p>Nous <em class="bl">rachetons votre voiture</em>, que vous achetiez chez nous ou non. Demandez une estimation.</p></div>
+    <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></div><h3>Rachat ou reprise</h3><p>Nous <em class="bl">rachetons votre véhicule</em>, avec ou sans achat chez nous. Estimation gratuite en ligne.</p></div>
   </div>
   <div class="rpa rv">
     <div class="wrap">
       <h2 class="rpt">Les avantages de la reprise</h2>
-      <p class="rps">Nous rachetons votre voiture, même sans achat chez nous. Et si vous en prenez une de nos occasions, le montant est déduit de son prix.</p>
+      <p class="rps">Nous rachetons votre véhicule, que vous achetiez chez nous ou non. En cas d'achat, le montant de la reprise est déduit du prix.</p>
       <div class="rpgrid">
         <div class="rpi"><span class="rpn">1</span><h3>Pas de prise de tête</h3><p>Ni annonce, ni visites, ni appels d'inconnus : on s'occupe de tout.</p></div>
         <div class="rpi"><span class="rpn">2</span><h3>Aucun frais à prévoir</h3><p>Pas de contrôle technique, d'entretien ni de réparation à payer.</p></div>
-        <div class="rpi"><span class="rpn">3</span><h3>Reprise immédiate</h3><p>Votre voiture est rachetée rapidement, sans attendre un acheteur.</p></div>
+        <div class="rpi"><span class="rpn">3</span><h3>Reprise immédiate</h3><p>Votre véhicule est repris rapidement, sans attendre de trouver un acheteur.</p></div>
       </div>
       <div class="rpcta"><button type="button" class="btn b-white hgo" data-rphome aria-expanded="false">Estimer ma reprise gratuitement<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><span>Estimation instantanée, sans engagement</span></div>
       <div class="rphome" id="rphome" hidden><div id="rpformH"></div></div>
@@ -543,8 +550,8 @@ header.scrolled .hbar{height:58px}
 <section id="estpage" class="estp">
   <div class="esth"><div class="wrap">
     <span class="kick">Gratuit <i>·</i> sans engagement</span>
-    <h1>Reprise de <span class="ul">votre véhicule</span></h1>
-    <p>Indiquez votre voiture et obtenez une estimation en 30 secondes. Nous vous la rachetons directement, ou nous déduisons le montant d'une de nos occasions.</p>
+    <h1><span class="ul">Reprise de votre véhicule</span></h1>
+    <p>Obtenez une estimation de votre véhicule en 30 secondes. Nous le rachetons directement, ou nous déduisons son montant de votre prochain achat chez nous.</p>
     <div class="estpills"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01"/></svg>Pas de prise de tête</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6.5A6.5 6.5 0 1 0 17 17.5"/><path d="M5 10.5h8M5 13.5h8"/><path d="M4 4l16 16"/></svg>Aucun frais à prévoir</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Reprise immédiate</span></div>
   </div></div>
   <div class="wrap"><div class="estcard" id="rpformE"></div></div>
@@ -718,7 +725,7 @@ function rpCalc(c){const G=window.GCE,mot=G.moteursDe(RP.b,RP.m),me=mot&&RP.e!==
   const off=rev=>Math.round(Math.max(0,rev-(marge+frais)*(100+tva)/100)/50)*50;
   const lo=off(est.bas*0.92),hi=Math.max(off(est.bas),lo);
   if(hi<400){r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>Sur inspection</b><p>Pour cette voiture, nous préférons la voir avant de vous faire une offre.</p></div>'+rpSend(c,null);return}
-  r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>'+fE.format(lo)+' – '+fE.format(hi)+'</b><p>Prix indicatif, confirmé après inspection de la voiture (état, entretien, Car-Pass).'+(c?' Une fois déduit du prix de cette voiture, il resterait environ <strong>'+fE.format(Math.max(0,(c.prix||0)-hi))+'</strong> à payer.':' Nous pouvons vous la racheter directement, ou déduire ce montant du prix d\'une de nos occasions.')+'</p></div>'+rpSend(c,[lo,hi])}
+  r.innerHTML='<div class="rpres"><small>Estimation de reprise</small><b>'+fE.format(lo)+' – '+fE.format(hi)+'</b><p>Prix indicatif, confirmé après inspection de la voiture (état, entretien, Car-Pass).'+(c?' Une fois déduit du prix de cette voiture, il resterait environ <strong>'+fE.format(Math.max(0,(c.prix||0)-hi))+'</strong> à payer.':' Nous pouvons racheter votre véhicule directement, ou déduire ce montant de votre prochain achat chez nous.')+'</p></div>'+rpSend(c,[lo,hi])}
 function rpSend(c,rg){const me=(()=>{const G=window.GCE,m=G.moteursDe(RP.b,RP.m);return m&&RP.e!==""&&RP.e!=null?m.e[Number(RP.e)][0]:""})();
   const t=(c?"Bonjour, je suis intéressé(e) par la "+title(c)+(c.annee?" de "+c.annee:"")+(c.prix?" à "+eur(c.prix):"")+" et je souhaite faire reprendre ma voiture :":"Bonjour, je souhaite faire reprendre ma voiture :")+"\n- "+RP.b+" "+RP.m+(me?" "+me:"")+"\n- Année : "+RP.y+"\n- Kilométrage : "+fN.format(Number(RP.k))+" km\n- Boîte : "+(RP.g||"Manuelle")+"\n- État : "+((window.GCE.ETATS.find(x=>x[0]===(RP.s||"bon"))||[])[1]||"")+(rg?"\nEstimation du site : "+fE.format(rg[0])+" – "+fE.format(rg[1]):"")+"\nPouvez-vous me faire une offre ?";
   SEND[RPK]=()=>c?{subject:"Rendez-vous achat + reprise · "+title(c),text:t.replace("Pouvez-vous me faire une offre ?","Je souhaiterais convenir d'un rendez-vous pour voir la "+title(c)+" et faire évaluer ma voiture.\nLien de l'annonce : "+location.href+"\nMerci de me recontacter.")}:{subject:"Demande de reprise de ma voiture",text:t};
