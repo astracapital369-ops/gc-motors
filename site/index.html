@@ -781,14 +781,19 @@ $("#aptrack").addEventListener("scroll",()=>requestAnimationFrame(apArrows),{pas
 $("#apL").addEventListener("click",()=>apStep(-1));$("#apR").addEventListener("click",()=>apStep(1));
 window.addEventListener("resize",apArrows);
 /* bruit de moteur synthétisé au clic sur le logo */
-let AC=null;function vroom(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const a=AC;if(a.state==="suspended")a.resume();const t=a.currentTime,D=1.5;
-  const out=a.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(.32,t+.06);out.gain.setValueAtTime(.32,t+.9);out.gain.exponentialRampToValueAtTime(.001,t+D);
-  const lp=a.createBiquadFilter();lp.type="lowpass";lp.Q.value=4;lp.frequency.setValueAtTime(380,t);lp.frequency.linearRampToValueAtTime(1500,t+.45);lp.frequency.exponentialRampToValueAtTime(420,t+D);
-  const ws=a.createWaveShaper(),cv=new Float32Array(1024);for(let i=0;i<1024;i++){const x=i/512-1;cv[i]=Math.tanh(x*3.2)}ws.curve=cv;
-  ws.connect(lp);lp.connect(out);out.connect(a.destination);
-  const rpm=(o,m)=>{o.frequency.setValueAtTime(38*m,t);o.frequency.linearRampToValueAtTime(34*m,t+.1);o.frequency.exponentialRampToValueAtTime(150*m,t+.5);o.frequency.exponentialRampToValueAtTime(95*m,t+.75);o.frequency.exponentialRampToValueAtTime(40*m,t+D)};
-  [[ "sawtooth",1,.5],["sawtooth",1.007,.4],["square",.5,.35]].forEach(([ty,m,g])=>{const o=a.createOscillator(),gg=a.createGain();o.type=ty;rpm(o,m);gg.gain.value=g;o.connect(gg);gg.connect(ws);o.start(t);o.stop(t+D+.05)});
-  const n=a.createBufferSource(),b=a.createBuffer(1,a.sampleRate*D,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*.25;n.buffer=b;const bp=a.createBiquadFilter();bp.type="bandpass";bp.frequency.value=600;bp.Q.value=.7;n.connect(bp);bp.connect(lp);n.start(t)}catch(e){}}
+let AC=null;function vroom(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const a=AC;if(a.state==="suspended")a.resume();const t=a.currentTime,D=1.9;
+  const out=a.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(.22,t+.04);out.gain.setValueAtTime(.22,t+1.35);out.gain.exponentialRampToValueAtTime(.001,t+D);
+  const lp=a.createBiquadFilter();lp.type="lowpass";lp.Q.value=2;lp.frequency.setValueAtTime(2200,t);lp.frequency.linearRampToValueAtTime(5200,t+1.3);lp.frequency.exponentialRampToValueAtTime(1200,t+D);
+  const pk=a.createBiquadFilter();pk.type="peaking";pk.frequency.value=1800;pk.Q.value=1.2;pk.gain.value=7;
+  const ws=a.createWaveShaper(),cv=new Float32Array(2048);for(let i=0;i<2048;i++){const x=i/1024-1;cv[i]=Math.tanh(x*5)}ws.curve=cv;
+  ws.connect(pk);pk.connect(lp);lp.connect(out);out.connect(a.destination);
+  /* 3 rapports qui montent en régime, avec passages de vitesse */
+  const G=[[0,230,650],[.47,430,720],[.95,500,790]],end=1.45;
+  const rpm=(o,m)=>{o.frequency.setValueAtTime(G[0][1]*m,t);G.forEach(([s,lo,hi],k)=>{if(k)o.frequency.exponentialRampToValueAtTime(lo*m,t+s+.04);const e=k<G.length-1?G[k+1][0]:end;o.frequency.exponentialRampToValueAtTime(hi*m,t+e)});o.frequency.exponentialRampToValueAtTime(560*m,t+D)};
+  [["sawtooth",1,.45],["sawtooth",2.003,.22],["square",.5,.25],["triangle",3,.12]].forEach(([ty,m,g])=>{const o=a.createOscillator(),gg=a.createGain();o.type=ty;rpm(o,m);gg.gain.value=g;o.connect(gg);gg.connect(ws);o.start(t);o.stop(t+D+.05)});
+  /* petit creux de volume à chaque passage de rapport */
+  const sh=a.createGain();sh.gain.setValueAtTime(1,t);[.47,.95].forEach(s=>{sh.gain.setValueAtTime(1,t+s-.01);sh.gain.linearRampToValueAtTime(.35,t+s+.02);sh.gain.linearRampToValueAtTime(1,t+s+.07)});out.disconnect();out.connect(sh);sh.connect(a.destination);
+  const n=a.createBufferSource(),b=a.createBuffer(1,a.sampleRate*D,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*.12;n.buffer=b;const bp=a.createBiquadFilter();bp.type="highpass";bp.frequency.value=2500;n.connect(bp);bp.connect(lp);n.start(t)}catch(e){}}
 document.querySelector("header .logo").addEventListener("click",e=>{const l=e.currentTarget;vroom();l.classList.remove("go");void l.offsetWidth;l.classList.add("go");setTimeout(()=>l.classList.remove("go"),800)});
 window.addEventListener("hashchange",showPage);
 document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car")||document.body.classList.contains("page-est"))){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
