@@ -259,8 +259,8 @@ body.lock{overflow:hidden}
 .ov.lb .gcount{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);right:auto}
 .ov.lb .gnav{position:fixed}
 .ov.lb .dx{position:fixed}
-.angrid>*{min-width:0}
-@media(max-width:960px){.angrid{grid-template-columns:minmax(0,1fr)}.anside{position:static}.others .car-track .card{flex-basis:calc((100% - 20px)/2)}}
+.angrid>*{min-width:0}@media(min-width:801px) and (max-width:1100px){.angrid{grid-template-columns:minmax(0,1fr) 310px;gap:22px}}
+@media(max-width:800px){.angrid{grid-template-columns:minmax(0,1fr)}.anside{position:static}.others .car-track .card{flex-basis:calc((100% - 20px)/2)}}
 @media(max-width:640px){.an{padding-top:12px;padding-bottom:100px}.agal{border-radius:14px;margin:0 -20px;border-radius:0}.athumbs{display:none}.anprice-m{display:block}.techg{grid-template-columns:1fr}.incg{grid-template-columns:1fr}.rpg{grid-template-columns:1fr 1fr}.rpg .w2{grid-column:span 2}.others .car-track .card{flex-basis:82%}.pbox .pval,.pbox>small,.pbox .pnote,.pbox .pdiv{display:none}.dbar{display:flex}.gfull{display:none}}
 body:not(.page-car) .dbar{display:none!important}
 body.page-car .fwa{display:none!important}
@@ -326,7 +326,7 @@ body.page-car .fwa{display:none!important}
 .incx.in .incic svg{animation:draw 1.4s ease forwards}
 .incx.in .incit:nth-child(2) .incic svg{animation-delay:.15s}.incx.in .incit:nth-child(3) .incic svg{animation-delay:.3s}.incx.in .incit:nth-child(4) .incic svg{animation-delay:.45s}
 @keyframes draw{to{stroke-dashoffset:0}}
-@media(max-width:960px){.an{display:flex;flex-direction:column}.an>.angrid{display:contents}.crumb{order:0}.anmain{order:1}.incx{order:2}.anside{order:3;margin-top:60px}.others{order:4}}
+@media(max-width:800px){.an{display:flex;flex-direction:column}.an>.angrid{display:contents}.crumb{order:0}.anmain{order:1}.incx{order:2}.anside{order:3;margin-top:60px}.others{order:4}}
 @media(max-width:700px){.incx{padding:34px 0 36px}.incrow{grid-template-columns:1fr 1fr;row-gap:28px}.incit{padding:0 10px}.incit:nth-child(3){border-left:0}}
 @media(prefers-reduced-motion:reduce){.incx .incic svg{stroke-dashoffset:0}}
 .hgrid>div{width:100%}.hero .hacts,.hero .hstats{justify-self:stretch;width:100%}.hero .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:38px}.hstats b{font-size:clamp(17px,1.9vw,22px);font-weight:700;color:#e6e6e8}.hstats div{text-align:center;line-height:1.35;justify-self:center;white-space:nowrap}.hstats b{margin-bottom:4px}
@@ -372,7 +372,7 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 body:not(.page-occ):not(.page-est):not(.page-car) .tnav [data-nav=home],body.page-occ .tnav [data-nav=occ],body.page-car .tnav [data-nav=occ],body.page-est .tnav [data-nav=est]{color:#fff}
 body:not(.page-occ):not(.page-est):not(.page-car) .tnav [data-nav=home]:after,body.page-occ .tnav [data-nav=occ]:after,body.page-car .tnav [data-nav=occ]:after,body.page-est .tnav [data-nav=est]:after{transform:scaleX(1)}}
 .hero h1{display:block;width:fit-content;position:relative;padding-bottom:.18em;margin-bottom:26px}.hero h1 .nw{white-space:nowrap}.hero h1 br.dk{display:none}@media(min-width:861px){.hero h1 br.dk{display:inline}body .hero h1{max-width:none}}
-.hero h1:after{content:"";position:absolute;left:0;right:0;bottom:-.08em;height:.09em;border-radius:99px;background:linear-gradient(90deg,var(--blue),rgba(47,123,255,.25));clip-path:inset(0 100% 0 0);animation:ulin 4s cubic-bezier(.65,0,.35,1) 1.3s infinite}
+.hero h1:after{content:"";position:absolute;left:0;right:0;bottom:-.16em;height:.24em;border-radius:3px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Crect width='12' height='20' fill='%232f7bff' fill-opacity='.22'/%3E%3Cpath d='M1 1.5h4.5l4.5 7.5H5.5zM1 18.5h4.5l4.5-7.5H5.5z' fill='%232f7bff'/%3E%3C/svg%3E") left center/auto 100% repeat-x;-webkit-mask:linear-gradient(90deg,#000 55%,rgba(0,0,0,.35));mask:linear-gradient(90deg,#000 55%,rgba(0,0,0,.35));clip-path:inset(0 100% 0 0);animation:ulin 4s cubic-bezier(.65,0,.35,1) 1.3s infinite}
 @media(prefers-reduced-motion:reduce){.hero h1:after{animation:none;clip-path:none}}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
@@ -503,6 +503,7 @@ header.scrolled .hbar{height:58px}
 .marq div{display:inline-flex;gap:48px;animation:marq 28s linear infinite;padding-left:48px}
 .marq span{font-family:"Archivo Black",Inter,sans-serif;font-size:14px;letter-spacing:.18em;text-transform:uppercase;opacity:.85;display:inline-flex;align-items:center;gap:48px}
 .marq span:after{content:"";width:6px;height:6px;border-radius:50%;background:#fff;opacity:.5}
+@media(min-width:861px){body .marq{padding:16px 0}body .marq div{display:flex;justify-content:center;gap:56px;animation:none;padding-left:0;width:100%}body .marq span{gap:56px;font-size:13px}body .marq span:nth-child(n+4){display:none}body .marq span:nth-child(3):after{display:none}}
 @keyframes marq{to{transform:translateX(-50%)}}
 /* détail : ouverture */
 .ov{transition:background .3s}
