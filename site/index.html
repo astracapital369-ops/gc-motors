@@ -293,21 +293,13 @@ body.page-car .fwa{display:none!important}
 .eqd summary svg{width:18px;height:18px;transition:transform .25s}.eqd[open] summary svg{transform:rotate(180deg)}
 .eqd .eqg{margin-top:14px}
 
-/* bloc « Inclus » inversé */
-.incb{position:relative;overflow:hidden;background:#000;color:#fff;border-radius:20px;padding:24px 22px}
-.incb h2{color:#fff;position:relative}
-.incb .incg{position:relative}
-.incb .incg li{background:#fff;color:var(--ink);border:0;border-radius:14px;padding:14px 16px;box-shadow:0 10px 24px rgba(0,0,0,.35);opacity:0;transform:translateY(14px);transition:transform .25s}
-.incb.in .incg li{animation:incin .6s cubic-bezier(.2,.8,.2,1) forwards}
-.incb.in .incg li:nth-child(2){animation-delay:.1s}.incb.in .incg li:nth-child(3){animation-delay:.2s}.incb.in .incg li:nth-child(4){animation-delay:.3s}
-@keyframes incin{to{opacity:1;transform:none}}
-.incb .incg li:hover{transform:translateY(-3px)}
-.incb .incg li:before{animation:none}
-.incb.in .incg li:before{animation:chk .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:inherit}
-@keyframes chk{from{transform:scale(0)}}
-.incglow{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 65%);top:-170px;right:-120px;animation:incg 7s ease-in-out infinite;pointer-events:none}
-@keyframes incg{50%{transform:translate(-80px,60px)}}
-@media(prefers-reduced-motion:reduce){.incb .incg li{opacity:1;transform:none}}
+.eqrow{border-bottom:1px solid var(--line)}
+.eqrow summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:12px;padding:11px 0;font-size:14.5px}
+.eqrow summary::-webkit-details-marker{display:none}
+.eqrow summary span{color:var(--muted)}.eqrow summary b{display:flex;align-items:center;gap:6px}
+.eqrow summary svg{width:16px;height:16px;transition:transform .25s}.eqrow[open] summary svg{transform:rotate(180deg)}
+.eql{list-style:none;padding:0 0 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 18px;font-size:14px}
+.eql li{display:flex;gap:8px;align-items:center}.eql li:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink);flex:none}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -515,9 +507,9 @@ function annonceHtml(c){const P=c.photos||[],g=c.garantie||INFO.garantie||12;
     '<div class="anhead rv"><div class="badges"><span>Garantie '+g+' mois</span><span>Car-Pass</span><span>Contrôle technique</span></div><h1>'+esc(title(c))+'</h1>'+(c.moteur?'<p class="ansub">'+esc(c.moteur)+'</p>':'')+'<div class="anprice-m">'+eur(c.prix)+'</div></div>'+
     '<div class="facts rv">'+facts.map(f=>'<div class="fact">'+f[0]+'<small>'+f[1]+'</small><b>'+esc(f[2])+'</b></div>').join("")+'</div>'+
     '<div class="ablock rv"><h2>Description</h2><p class="desc">'+esc(c.description||autoDesc(c)).replace(/\n/g,"<br>")+'</p></div>'+
-    '<div class="ablock rv"><h2>Caractéristiques</h2><div class="techg">'+tech.map(r=>'<div><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("")+'</div></div>'+
-    (c.options&&c.options.length?'<details class="ablock eqd rv"><summary><h2>Équipements et options</h2><span class="cnt2">'+c.options.length+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><ul class="eqg">'+c.options.map(o=>'<li>'+esc(o)+'</li>').join("")+'</ul></details>':'')+
-    '<div class="ablock incb rv"><span class="incglow"></span><h2>Inclus avec cette voiture</h2><ul class="incg"><li><div><b>Garantie '+g+' mois</b><span>Par écrit, sur le bon de commande</span></div></li><li><div><b>Contrôle technique « vente »</b><span>Récent, prêt pour l\'immatriculation</span></div></li><li><div><b>Car-Pass</b><span>Historique du kilométrage</span></div></li><li><div><b>Préparation complète</b><span>Nettoyage et vérifications avant livraison</span></div></li></ul></div>'+
+    '<div class="ablock rv"><h2>Caractéristiques</h2><div class="techg">'+tech.map(r=>'<div><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("")+'</div>'+(c.options&&c.options.length?'<details class="eqrow"><summary><span>Équipements et options</span><b>'+c.options.length+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></b></summary><ul class="eql">'+c.options.map(o=>'<li>'+esc(o)+'</li>').join("")+'</ul></details>':'')+'</div>'+
+    
+    '<div class="ablock rv"><h2>Inclus avec cette voiture</h2><ul class="incg"><li><div><b>Garantie '+g+' mois</b><span>Par écrit, sur le bon de commande</span></div></li><li><div><b>Contrôle technique « vente »</b><span>Récent, prêt pour l\'immatriculation</span></div></li><li><div><b>Car-Pass</b><span>Historique du kilométrage</span></div></li><li><div><b>Préparation complète</b><span>Nettoyage et vérifications avant livraison</span></div></li></ul></div>'+
    '</div><aside class="anside"><div class="pbox"><small>Prix</small><div class="pval">'+eur(c.prix)+'</div><p class="pnote">TVA comprise · régime de la marge</p><div class="pdiv"></div><b class="pq">Cette voiture vous intéresse ?</b><div class="pbtns">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler · '+esc(INFO.tel)+'</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'Envoyer un e-mail</a>':'')+'</div>'+(INFO.whatsapp?'<a class="walink" href="'+waLink(c)+'" target="_blank" rel="noopener">ou écrire sur WhatsApp</a>':'')+'<button type="button" class="rplink" data-rpopen aria-expanded="false">'+IC.swap+'<span>Reprise de votre véhicule possible<small>Estimation gratuite et instantanée du prix de reprise</small></span><svg class="rpchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="rprise" id="reprise" hidden><p class="rpintro">Le montant de la reprise est déduit du prix de cette voiture.</p><div id="rpform"></div></div></div></aside></div>'+
    (others.length?'<div class="ablock others rv"><h2>Autres voitures qui pourraient vous plaire</h2><div class="car-track" id="otrack">'+others.map(cardHtml).join("")+'</div></div>':'')+
    '</div><div class="dbar">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'E-mail</a>':'')+'</div>'}
