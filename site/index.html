@@ -798,7 +798,7 @@ let AC=null;function vroom(){try{AC=AC||new (window.AudioContext||window.webkitA
   /* petit creux de volume à chaque passage de rapport */
   const sh=a.createGain();sh.gain.setValueAtTime(1,t);[.47,.95].forEach(s=>{sh.gain.setValueAtTime(1,t+s-.01);sh.gain.linearRampToValueAtTime(.35,t+s+.02);sh.gain.linearRampToValueAtTime(1,t+s+.07)});out.disconnect();out.connect(sh);sh.connect(a.destination);
   const n=a.createBufferSource(),b=a.createBuffer(1,a.sampleRate*D,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*.12;n.buffer=b;const bp=a.createBiquadFilter();bp.type="highpass";bp.frequency.value=2500;n.connect(bp);bp.connect(lp);n.start(t)}catch(e){}}
-document.querySelector("header .logo").addEventListener("click",e=>{const l=e.currentTarget;vroom();l.classList.remove("go");void l.offsetWidth;l.classList.add("go");setTimeout(()=>l.classList.remove("go"),800)});
+document.querySelector("header .logo").addEventListener("click",e=>{const l=e.currentTarget;l.classList.remove("go");void l.offsetWidth;l.classList.add("go");setTimeout(()=>l.classList.remove("go"),800)});
 window.addEventListener("hashchange",showPage);
 document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car")||document.body.classList.contains("page-est"))){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
 showPage();
