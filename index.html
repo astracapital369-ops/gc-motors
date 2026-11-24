@@ -213,6 +213,7 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .liq[open] .lbl::after{content:" ⌄"}
 .liqval{font-family:var(--display);font-size:26px;font-weight:600;line-height:1;color:var(--accent)}
 .liqval.neg{color:var(--bad)}
+.sfrl{display:flex;flex-direction:column;gap:8px;margin-top:10px}.sfr{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}.sfr>span{flex:1;min-width:0;font-weight:600;font-size:14px}.sfr small{display:block;font-weight:400;color:var(--muted);font-size:12px}.sfr input{width:90px;text-align:right}.sfr .x{border:0;background:none;font-size:20px;color:var(--muted);cursor:pointer;padding:0 4px}.sfrtot{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-size:15px}.sfrtot b{font-size:18px}
 .topacts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 @media(max-width:640px){.top>.topacts,.top>[data-act=achatrapide]{width:100%}.topacts .btn{flex:1;justify-content:center}}
 .as-part[hidden],.as-pro[hidden]{display:none!important}
@@ -511,7 +512,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="21.0";
+const APP_VERSION="21.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -2881,7 +2882,7 @@ function vSim(){
   if(S.sim.kmMin===undefined){S.sim.kmMin=S.sim.kmMax=S.sim.km||100000}
   if(S.sim.anneeMin!==S.sim.anneeMax){S.sim.anneeMin=S.sim.anneeMax=Math.round((S.sim.anneeMin+S.sim.anneeMax)/2)}
   if(S.sim.kmMin!==S.sim.kmMax){S.sim.kmMin=S.sim.kmMax=Math.round((S.sim.kmMin+S.sim.kmMax)/2/1000)*1000}
-  S.sim.frais={};S.sim.reparations=0;
+  if(!S.sim.frais||typeof S.sim.frais!=="object")S.sim.frais={};
   const s=S.sim;if(!s.open)s.open={};
   const yNow=new Date().getFullYear();
   if(s.result&&!s.editing)return'<div class="top"><h1>Simulation de prix de revente</h1></div><div class="simdone"><div class="card" id="simres">'+simResult()+'</div>'+
@@ -2904,7 +2905,13 @@ function vSim(){
   // 3 état
   h+='<div class="card">'+step(2,"État et historique")+'<div class="form">'+sel("etat","État général",ETATS.map(([k,l,d])=>[k,l+" : "+d.toLowerCase()]))+
      sel("entretien","Carnet d'entretien",[["1","Complet"],["0","Incomplet ou absent"]])+sel("proprios","Propriétaires",[["1","1 propriétaire"],["2","2 propriétaires"],["3","3 propriétaires et plus"]])+'</div></div>';
-  // 5 frais
+  // 4 frais prévus
+  {const ks=Object.keys(s.frais).filter(k=>PB_INDEX[k]);
+   h+='<div class="card">'+step(3,"Frais prévus")+'<p class="note" style="margin:0 0 10px">Choisis ce qu\'il faudra faire sur la voiture : l\'estimation se met toute seule, tu peux la corriger.</p>'+
+   '<label class="f full">Ajouter un frais<select data-simaddfr><option value="">Choisir un frais…</option>'+PROBLEMES.map(([g,items])=>'<optgroup label="'+esc(g)+'">'+items.filter(([k])=>!(k in s.frais)).map(([k,l,c])=>'<option value="'+k+'">'+esc(l)+' · ≈ '+eur(c)+'</option>').join("")+'</optgroup>').join("")+'</select></label>'+
+   (ks.length?'<div class="sfrl">'+ks.map(k=>'<div class="sfr"><span>'+esc(PB_INDEX[k].l)+'<small>'+esc(PB_INDEX[k].g)+' · estimation ≈ '+eur(PB_INDEX[k].c)+'</small></span><input type="number" inputmode="decimal" step="any" data-simfrv="'+k+'" value="'+esc(s.frais[k])+'" aria-label="Montant '+esc(PB_INDEX[k].l)+'"><b>€</b><button type="button" class="x" data-simfrdel="'+k+'" aria-label="Retirer">×</button></div>').join("")+'</div>':'<p class="note">Aucun frais ajouté.</p>')+
+   '<label class="f full" style="margin-top:10px">Autres frais (€)<input type="number" inputmode="decimal" step="any" data-simfrautre value="'+esc(s.reparations||"")+'" placeholder="0"></label>'+
+   '<div class="sfrtot"><span>Total des frais prévus</span><b id="fraistotal">'+eur(fraisSim(s))+'</b></div></div>'}
   h+='<button class="btn primary big" data-act="simuler"'+(simReady(s)?"":" disabled")+'>'+(simReady(s)?"Simuler":"Choisis la marque et le modèle")+'</button>';
   h+='</div><div class="stack sticky'+(s.result?'':' hide-m')+'"><div class="card" id="simres">'+simResult()+'</div></div></div>';
   return h;
@@ -3099,6 +3106,7 @@ document.addEventListener("click",async e=>{
       toast("Sauvegarde restaurée.");render()})}
 });
 document.addEventListener("input",e=>{
+  {const t=e.target;if(t.dataset&&(t.dataset.simfrv!==undefined||t.dataset.simfrautre!==undefined)&&S.sim){if(t.dataset.simfrv!==undefined)S.sim.frais[t.dataset.simfrv]=num(t.value);else S.sim.reparations=num(t.value);const z=$("#fraistotal");if(z)z.textContent=eur(fraisSim(S.sim));if(S.sim.result&&simReady(S.sim))S.sim.result=estimerSim(S.sim);return}}
   const t=e.target,r=route();
   if(t.id==="search"){S.search=t.value;const pos=t.selectionStart;render();const s=$("#search");if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(_){}}return}
   if(t.hasAttribute&&t.hasAttribute("data-bsearch")){const q=t.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");t.closest(".ddlist").querySelectorAll("[data-bpick]").forEach(el=>el.style.display=!q||el.dataset.k.split(/[\s\/&()-]+/).some(w=>w.startsWith(q))||el.dataset.k.startsWith(q)?"":"none");return}
@@ -3131,6 +3139,7 @@ document.addEventListener("input",e=>{
   if(t.dataset.check){v.check=v.check||{};if(t.checked)v.check[t.dataset.check]=1;else delete v.check[t.dataset.check];persistVehicle(v,true);return}
 });
 document.addEventListener("change",e=>{
+  {const t=e.target;if(t.hasAttribute&&t.hasAttribute("data-simaddfr")&&S.sim&&t.value){S.sim.frais[t.value]=PB_INDEX[t.value].c;const y0=scrollY;render();scrollTo(0,y0);return}}
   const t=e.target,r=route();
   if(t.dataset.simsel&&S.sim){const s=S.sim,k=t.dataset.simsel;let v=t.value;if(["anneeMin","anneeMax","km","proprios"].includes(k))v=+v;if(k==="entretien")v=v==="1";s[k]=v;
     if(k==="brand"){s.model="";s.moteur="";s.carburant="Essence";s.coef=1;s.result=null}
@@ -3169,6 +3178,7 @@ document.addEventListener("change",e=>{
 document.addEventListener("focusout",()=>{setTimeout(()=>{if(!editing()&&route().view!=="fiche"&&route().view!=="simulateur"&&route().view!=="reglages")render()},50)});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.open){location.hash="d-"+e.target.dataset.open;return}if(e.key==="Escape"){const had=$("#overlay").innerHTML;$("#overlay").innerHTML="";if(had)render()}});
 
+document.addEventListener("click",e=>{const b=e.target.closest("[data-simfrdel]");if(!b||!S.sim)return;delete S.sim.frais[b.dataset.simfrdel];const y0=scrollY;render();scrollTo(0,y0)});
 document.addEventListener("click",e=>{const t=e.target.closest("[data-dthumb]");if(!t)return;const tr=$("#dtrack");if(tr)tr.scrollTo({left:+t.dataset.dthumb*tr.clientWidth,behavior:"smooth"})});
 document.addEventListener("scroll",e=>{const t=e.target;if(t&&t.classList&&t.classList.contains("ctrack")){clearTimeout(t._t);t._t=setTimeout(()=>{const n=Math.round(t.scrollLeft/Math.max(1,t.clientWidth)),c=t.parentNode.querySelector(".dcount");if(c)c.textContent=(n+1)+" / "+t.children.length},60)}},true);
 document.addEventListener("scroll",e=>{const tr=e.target;if(!tr||tr.id!=="dtrack")return;clearTimeout(tr._t);tr._t=setTimeout(()=>{const n=Math.round(tr.scrollLeft/Math.max(1,tr.clientWidth)),c=$("#dcount");if(c)c.textContent=(n+1)+" / "+tr.children.length;document.querySelectorAll("[data-dthumb]").forEach(b=>b.classList.toggle("on",+b.dataset.dthumb===n))},60)},true);
