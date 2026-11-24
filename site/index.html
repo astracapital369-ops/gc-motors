@@ -430,7 +430,9 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .cgo{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-weight:700;font-size:15px;color:#000}
 .cgo svg{width:18px;height:18px;flex:none;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
 .card:hover .cgo svg{transform:translateX(5px)}
-em.bl{font-style:normal;color:var(--blue);font-weight:600}
+em.bl{font-style:normal;font-weight:600;background:linear-gradient(100deg,#1d4fbf 0%,#2f7bff 30%,#9cc2ff 48%,#2f7bff 62%,#1a47ad 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:blsh 6s ease-in-out infinite}
+@keyframes blsh{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
+@media(prefers-reduced-motion:reduce){em.bl{animation:none}}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -534,7 +536,7 @@ header.scrolled .hbar{height:58px}
   <div class="rpa rv">
     <div class="wrap">
       <h2 class="rpt">Les avantages de la reprise</h2>
-      <p class="rps">Nous rachetons votre véhicule, que vous achetiez chez nous ou non. En cas d'achat, le montant de la reprise est déduit du prix.</p>
+      <p class="rps">Nous reprenons votre véhicule, même sans commande chez nous. Si vous choisissez l'une de nos occasions, sa valeur est déduite du prix.</p>
       <div class="rpgrid">
         <div class="rpi"><span class="rpn">1</span><h3>Pas de prise de tête</h3><p>Ni annonce, ni visites, ni appels d'inconnus : on s'occupe de tout.</p></div>
         <div class="rpi"><span class="rpn">2</span><h3>Aucun frais à prévoir</h3><p>Pas de contrôle technique, d'entretien ni de réparation à payer.</p></div>
