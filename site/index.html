@@ -776,12 +776,12 @@ function rpInit(c,root,key){RPR=root||$("#rpform");RPC=c||null;RPK=key||"rp";con
 function rpForm(c){const G=window.GCE,box=RPR;if(!box)return;const yNow=new Date().getFullYear();
   const brands=Object.keys(G.CATALOGUE).sort((a,b)=>a.localeCompare(b,"fr"));
   const mods=RP.b?Object.keys(G.CATALOGUE[RP.b].m).sort((a,b)=>a.localeCompare(b,"fr")):[];
-  const mot=RP.b&&RP.m?G.moteursDe(RP.b,RP.m):null,years=RP.b&&RP.m?G.anneesDe(RP.b,RP.m):Array.from({length:30},(_,i)=>yNow-i);
+  const mot=RP.b&&RP.m?G.moteursDe(RP.b,RP.m):null,me=mot&&RP.e!==""&&RP.e!=null?mot.e[Number(RP.e)]:null,years=RP.b&&RP.m?G.anneesDe(RP.b,RP.m,me?me[0]:""):Array.from({length:30},(_,i)=>yNow-i);if(RP.y&&!years.includes(Number(RP.y)))RP.y="";
   const opt=(arr,cur,ph)=>(ph?'<option value="">'+ph+'</option>':'')+arr.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(v)+'"'+(String(cur)===String(v)?" selected":"")+'>'+esc(l)+'</option>'}).join("");
   box.innerHTML='<div class="rpg">'+
    '<label>Marque<select data-rp="b">'+opt(brands,RP.b,"Choisir")+'</select></label>'+
    '<label>Modèle<select data-rp="m"'+(RP.b?"":" disabled")+'>'+opt(mods,RP.m,RP.b?"Choisir":"Choisir la marque")+'</select></label>'+
-   '<label>Motorisation<select data-rp="e"'+(mot?"":" disabled")+'>'+opt(mot?mot.e.map((x,i)=>[i,mot.gen?x[0]:x[0]+" · "+G.FUEL[x[1]]]):[],RP.e,mot?"Choisir":"Choisir le modèle")+'</select></label>'+
+   '<label>Motorisation<select data-rp="e"'+(mot?"":" disabled")+'>'+opt(mot?mot.e.map((x,i)=>[i,G.motLab(x,mot.gen)]):[],RP.e,mot?"Choisir":"Choisir le modèle")+'</select></label>'+
    '<label>Année<select data-rp="y">'+opt(years,RP.y,"Choisir")+'</select></label>'+
    '<label>Kilométrage<input data-rp="k" type="number" inputmode="numeric" placeholder="ex. 120000" value="'+esc(RP.k||"")+'"></label>'+
    '<label>Boîte<select data-rp="g">'+opt(["Manuelle","Automatique"],RP.g||"Manuelle")+'</select></label>'+
@@ -790,7 +790,7 @@ function rpForm(c){const G=window.GCE,box=RPR;if(!box)return;const yNow=new Date
   if(RP.done)rpCalc(c)}
 document.addEventListener("change",e=>{const t=e.target.closest("[data-rp]");if(!t||!RPR||!RPR.contains(t))return;const k=t.dataset.rp;RP[k]=t.value;
   if(k==="b"){RP.m="";RP.e="";RP.y=""}if(k==="m"){RP.e="";RP.y=""}if(k==="e"&&RP.b&&RP.m){const x=window.GCE.moteursDe(RP.b,RP.m);}
-  RP.done=false;if(k==="b"||k==="m")rpForm(RPC);else{const r=rpQ("#rpres");if(r)r.innerHTML=""}});
+  RP.done=false;if(k==="b"||k==="m"||k==="e")rpForm(RPC);else{const r=rpQ("#rpres");if(r)r.innerHTML=""}});
 document.addEventListener("input",e=>{const t=e.target.closest('[data-rp="k"]');if(t&&RPR&&RPR.contains(t)){RP.k=t.value;RP.done=false;const r=rpQ("#rpres");if(r)r.innerHTML=""}});
 document.addEventListener("click",e=>{const g=e.target.closest("[data-rpgo]");if(g&&RPR&&RPR.contains(g)){if(!RP.b||!RP.m||!RP.y||!RP.k){const r=rpQ("#rpres");r.innerHTML='<p class="rperr">Indique la marque, le modèle, l\'année et le kilométrage.</p>';return}RP.done=true;rpCalc(RPC)}});
 function rpCalc(c){const G=window.GCE,mot=G.moteursDe(RP.b,RP.m),me=mot&&RP.e!==""&&RP.e!=null?mot.e[Number(RP.e)]:null;
