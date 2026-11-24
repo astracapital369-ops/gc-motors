@@ -17,7 +17,7 @@
 :root{--ink:#0b0b0c;--muted:#6b6f76;--line:#e7e7e9;--bg:#ffffff;--soft:#f5f5f6;--black:#000;--r:16px;--wa:#25d366}
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
-body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
+body{overflow-x:clip;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
 a{color:inherit}
 img{display:block;max-width:100%}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
@@ -381,12 +381,16 @@ header .logo.go img{animation:lggo .75s cubic-bezier(.6,0,.3,1)}header .logo:act
 @keyframes lgrev{0%{transform:none}18%{transform:translateX(-3px) rotate(1.5deg)}45%{transform:translateX(9px) skewX(-8deg)}68%{transform:translateX(-2px) skewX(2deg)}85%{transform:translateX(1px)}100%{transform:none}}
 @keyframes lggo{0%{transform:none;opacity:1}40%{transform:translateX(70px) skewX(-14deg);opacity:0}41%{transform:translateX(-70px) skewX(-14deg);opacity:0}100%{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){header .logo img{animation:none!important}}
-#pgbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:80;pointer-events:none;background:linear-gradient(90deg,transparent,var(--blue) 30%,#9cc0ff 50%,var(--blue) 70%,transparent);transform:translateX(-100%);opacity:0}
-#pgbar.pgin{animation:pgbar .75s cubic-bezier(.6,0,.2,1)}
-@keyframes pgbar{0%{transform:translateX(-100%);opacity:1}100%{transform:translateX(100%);opacity:1}}
-main.pgin{animation:pgin .55s cubic-bezier(.2,.75,.2,1)}
-@keyframes pgin{0%{opacity:0;transform:translateY(18px);filter:blur(6px)}100%{opacity:1;transform:none;filter:none}}
-@media(prefers-reduced-motion:reduce){main.pgin,#pgbar.pgin{animation:none}}
+#pgwipe{position:fixed;inset:0;z-index:90;pointer-events:none;background:#0a0a0b;transform:translateX(101%);visibility:hidden}
+#pgwipe:after{content:"";position:absolute;top:0;bottom:0;width:4px;background:var(--blue);box-shadow:0 0 24px 4px rgba(47,123,255,.6)}
+#pgwipe.fw:after{right:-4px}#pgwipe.bw:after{left:-4px}
+#pgwipe.pgin{visibility:visible}#pgwipe.pgin.fw{animation:wipefw .6s cubic-bezier(.7,0,.25,1) forwards}#pgwipe.pgin.bw{animation:wipebw .6s cubic-bezier(.7,0,.25,1) forwards}
+@keyframes wipefw{0%{transform:translateX(0)}100%{transform:translateX(-101%)}}
+@keyframes wipebw{0%{transform:translateX(0)}100%{transform:translateX(101%)}}
+main.pgin.fw{animation:slfw .7s cubic-bezier(.2,.8,.2,1)}main.pgin.bw{animation:slbw .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes slfw{0%{opacity:0;transform:translateX(80px)}35%{opacity:0}100%{opacity:1;transform:none}}
+@keyframes slbw{0%{opacity:0;transform:translateX(-80px)}35%{opacity:0}100%{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){main.pgin,#pgwipe.pgin{animation:none;visibility:hidden}}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
 .burger span:nth-child(2){width:70%}
@@ -529,7 +533,7 @@ header.scrolled .hbar{height:58px}
 </style>
 </head>
 <body>
-<div id="pgbar" aria-hidden="true"></div>
+<div id="pgwipe" aria-hidden="true"></div>
 <header><div class="wrap hbar">
   <button type="button" class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
@@ -666,10 +670,10 @@ function renderPreview(){const t=$("#aptrack");const L=CARS.slice().sort((a,z)=>
   $("#apL").parentElement.style.visibility=L.length>1?"":"hidden";apArrows()}
 function apArrows(){const t=$("#aptrack");$("#apL").disabled=t.scrollLeft<8;$("#apR").disabled=t.scrollLeft+t.clientWidth>=t.scrollWidth-8}
 function apStep(d){const t=$("#aptrack"),c=t.querySelector(".card");const w=c?c.getBoundingClientRect().width+20:t.clientWidth;t.scrollBy({left:d*w,behavior:"smooth"})}
-function pageFx(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const m=document.querySelector("main"),b=$("#pgbar");[m,b].forEach(el=>{if(!el)return;el.classList.remove("pgin");void el.offsetWidth;el.classList.add("pgin")})}
+function pageFx(from,to){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const O={home:0,occ:1,est:3},ix=x=>x&&x.startsWith("car")?2:(O[x]??0),dir=ix(to)>=ix(from)?"fw":"bw",m=document.querySelector("main"),w=$("#pgwipe");[m,w].forEach(el=>{if(!el)return;el.classList.remove("pgin","fw","bw");void el.offsetWidth;el.classList.add("pgin",dir)})}
 let lastOcc=null,loaded=false;function showPage(){const h=location.hash,m=h.match(/^#v-(.+)$/),pg=m?"car:"+m[1]:h==="#occasions"?"occ":h==="#estimation"?"est":"home";closeLb();document.body.classList.toggle("page-est",pg==="est");if(pg==="est"){const rf=$("#rpformE");if(!rf.innerHTML||RPR!==rf)rpInit(null,rf,"rpe")}
   document.body.classList.toggle("page-occ",pg==="occ");document.body.classList.toggle("page-car",!!m);if(m)renderAnnonce(m[1]);else{curCar=null;document.title=(INFO.nom||"GC Motor's")+" · Véhicules d'occasion vérifiés et garantis"}
-  if(lastOcc!==null&&pg!==lastOcc){scrollTo({top:0,behavior:"instant"});pageFx()}lastOcc=pg;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
+  if(lastOcc!==null&&pg!==lastOcc){scrollTo({top:0,behavior:"instant"});pageFx(lastOcc,pg)}lastOcc=pg;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
 function fillBrands(){const s=$("#fbrand"),cur=s.value,B=[...new Set(CARS.map(c=>c.marque).filter(Boolean))].sort();s.innerHTML='<option value="">Toutes les marques</option>'+B.map(b=>'<option'+(b===cur?" selected":"")+'>'+esc(b)+'</option>').join("");s.style.display=B.length>1?"":"none"}
 
 /* bouton unique « Envoyer ma demande » avec choix WhatsApp / e-mail */
