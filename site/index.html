@@ -300,6 +300,23 @@ body.page-car .fwa{display:none!important}
 .eqrow summary svg{width:16px;height:16px;transition:transform .25s}.eqrow[open] summary svg{transform:rotate(180deg)}
 .eql{list-style:none;padding:0 0 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 18px;font-size:14px}
 .eql li{display:flex;gap:8px;align-items:center}.eql li:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink);flex:none}
+/* bloc « Inclus » épuré sur fond noir */
+.incx{background:#0a0a0b;color:#fff;border-radius:20px;padding:26px 24px 24px}
+.inck{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#8d8d92;margin-bottom:18px}
+.incrow{display:grid;grid-template-columns:repeat(4,1fr)}
+.incit{display:flex;flex-direction:column;gap:4px;padding:0 18px;border-left:1px solid rgba(255,255,255,.12)}
+.incit:first-child{padding-left:0;border-left:0}
+.incic{width:34px;height:34px;color:#fff;margin-bottom:10px;display:block}.incic svg{width:100%;height:100%}
+.incit b{font-size:15px;font-weight:700}.incit>span:last-child{font-size:13px;color:#9a9a9f;line-height:1.4}
+.incx.rv .incit{opacity:0;transform:translateY(10px);transition:opacity .7s ease,transform .7s ease}
+.incx.rv.in .incit{opacity:1;transform:none}
+.incx.in .incit:nth-child(2){transition-delay:.1s}.incx.in .incit:nth-child(3){transition-delay:.2s}.incx.in .incit:nth-child(4){transition-delay:.3s}
+.incx .incic svg{stroke-dasharray:80;stroke-dashoffset:80}
+.incx.in .incic svg{animation:draw 1.4s ease forwards}
+.incx.in .incit:nth-child(2) .incic svg{animation-delay:.15s}.incx.in .incit:nth-child(3) .incic svg{animation-delay:.3s}.incx.in .incit:nth-child(4) .incic svg{animation-delay:.45s}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media(max-width:700px){.incrow{grid-template-columns:1fr 1fr;row-gap:22px}.incit:nth-child(3){padding-left:0;border-left:0}}
+@media(prefers-reduced-motion:reduce){.incx .incic svg{stroke-dashoffset:0}}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -509,7 +526,7 @@ function annonceHtml(c){const P=c.photos||[],g=c.garantie||INFO.garantie||12;
     '<div class="ablock rv"><h2>Description</h2><p class="desc">'+esc(c.description||autoDesc(c)).replace(/\n/g,"<br>")+'</p></div>'+
     '<div class="ablock rv"><h2>Caractéristiques</h2><div class="techg">'+tech.map(r=>'<div><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("")+'</div>'+(c.options&&c.options.length?'<details class="eqrow"><summary><span>Équipements et options</span><b>'+c.options.length+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></b></summary><ul class="eql">'+c.options.map(o=>'<li>'+esc(o)+'</li>').join("")+'</ul></details>':'')+'</div>'+
     
-    '<div class="ablock rv"><h2>Inclus avec cette voiture</h2><ul class="incg"><li><div><b>Garantie '+g+' mois</b><span>Par écrit, sur le bon de commande</span></div></li><li><div><b>Contrôle technique « vente »</b><span>Récent, prêt pour l\'immatriculation</span></div></li><li><div><b>Car-Pass</b><span>Historique du kilométrage</span></div></li><li><div><b>Préparation complète</b><span>Nettoyage et vérifications avant livraison</span></div></li></ul></div>'+
+    '<div class="ablock incx rv"><p class="inck">Inclus avec cette voiture</p><div class="incrow"><div class="incit"><span class="incic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span><b>Garantie '+g+' mois</b><span>Par écrit, sur le bon de commande</span></div><div class="incit"><span class="incic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><b>Contrôle technique</b><span>Récent, « vente »</span></div><div class="incit"><span class="incic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1A10 10 0 1 1 19.1 19.1"/><path d="M12 13l4-4"/><circle cx="12" cy="13" r="1.4"/></svg></span><b>Car-Pass</b><span>Historique du kilométrage</span></div><div class="incit"><span class="incic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg></span><b>Préparation</b><span>Nettoyage et vérifications</span></div></div></div>'+
    '</div><aside class="anside"><div class="pbox"><small>Prix</small><div class="pval">'+eur(c.prix)+'</div><p class="pnote">TVA comprise · régime de la marge</p><div class="pdiv"></div><b class="pq">Cette voiture vous intéresse ?</b><div class="pbtns">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler · '+esc(INFO.tel)+'</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'Envoyer un e-mail</a>':'')+'</div>'+(INFO.whatsapp?'<a class="walink" href="'+waLink(c)+'" target="_blank" rel="noopener">ou écrire sur WhatsApp</a>':'')+'<button type="button" class="rplink" data-rpopen aria-expanded="false">'+IC.swap+'<span>Reprise de votre véhicule possible<small>Estimation gratuite et instantanée du prix de reprise</small></span><svg class="rpchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="rprise" id="reprise" hidden><p class="rpintro">Le montant de la reprise est déduit du prix de cette voiture.</p><div id="rpform"></div></div></div></aside></div>'+
    (others.length?'<div class="ablock others rv"><h2>Autres voitures qui pourraient vous plaire</h2><div class="car-track" id="otrack">'+others.map(cardHtml).join("")+'</div></div>':'')+
    '</div><div class="dbar">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'E-mail</a>':'')+'</div>'}
