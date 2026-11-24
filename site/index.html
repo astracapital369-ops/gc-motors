@@ -381,16 +381,19 @@ header .logo.go img{animation:lggo .75s cubic-bezier(.6,0,.3,1)}header .logo:act
 @keyframes lgrev{0%{transform:none}18%{transform:translateX(-3px) rotate(1.5deg)}45%{transform:translateX(9px) skewX(-8deg)}68%{transform:translateX(-2px) skewX(2deg)}85%{transform:translateX(1px)}100%{transform:none}}
 @keyframes lggo{0%{transform:none;opacity:1}40%{transform:translateX(70px) skewX(-14deg);opacity:0}41%{transform:translateX(-70px) skewX(-14deg);opacity:0}100%{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){header .logo img{animation:none!important}}
-#pgwipe{position:fixed;inset:0;z-index:90;pointer-events:none;background:#0a0a0b;transform:translateX(101%);visibility:hidden}
-#pgwipe:after{content:"";position:absolute;top:0;bottom:0;width:3px;background:var(--blue);box-shadow:0 0 26px 5px rgba(47,123,255,.55)}
-#pgwipe img{position:absolute;top:50%;width:min(260px,46vw);height:auto;margin-top:calc(min(260px,46vw) * -.12);filter:drop-shadow(0 0 14px rgba(47,123,255,.45))}
-#pgwipe.fw:after{left:-3px}#pgwipe.fw img{left:28px}
-#pgwipe.bw:after{right:-3px}#pgwipe.bw img{right:28px;transform:scaleX(-1)}
-#pgwipe.pgin{visibility:visible}#pgwipe.pgin.fw{animation:wipefw .85s cubic-bezier(.55,0,.25,1) forwards}#pgwipe.pgin.bw{animation:wipebw .85s cubic-bezier(.55,0,.25,1) forwards}
-@keyframes wipefw{0%{transform:translateX(0)}100%{transform:translateX(101%)}}
-@keyframes wipebw{0%{transform:translateX(0)}100%{transform:translateX(-101%)}}
+#pgwipe{position:fixed;top:0;bottom:0;z-index:90;pointer-events:none;width:150vw;visibility:hidden;background:#0a0a0b}
+#pgwipe .pgcar{position:absolute;top:50%;width:min(760px,92vw);transform:translateY(-55%)}
+#pgwipe .pgcar img{display:block;width:100%;height:auto;filter:drop-shadow(0 10px 30px rgba(0,0,0,.6)) drop-shadow(0 0 28px rgba(47,123,255,.35))}
+#pgwipe .pgcar:before{content:"";position:absolute;top:38%;height:30%;width:120%;filter:blur(18px);opacity:.75}
+#pgwipe.fw{left:-50vw;-webkit-mask:linear-gradient(90deg,transparent 0,#000 46vw);mask:linear-gradient(90deg,transparent 0,#000 46vw)}
+#pgwipe.fw .pgcar{left:44vw}#pgwipe.fw .pgcar:before{right:60%;background:linear-gradient(90deg,transparent,rgba(47,123,255,.55))}
+#pgwipe.bw{left:0;-webkit-mask:linear-gradient(270deg,transparent 0,#000 46vw);mask:linear-gradient(270deg,transparent 0,#000 46vw)}
+#pgwipe.bw .pgcar{right:44vw}#pgwipe.bw .pgcar img{transform:scaleX(-1)}#pgwipe.bw .pgcar:before{left:60%;background:linear-gradient(270deg,transparent,rgba(47,123,255,.55))}
+#pgwipe.pgin{visibility:visible}#pgwipe.pgin.fw{animation:wipefw 1.05s cubic-bezier(.5,0,.3,1) forwards}#pgwipe.pgin.bw{animation:wipebw 1.05s cubic-bezier(.5,0,.3,1) forwards}
+@keyframes wipefw{0%{transform:translateX(0)}100%{transform:translateX(160vw)}}
+@keyframes wipebw{0%{transform:translateX(0)}100%{transform:translateX(-160vw)}}
 main.pgin.fw{animation:slfw .7s cubic-bezier(.2,.8,.2,1)}main.pgin.bw{animation:slbw .7s cubic-bezier(.2,.8,.2,1)}
-@keyframes slfw{0%{opacity:0;transform:translateX(-60px)}35%{opacity:0}100%{opacity:1;transform:none}}
+@keyframes slfw{0%{opacity:0;transform:translateX(-60px)}30%{opacity:0}100%{opacity:1;transform:none}}
 @keyframes slbw{0%{opacity:0;transform:translateX(60px)}35%{opacity:0}100%{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){main.pgin,#pgwipe.pgin{animation:none;visibility:hidden}}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
@@ -535,7 +538,7 @@ header.scrolled .hbar{height:58px}
 </style>
 </head>
 <body>
-<div id="pgwipe" aria-hidden="true"><img src="logo-car.png" alt=""></div>
+<div id="pgwipe" aria-hidden="true"><div class="pgcar"><img src="logo-car.png" alt=""></div></div>
 <header><div class="wrap hbar">
   <button type="button" class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
