@@ -381,6 +381,12 @@ header .logo.go img{animation:lggo .75s cubic-bezier(.6,0,.3,1)}header .logo:act
 @keyframes lgrev{0%{transform:none}18%{transform:translateX(-3px) rotate(1.5deg)}45%{transform:translateX(9px) skewX(-8deg)}68%{transform:translateX(-2px) skewX(2deg)}85%{transform:translateX(1px)}100%{transform:none}}
 @keyframes lggo{0%{transform:none;opacity:1}40%{transform:translateX(70px) skewX(-14deg);opacity:0}41%{transform:translateX(-70px) skewX(-14deg);opacity:0}100%{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){header .logo img{animation:none!important}}
+#pgbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:80;pointer-events:none;background:linear-gradient(90deg,transparent,var(--blue) 30%,#9cc0ff 50%,var(--blue) 70%,transparent);transform:translateX(-100%);opacity:0}
+#pgbar.pgin{animation:pgbar .75s cubic-bezier(.6,0,.2,1)}
+@keyframes pgbar{0%{transform:translateX(-100%);opacity:1}100%{transform:translateX(100%);opacity:1}}
+main.pgin{animation:pgin .55s cubic-bezier(.2,.75,.2,1)}
+@keyframes pgin{0%{opacity:0;transform:translateY(18px);filter:blur(6px)}100%{opacity:1;transform:none;filter:none}}
+@media(prefers-reduced-motion:reduce){main.pgin,#pgbar.pgin{animation:none}}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
 .burger span:nth-child(2){width:70%}
@@ -523,6 +529,7 @@ header.scrolled .hbar{height:58px}
 </style>
 </head>
 <body>
+<div id="pgbar" aria-hidden="true"></div>
 <header><div class="wrap hbar">
   <button type="button" class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
@@ -659,9 +666,10 @@ function renderPreview(){const t=$("#aptrack");const L=CARS.slice().sort((a,z)=>
   $("#apL").parentElement.style.visibility=L.length>1?"":"hidden";apArrows()}
 function apArrows(){const t=$("#aptrack");$("#apL").disabled=t.scrollLeft<8;$("#apR").disabled=t.scrollLeft+t.clientWidth>=t.scrollWidth-8}
 function apStep(d){const t=$("#aptrack"),c=t.querySelector(".card");const w=c?c.getBoundingClientRect().width+20:t.clientWidth;t.scrollBy({left:d*w,behavior:"smooth"})}
+function pageFx(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const m=document.querySelector("main"),b=$("#pgbar");[m,b].forEach(el=>{if(!el)return;el.classList.remove("pgin");void el.offsetWidth;el.classList.add("pgin")})}
 let lastOcc=null,loaded=false;function showPage(){const h=location.hash,m=h.match(/^#v-(.+)$/),pg=m?"car:"+m[1]:h==="#occasions"?"occ":h==="#estimation"?"est":"home";closeLb();document.body.classList.toggle("page-est",pg==="est");if(pg==="est"){const rf=$("#rpformE");if(!rf.innerHTML||RPR!==rf)rpInit(null,rf,"rpe")}
   document.body.classList.toggle("page-occ",pg==="occ");document.body.classList.toggle("page-car",!!m);if(m)renderAnnonce(m[1]);else{curCar=null;document.title=(INFO.nom||"GC Motor's")+" · Véhicules d'occasion vérifiés et garantis"}
-  if(lastOcc!==null&&pg!==lastOcc)scrollTo({top:0,behavior:"instant"});lastOcc=pg;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
+  if(lastOcc!==null&&pg!==lastOcc){scrollTo({top:0,behavior:"instant"});pageFx()}lastOcc=pg;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
 function fillBrands(){const s=$("#fbrand"),cur=s.value,B=[...new Set(CARS.map(c=>c.marque).filter(Boolean))].sort();s.innerHTML='<option value="">Toutes les marques</option>'+B.map(b=>'<option'+(b===cur?" selected":"")+'>'+esc(b)+'</option>').join("");s.style.display=B.length>1?"":"none"}
 
 /* bouton unique « Envoyer ma demande » avec choix WhatsApp / e-mail */
@@ -772,7 +780,16 @@ $("#aptrack").addEventListener("click",e=>{const c=e.target.closest(".card");if(
 $("#aptrack").addEventListener("scroll",()=>requestAnimationFrame(apArrows),{passive:true});
 $("#apL").addEventListener("click",()=>apStep(-1));$("#apR").addEventListener("click",()=>apStep(1));
 window.addEventListener("resize",apArrows);
-document.querySelector("header .logo").addEventListener("click",e=>{const l=e.currentTarget;l.classList.remove("go");void l.offsetWidth;l.classList.add("go");setTimeout(()=>l.classList.remove("go"),800)});
+/* bruit de moteur synthétisé au clic sur le logo */
+let AC=null;function vroom(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const a=AC;if(a.state==="suspended")a.resume();const t=a.currentTime,D=1.5;
+  const out=a.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(.32,t+.06);out.gain.setValueAtTime(.32,t+.9);out.gain.exponentialRampToValueAtTime(.001,t+D);
+  const lp=a.createBiquadFilter();lp.type="lowpass";lp.Q.value=4;lp.frequency.setValueAtTime(380,t);lp.frequency.linearRampToValueAtTime(1500,t+.45);lp.frequency.exponentialRampToValueAtTime(420,t+D);
+  const ws=a.createWaveShaper(),cv=new Float32Array(1024);for(let i=0;i<1024;i++){const x=i/512-1;cv[i]=Math.tanh(x*3.2)}ws.curve=cv;
+  ws.connect(lp);lp.connect(out);out.connect(a.destination);
+  const rpm=(o,m)=>{o.frequency.setValueAtTime(38*m,t);o.frequency.linearRampToValueAtTime(34*m,t+.1);o.frequency.exponentialRampToValueAtTime(150*m,t+.5);o.frequency.exponentialRampToValueAtTime(95*m,t+.75);o.frequency.exponentialRampToValueAtTime(40*m,t+D)};
+  [[ "sawtooth",1,.5],["sawtooth",1.007,.4],["square",.5,.35]].forEach(([ty,m,g])=>{const o=a.createOscillator(),gg=a.createGain();o.type=ty;rpm(o,m);gg.gain.value=g;o.connect(gg);gg.connect(ws);o.start(t);o.stop(t+D+.05)});
+  const n=a.createBufferSource(),b=a.createBuffer(1,a.sampleRate*D,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*.25;n.buffer=b;const bp=a.createBiquadFilter();bp.type="bandpass";bp.frequency.value=600;bp.Q.value=.7;n.connect(bp);bp.connect(lp);n.start(t)}catch(e){}}
+document.querySelector("header .logo").addEventListener("click",e=>{const l=e.currentTarget;vroom();l.classList.remove("go");void l.offsetWidth;l.classList.add("go");setTimeout(()=>l.classList.remove("go"),800)});
 window.addEventListener("hashchange",showPage);
 document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car")||document.body.classList.contains("page-est"))){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
 showPage();
