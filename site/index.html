@@ -46,7 +46,9 @@ nav a{text-decoration:none;opacity:.8}nav a:hover{opacity:1}
 .hgrid{display:grid;grid-template-columns:1fr;justify-items:start;text-align:left;gap:0;padding-top:64px;padding-bottom:30px;position:relative;z-index:1}
 .kick{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#bdbdbf;margin-bottom:12px}
 .hero h1{max-width:820px;font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:clamp(32px,5vw,58px);line-height:1.1;letter-spacing:-.03em;margin-bottom:22px}
-.hero h1 .gr{color:#8e8e94}
+.hero h1 .gr{display:inline-block;opacity:0;transform:translateY(22px);background:linear-gradient(100deg,#6f6f76 0%,#b9b9bf 14%,#ffffff 24%,#8f8f96 36%,#5a5a61 48%,#cfcfd4 62%,#ffffff 70%,#8a8a91 84%,#66666d 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:up .9s cubic-bezier(.2,.7,.2,1) .45s forwards,chrome 8s ease-in-out 1.6s infinite}
+@keyframes chrome{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
+@media(prefers-reduced-motion:reduce){.hero h1 .gr{animation:none;opacity:1;transform:none}}
 .hero p.lead{font-size:17px;line-height:1.65;color:#a3a3a8;max-width:520px;margin:0 0 30px;font-weight:400}
 .hacts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .hcar{position:relative}
@@ -420,7 +422,7 @@ header.scrolled .hbar{height:58px}
 <div class="hero"><span class="glow"></span><div class="wrap hgrid">
   <div>
     <span class="kick">Voitures d'occasion · Belgique</span>
-    <h1><span class="ln" style="animation-delay:0.20s">Des</span> <span class="ln" style="animation-delay:0.27s">occasions</span> <span class="ln" style="animation-delay:0.34s">vérifiées,</span> <span class="gr"><span class="ln" style="animation-delay:0.41s">garanties</span> <span class="ln" style="animation-delay:0.48s">et</span> <span class="ln" style="animation-delay:0.55s">prêtes</span> <span class="ln" style="animation-delay:0.62s">à</span> <span class="ln" style="animation-delay:0.69s">rouler.</span></span></h1>
+    <h1><span class="ln" style="animation-delay:0.20s">Des</span> <span class="ln" style="animation-delay:0.27s">occasions</span> <span class="ln" style="animation-delay:0.34s">vérifiées,</span> <span class="gr">garanties et prêtes à rouler.</span></h1>
     <p class="lead">Chaque voiture est contrôlée, préparée et vendue avec son contrôle technique, son Car-Pass et <span class="gmo">12</span> mois de garantie.</p>
     <div class="hacts"><a class="btn b-white hgo" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
     <div class="hstats"><div><b><span class="gmo cu">12</span> mois</b>de garantie<br class="mb"> incluse</div><div><b><span class="cu" data-to="7">7</span> j/7</b>à votre<br class="mb"> écoute</div><div><b><span class="cu" data-to="30">30</span> sec</b>pour estimer<br class="mb"> votre reprise</div></div>
