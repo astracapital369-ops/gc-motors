@@ -375,7 +375,7 @@ header.scrolled .hbar{height:58px}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.rv,.hero .kick,.hero h1 .ln,.hero p.lead,.hero .hacts,.hero .hstats,.hcar{opacity:1!important;transform:none!important}}
 
 @media(max-width:820px){.dbar{display:flex}}
-@media(max-width:520px){.hstats{gap:22px}.hstats b{font-size:19px}}
+@media(max-width:520px){.hstats{gap:16px;flex-wrap:nowrap}.hstats div{font-size:12px}.hstats b{font-size:18px}}
 </style>
 </head>
 <body>
@@ -391,7 +391,7 @@ header.scrolled .hbar{height:58px}
     <h1><span class="ln" style="animation-delay:0.20s">Des</span> <span class="ln" style="animation-delay:0.27s">occasions</span> <span class="ln" style="animation-delay:0.34s">vérifiées,</span> <span class="ln" style="animation-delay:0.41s">garanties</span> <span class="ln" style="animation-delay:0.48s">et</span> <span class="ln" style="animation-delay:0.55s">prêtes</span> <span class="ln" style="animation-delay:0.62s">à</span> <span class="ln" style="animation-delay:0.69s">rouler.</span></h1>
     <p class="lead">Chaque voiture est contrôlée, préparée et vendue avec son contrôle technique, son Car-Pass et une garantie de <span class="gmo">12</span> mois. Simple, clair, sans mauvaise surprise.</p>
     <div class="hacts"><a class="btn b-white hgo" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
-    <div class="hstats"><div><b>Essai</b>sur rendez-vous</div><div><b><span class="gmo">12</span> mois</b>de garantie</div><div><b>Reprise</b>estimation gratuite</div></div>
+    <div class="hstats"><div><b><span class="gmo cu">12</span> mois</b>de garantie</div><div><b>&lt; <span class="cu" data-to="2">2</span> mois</b>contrôle tech.</div><div><b><span class="cu" data-to="30">30</span> sec</b>estimation reprise</div></div>
   </div>
   </div></div>
 <div class="marq" aria-hidden="true"><div><span>Garantie 12 mois</span><span>Contrôle technique</span><span>Car-Pass fourni</span><span>Voitures vérifiées</span><span>Reprise possible</span><span>Essai sur rendez-vous</span><span>Garantie 12 mois</span><span>Contrôle technique</span><span>Car-Pass fourni</span><span>Voitures vérifiées</span><span>Reprise possible</span><span>Essai sur rendez-vous</span></div></div>
@@ -612,6 +612,7 @@ const hc=$("#hcar");if(hc&&!RM){addEventListener("scroll",()=>{const y=Math.min(
 /* compteur animé */
 function countUp(el,to){if(RM||!to){el.textContent=to;return}const t0=performance.now(),d=1100;const f=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(to*e);if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
 let counted=false;
+setTimeout(()=>document.querySelectorAll(".hstats .cu").forEach(el=>countUp(el,Number(el.dataset.to||el.textContent)||0)),950);
 applyInfo();
 try{
   if(!window.FIREBASE_CONFIG)throw new Error("config");
