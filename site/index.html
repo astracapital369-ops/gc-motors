@@ -409,23 +409,20 @@ body.page-car .contact:before,body.page-occ .contact:before{content:"";position:
 .pchip small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#bdbdc2;font-weight:600}
 .pchip b{font-size:clamp(22px,2.6vw,30px);font-weight:800;line-height:1.05;letter-spacing:-.01em}
 @media(max-width:640px){.pchip{left:12px;bottom:12px;padding:8px 13px 9px;border-radius:12px}}
-/* page estimation de reprise */
-.estp{padding-top:28px}
-.estp .back{display:flex;justify-content:center;width:max-content;margin:0 auto 8px}
-.estgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:26px;align-items:start;max-width:980px;margin:10px auto 0}
-.estcard{border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 14px 40px rgba(0,0,0,.06);background:#fff}
-.estcard .rpg{grid-template-columns:repeat(3,1fr)}
-.estadv{list-style:none;padding:0;display:flex;flex-direction:column;gap:12px}
-.estadv li{display:flex;flex-direction:column;gap:2px;padding:16px 18px;border-radius:16px;background:#0a0a0b;color:#fff}
-.estadv b{font-size:16px}.estadv span{color:#a9a9ad;font-size:14px}
-@media(max-width:860px){.estgrid{grid-template-columns:minmax(0,1fr)}.estcard{padding:18px}.estcard .rpg{grid-template-columns:1fr 1fr}}
-.cpc{left:12px;bottom:12px;padding:7px 12px;border-radius:12px;animation:none}
-.cpc b{font-size:19px}
-.cgo{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-weight:700;font-size:15px;color:#000}
-.cgo svg{width:18px;height:18px;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
-.card:hover .cgo svg{transform:translateX(5px)}
-.cgo span{transition:letter-spacing .25s}
-em.bl{font-style:normal;color:var(--blue);font-weight:600}
+/* page reprise de votre véhicule */
+.estp{padding:0 0 56px;background:#f5f5f6}
+.esth{background:#0a0a0b;color:#fff;text-align:center;padding:56px 0 130px}
+.esth .kick{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);margin-bottom:14px}
+.esth h1{font-family:Inter,system-ui,sans-serif;font-weight:800;font-size:clamp(30px,4.6vw,52px);letter-spacing:-.03em;line-height:1.1}
+.esth p{color:#a3a3a8;font-size:17px;line-height:1.6;max-width:560px;margin:14px auto 0}
+.estpills{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:24px}
+.estpills span{font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.estcard{position:relative;max-width:760px;margin:-90px auto 0;background:#fff;border-radius:22px;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,.18)}
+.estcard .rpg{grid-template-columns:repeat(3,1fr);gap:12px}
+.estcard .rpg select,.estcard .rpg input{padding:13px 14px}
+.estcard .rpgo{padding:15px;font-size:16px;margin-top:18px}
+.estcard .note{color:var(--muted);font-size:13px;margin-top:10px}
+@media(max-width:700px){.esth{padding:40px 0 110px}.esth p{font-size:15.5px}.estcard{padding:18px;margin-top:-80px;border-radius:18px}.estcard .rpg{grid-template-columns:1fr 1fr}}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
@@ -491,7 +488,7 @@ header.scrolled .hbar{height:58px}
   <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
   <span class="hsp"></span>
 </div></header>
-<div class="drawer" id="drawer" aria-hidden="true"><div class="dpanel"><button type="button" class="dclose" aria-label="Fermer le menu">×</button><nav class="dnav"><a href="#top" data-nav="home"><span>01</span>Accueil</a><a href="#occasions" data-nav="occ"><span>02</span>Nos occasions</a><a href="#estimation" data-nav="est"><span>03</span>Estimation de reprise</a><a href="#contact" data-nav="contact"><span>04</span>Contact</a></nav><div class="dfoot" id="dfoot"></div></div></div>
+<div class="drawer" id="drawer" aria-hidden="true"><div class="dpanel"><button type="button" class="dclose" aria-label="Fermer le menu">×</button><nav class="dnav"><a href="#top" data-nav="home"><span>01</span>Accueil</a><a href="#occasions" data-nav="occ"><span>02</span>Nos occasions</a><a href="#estimation" data-nav="est"><span>03</span>Reprise de votre véhicule</a><a href="#contact" data-nav="contact"><span>04</span>Contact</a></nav><div class="dfoot" id="dfoot"></div></div></div>
 
 <main id="top">
 <div class="hero"><span class="glow"></span><div class="wrap hgrid">
@@ -542,14 +539,15 @@ header.scrolled .hbar{height:58px}
 </div></section>
 
 <div id="annonce"></div>
-<section id="estpage" class="estp"><div class="wrap">
-  <a class="back" href="#top">← Accueil</a>
-  <div class="sh"><div><h2>Estimation de reprise</h2><p>Estimez gratuitement votre voiture en 30 secondes. Si vous achetez chez nous, le montant est déduit de votre nouvelle voiture.</p></div></div>
-  <div class="estgrid">
-    <div class="estcard" id="rpformE"></div>
-    <ul class="estadv"><li><b>Pas de prise de tête</b><span>Ni annonce, ni visites, ni appels d'inconnus.</span></li><li><b>Aucun frais à prévoir</b><span>Pas de contrôle technique ni de réparation à payer.</span></li><li><b>Reprise immédiate</b><span>Votre voiture est reprise le jour de votre achat.</span></li></ul>
-  </div>
-</div></section>
+<section id="estpage" class="estp">
+  <div class="esth"><div class="wrap">
+    <span class="kick">Gratuit · sans engagement</span>
+    <h1>Reprise de votre véhicule</h1>
+    <p>Indiquez votre voiture et obtenez une estimation en 30 secondes. Le montant est déduit de la voiture que vous achetez chez nous.</p>
+    <div class="estpills"><span>✓ Pas de prise de tête</span><span>✓ Aucun frais à prévoir</span><span>✓ Reprise immédiate</span></div>
+  </div></div>
+  <div class="wrap"><div class="estcard" id="rpformE"></div></div>
+</section>
 <section class="contact" id="contact"><div class="wrap cgrid">
   <div class="rv"><h2>Une voiture vous intéresse&nbsp;?</h2><p>Appelez, écrivez sur WhatsApp ou envoyez un e-mail : réponse rapide. Visites et essais sur rendez-vous.</p></div>
   <div class="clist rv d2" id="clist"></div>
