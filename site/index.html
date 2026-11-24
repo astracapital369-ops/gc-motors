@@ -96,7 +96,7 @@ section{padding:76px 0}
 .seeall{display:flex;justify-content:center;margin-top:18px}
 .seeall .btn svg{width:18px;height:18px;transition:transform .15s}.seeall .btn:hover svg{transform:translateX(3px)}
 .back{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;text-decoration:none;color:var(--muted);margin-bottom:14px}.back:hover{color:var(--ink)}
-body.page-occ .hero,body.page-occ #apercu,body.page-occ #pourquoi{display:none}
+body.page-occ .hero,body.page-occ .marq,body.page-occ #apercu,body.page-occ #pourquoi{display:none}
 body:not(.page-occ) #voitures{display:none}
 /* why */
 .why{background:var(--soft)}
@@ -157,6 +157,17 @@ footer{background:#000;color:#8d8d90;border-top:1px solid #1d1d1f;font-size:13px
 .dbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:55;background:#fff;border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom));gap:10px}
 .dbar .btn{flex:1;padding:14px 10px}
 body.lock{overflow:hidden}
+
+/* centrage */
+.sh{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+.sh p{max-width:560px;margin-left:auto;margin-right:auto}
+.filters{justify-content:center}
+#voitures .back{display:flex;justify-content:center;width:max-content;margin:0 auto 14px}
+.wi{text-align:center}.wi .ic{margin-left:auto;margin-right:auto}
+.cgrid{grid-template-columns:1fr;justify-items:center;text-align:center;gap:30px}
+.contact p{max-width:560px;margin:0 auto}
+.clist{width:100%;max-width:520px;text-align:left}
+.fbar{justify-content:center;text-align:center;flex-direction:column;align-items:center;gap:6px}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
