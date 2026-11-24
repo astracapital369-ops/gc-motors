@@ -338,6 +338,13 @@ body.page-car .fwa{display:none!important}
 .rphome{max-width:640px;margin:26px auto 0;background:#fff;color:var(--ink);border-radius:20px;padding:24px;text-align:left;animation:pop .35s cubic-bezier(.2,.8,.2,1)}
 .rphome .rpg{grid-template-columns:repeat(3,1fr)}
 @media(max-width:860px){.rpgrid{grid-template-columns:1fr;row-gap:30px}.rpi{border-left:0;padding:0 10px}.rpi:not(:first-child){padding-top:30px;border-top:1px solid rgba(255,255,255,.12)}.rpa{padding:44px 0 48px;margin-bottom:-38px}.rphome{padding:18px}.rphome .rpg{grid-template-columns:1fr 1fr}}
+/* transitions noir / blanc arrondies */
+.rpa{border-radius:48px 48px 0 0}
+.marq{border-radius:0 0 40px 40px;position:relative;z-index:1}
+.incx{border-radius:48px}
+body.page-car .contact,body.page-occ .contact{border-radius:48px 48px 0 0}
+#apercu{margin-top:-40px;padding-top:92px}
+@media(max-width:700px){.rpa{border-radius:32px 32px 0 0}.marq{border-radius:0 0 28px 28px}.incx{border-radius:32px}body.page-car .contact,body.page-occ .contact{border-radius:32px 32px 0 0}#apercu{margin-top:-28px;padding-top:66px}}
 /* ===== animations ===== */
 header{transition:height .3s,background .3s,box-shadow .3s}
 header.scrolled{background:rgba(0,0,0,.97);box-shadow:0 8px 30px rgba(0,0,0,.25)}
