@@ -429,6 +429,13 @@ body .hero .hico div{display:flex;flex-direction:column;align-items:center;gap:1
 .hghost{padding:14px 26px;font-size:15px;background:#000;color:#fff;border:1.5px solid rgba(255,255,255,.85);transition:background .2s,border-color .2s}
 .hghost svg{width:18px;height:18px;transition:transform .2s}.hghost:hover{background:#111;border-color:#fff}.hghost:hover svg{transform:translateX(4px)}
 .contact .hours{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:10px 16px;border:1px solid rgba(255,255,255,.16);border-radius:999px;font-size:14px;color:#d8d8dc}.contact .hours svg{width:18px;height:18px;color:var(--blue);flex:none}.contact .hours b{color:#fff;font-weight:700}
+.sgrid .si{display:block;position:relative;padding:26px 4px 6px;border-top:2px solid #0a0a0b;color:inherit;text-decoration:none}
+.sgrid .si .sn{display:block;font-family:"Archivo Black",Inter,sans-serif;font-size:13px;letter-spacing:.14em;color:var(--blue);margin-bottom:10px}
+.sgrid .si h3{font-family:"Archivo Black",Inter,sans-serif;font-size:30px;line-height:1.05;margin:0 0 10px;letter-spacing:-.01em}
+.sgrid .si p{color:var(--muted);font-size:15px;line-height:1.55;margin:0}
+.sgrid .si .sgo{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:14px;font-weight:600;color:#0a0a0b}
+.sgrid .si .sar{width:16px;height:16px;transition:transform .2s}.sgrid a.si:hover .sar{transform:translateX(4px)}
+.sgrid{gap:34px}@media(max-width:760px){.sgrid{gap:26px}.sgrid .si h3{font-size:26px}}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
 .burger span:nth-child(2){width:70%}
@@ -597,9 +604,9 @@ header.scrolled .hbar{height:58px}
 <section class="svc" id="services"><div class="wrap">
   <div class="sh rv"><div><span class="eyb">Ce que nous faisons</span><h2>Nos services</h2></div></div>
   <div class="sgrid">
-    <a class="wi rv" href="#occasions"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M3 13l2-5.5A2 2 0 0 1 6.9 6h10.2a2 2 0 0 1 1.9 1.5L21 13v4h-2M3 13v4h2M3 13h18"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></svg></div><h3>Vente</h3><p>Des véhicules vérifiés et garantis, prêts à rouler.</p></a>
-    <a class="wi rv" href="#estimation"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3.5-3.5"/><path d="M20 16H7l3.5 3.5"/></svg></div><h3>Reprise</h3><p>Avec ou sans achat chez nous, estimation gratuite.</p></a>
-    <div class="wi rv"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></div><h3>Préparation</h3><ul class="sl"><li>Entretien</li><li>Contrôle technique</li><li>Nettoyage intérieur et extérieur</li><li>Assurance : on s'en occupe</li></ul></div>
+    <a class="si rv" href="#occasions"><span class="sn">01</span><h3>Vente</h3><p>Des véhicules d'occasion vérifiés et garantis, prêts à rouler.</p><span class="sgo">Voir nos occasions<svg class="sar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+    <a class="si rv" href="#estimation"><span class="sn">02</span><h3>Reprise</h3><p>Nous rachetons votre véhicule, avec ou sans achat chez nous.</p><span class="sgo">Estimer mon véhicule<svg class="sar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+    <div class="si rv"><span class="sn">03</span><h3>Préparation</h3><p>Entretien, contrôle technique, nettoyage intérieur et extérieur. L'assurance, on s'en occupe.</p></div>
   </div>
 </div></section>
 <section id="apercu"><div class="wrap">
