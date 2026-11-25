@@ -425,6 +425,9 @@ body .hero .hico div{display:flex;flex-direction:column;align-items:center;gap:1
 .sgrid .sl li:before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--blue);margin:0 8px 2px 0;vertical-align:middle}
 @media(max-width:760px){.sgrid{grid-template-columns:1fr}}
 .hgo .bci{width:20px;height:20px;margin-right:2px}
+.hacts.hcol{flex-direction:column;align-items:center;gap:12px}.hacts.hcol .btn{min-width:min(280px,100%);justify-content:center}
+.hghost{padding:14px 26px;font-size:15px;background:#000;color:#fff;border:1.5px solid rgba(255,255,255,.85);transition:background .2s,border-color .2s}
+.hghost svg{width:18px;height:18px;transition:transform .2s}.hghost:hover{background:#111;border-color:#fff}.hghost:hover svg{transform:translateX(4px)}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
 .burger span:nth-child(2){width:70%}
@@ -584,7 +587,7 @@ header.scrolled .hbar{height:58px}
     <span class="kick">Véhicules d'occasion <i>·</i> Belgique</span>
     <h1><span class="ln" style="animation-delay:0.20s">Des</span> <span class="ln" style="animation-delay:0.27s">occasions</span> <span class="ln" style="animation-delay:0.34s">sûres</span><br class="dk"> <span class="gr">et prêtes à prendre <span class="nw">la route.</span></span></h1>
     <p class="lead">Nous prenons soin de chaque véhicule : vérification, préparation et nettoyage avant la livraison. Vous n'avez plus qu'à rouler, <span class="nw">garanti <span class="gmo">12</span> mois.</span></p>
-    <div class="hacts"><a class="btn b-white hgo" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+    <div class="hacts hcol"><a class="btn b-white hgo" href="#estimation"><svg class="bci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M3 13l2-5.5A2 2 0 0 1 6.9 6h10.2a2 2 0 0 1 1.9 1.5L21 13v4h-2M3 13v4h2M3 13h18"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></svg>Vendre mon véhicule<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn hghost" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
     
   </div>
   </div></div>
