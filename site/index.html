@@ -436,6 +436,14 @@ body .hero .hico div{display:flex;flex-direction:column;align-items:center;gap:1
 .sgrid .si .sgo{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:14px;font-weight:600;color:#0a0a0b}
 .sgrid .si .sar{width:16px;height:16px;transition:transform .2s}.sgrid a.si:hover .sar{transform:translateX(4px)}
 .sgrid{gap:34px}@media(max-width:760px){.sgrid{gap:26px}.sgrid .si h3{font-size:26px}}
+.hbox{grid-column:1/-1;width:100%;max-width:560px;margin:10px auto 0;padding:30px 26px 26px;border-radius:22px;text-align:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(47,123,255,.16),transparent 70%),#0d0d10;border:1px solid rgba(255,255,255,.1)}
+.hbox .hic{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:rgba(47,123,255,.14);color:var(--blue)}.hbox .hic svg{width:28px;height:28px}
+.hbox h3{font-family:"Archivo Black",Inter,sans-serif;font-size:24px;color:#fff;margin:0 0 18px}
+.hrows{margin:0;padding:0}.hrows div{display:flex;justify-content:space-between;gap:16px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08);font-size:15.5px}
+.hrows div:last-child{border-bottom:0}.hrows dt{color:#c9c9ce}.hrows dd{margin:0;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
+.hrows div.today dt,.hrows div.today dd{color:var(--blue-l,#6aa1ff)}.hrows div.today dt:after{content:"Aujourd'hui";display:block;font-size:11.5px;opacity:.8;text-align:left}.hrows dd{white-space:nowrap}.hrows dt{text-align:left}.hrows div{align-items:center}
+.hbox .hrdv{display:block;margin:16px 0 10px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--blue-l,#6aa1ff)}
+.hbox .hnote{margin:0;font-size:13.5px;line-height:1.55;color:#9a9aa1}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
 .burger span:nth-child(2){width:70%}
@@ -656,8 +664,12 @@ header.scrolled .hbar{height:58px}
   <div class="wrap"><div class="estcard" id="rpformE"></div></div>
 </section>
 <section class="contact" id="contact"><div class="wrap cgrid">
-  <div class="rv"><h2>Un véhicule vous intéresse&nbsp;?</h2><p>Appelez, écrivez sur WhatsApp ou envoyez un e-mail : réponse rapide. Visites et essais sur rendez-vous.</p><p class="hours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Horaires d'ouverture <b>8 h – 18 h</b></span></p></div>
+  <div class="rv"><h2>Un véhicule vous intéresse&nbsp;?</h2><p>Appelez, écrivez sur WhatsApp ou envoyez un e-mail : réponse rapide. Visites et essais sur rendez-vous.</p></div>
   <div class="clist rv d2" id="clist"></div>
+  <div class="hbox rv d2"><div class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>Heures d'ouverture</h3>
+    <dl class="hrows"><div data-d="1-5"><dt>Lundi – Vendredi</dt><dd>8:00 – 18:00</dd></div><div data-d="6"><dt>Samedi</dt><dd>8:00 – 18:00</dd></div><div data-d="0"><dt>Dimanche</dt><dd>8:00 – 18:00</dd></div></dl>
+    <span class="hrdv">Ou sur rendez-vous</span>
+    <p class="hnote">Nous sommes parfois en rendez-vous à l'extérieur : un petit appel avant de passer, et on vous attend.</p></div>
 </div></section>
 </main>
 <footer><div class="wrap fbar"><span id="fname">© GC Motor's</span><span id="ftva"></span></div></footer>
@@ -842,6 +854,7 @@ document.querySelector("header .logo").addEventListener("click",e=>{const l=e.cu
 /* largeur de la trace = ligne la plus longue du titre */
 function ulw(){const h=document.querySelector(".hero h1");if(!h)return;const r=document.createRange();r.selectNodeContents(h);const L=h.getBoundingClientRect().left;let m=0;for(const q of r.getClientRects())m=Math.max(m,q.right-L);if(m)h.style.setProperty("--ulw",Math.ceil(m)+"px")}
 addEventListener("resize",ulw);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ulw);setTimeout(ulw,1600);
+(function(){const d=new Date().getDay();document.querySelectorAll(".hrows [data-d]").forEach(r=>{const v=r.dataset.d;const ok=v.includes("-")?(d>=+v[0]&&d<=+v[2]):d===+v;if(ok)r.classList.add("today")})})();
 window.addEventListener("hashchange",showPage);
 document.addEventListener("click",e=>{const a=e.target.closest('a[href="#top"]');if(a&&(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car")||document.body.classList.contains("page-est"))){e.preventDefault();history.pushState(null,"",location.pathname);showPage()}});
 showPage();
