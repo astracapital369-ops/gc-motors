@@ -601,7 +601,7 @@ header.scrolled .hbar{height:58px}
   <nav class="tnav tl" aria-label="Menu"><a href="#top" data-nav="home">Accueil</a><a href="#occasions" data-nav="occ">Nos occasions</a></nav>
   <nav class="tnav tr" aria-label="Menu"><a href="#estimation" data-nav="est">Vendre mon véhicule</a><a href="#contact" data-nav="contact">Contact</a></nav>
 </div></header>
-<div class="drawer" id="drawer" aria-hidden="true"><div class="dpanel"><button type="button" class="dclose" aria-label="Fermer le menu">×</button><nav class="dnav"><a href="#top" data-nav="home"><span>01</span>Accueil</a><a href="#occasions" data-nav="occ"><span>02</span>Nos occasions</a><a href="#estimation" data-nav="est"><span>03</span>Vendre mon véhicule</a><a href="#contact" data-nav="contact"><span>04</span>Contact</a></nav><div class="dfoot" id="dfoot"></div></div></div>
+<div class="drawer" id="drawer" aria-hidden="true"><div class="dpanel"><button type="button" class="dclose" aria-label="Fermer le menu">×</button><nav class="dnav"><a href="#top" data-nav="home"><span>01</span>Accueil</a><a href="#occasions" data-nav="occ"><span>02</span>Nos occasions</a><a href="#estimation" data-nav="est"><span>03</span>Vendre mon véhicule</a><a href="#pourquoi" data-nav="services"><span>04</span>Nos services</a><a href="#contact" data-nav="contact"><span>05</span>Contact</a></nav><div class="dfoot" id="dfoot"></div></div></div>
 
 <main id="top">
 <div class="hero"><span class="glow"></span><div class="wrap hgrid">
@@ -716,6 +716,7 @@ function goNav(n){
   if(n==="home"){history.pushState(null,"",location.pathname);showPage();scrollTo({top:0,behavior:"smooth"})}
   else if(n==="occ"){location.hash="occasions"}
   else if(n==="est"){location.hash="estimation"}
+  else if(n==="services"){const go=()=>setTimeout(()=>{const el=$("#pourquoi");if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-70,behavior:"smooth"})},60);if(document.body.classList.contains("page-occ")||document.body.classList.contains("page-car")||document.body.classList.contains("page-est")){history.pushState(null,"",location.pathname);showPage();setTimeout(go,350)}else go()}
   else setTimeout(()=>$("#contact").scrollIntoView({behavior:"smooth"}),50)}
 $("#drawer").addEventListener("click",e=>{if(e.target.id==="drawer"||e.target.closest(".dclose")){drawer(false);return}const a=e.target.closest("[data-nav]");if(!a)return;e.preventDefault();drawer(false);goNav(a.dataset.nav)});
 document.querySelectorAll(".tnav [data-nav]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();goNav(a.dataset.nav)}));
