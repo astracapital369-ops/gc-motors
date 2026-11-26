@@ -7,9 +7,9 @@
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-title" content="PrimeAuto">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
-<link rel="icon" type="image/png" href="favicon-64.png?v=8">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=8">
-<link rel="manifest" href="manifest.webmanifest?v=8">
+<link rel="icon" type="image/png" href="favicon-64.png?v=9">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=9">
+<link rel="manifest" href="manifest.webmanifest?v=9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -49,7 +49,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;justify-content:center;gap:10px;padding:4px 6px 18px}
 .hlogo{display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1}.hlogo img{height:26px;width:auto;display:block}.hlogo span{font:800 12.5px var(--body);letter-spacing:.32em;margin-right:-.32em;color:#fff}
-.brand .hlogo{background:#000;border-radius:12px;padding:12px 16px;width:100%}.brand .hlogo img{height:30px}
+.brand .hlogo{background:#000;border-radius:12px;padding:12px 16px;width:100%}.brand .hlogo img{height:30px}.hlogo img.wmk{height:13px!important;margin-top:4px}.brand .hlogo img.wmk{height:15px!important}
 .brand svg{width:42px;height:42px;flex:none;border-radius:10px}
 .brand .wm{font-family:var(--display);font-weight:700;font-size:23px;line-height:1;letter-spacing:.02em;white-space:nowrap}
 .brand .wm em{font-style:normal;color:rgba(255,255,255,.62)}
@@ -514,7 +514,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="22.2";
+const APP_VERSION="22.3";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -546,7 +546,7 @@ const LOGO_SRC=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.
 let logoN=0;
 function logo(){const n="g"+(logoN++);return LOGO_SRC.replace(/id="(bg|chrome|blue)"/g,(m,a)=>'id="'+a+n+'"').replace(/url\(#(bg|chrome|blue)\)/g,(m,a)=>"url(#"+a+n+")").replace("<svg ",'<svg aria-hidden="true" ')}
 const WORDMARK='<div class="wm">PrimeAuto</div>';
-const HLOGO=()=>'<div class="hlogo"><img src="logo-car.png?v=2" alt="" aria-hidden="true"><span>'+esc(entNomV().toUpperCase())+'</span></div>';
+const HLOGO=()=>'<div class="hlogo"><img src="logo-car.png?v=2" alt="" aria-hidden="true">'+(entNomV()==="PrimeAuto"?'<img class="wmk" src="wordmark-prime.png?v=1" alt="PrimeAuto">':'<span>'+esc(entNomV().toUpperCase())+'</span>')+'</div>';
 const NAV=[["tableau","Tableau de bord"],["garage","Garage"],["simulateur","Simulateur"],["ventes","Ventes"],["compta","Comptabilité"],["reglages","Réglages"]];
 
 /* ---------- état ---------- */
@@ -935,8 +935,9 @@ const FG_CATS=["Assurance","Plaque Z","Annonces","Carburant / déplacements","Co
 const Z_MOTIFS=["Contrôle technique","Garage / réparation","Carrosserie","Essai client","Livraison client","Récupération après achat","Nettoyage / préparation","Autre"];
 
 /* en-tête commun des PDF */
-async function pdfCar(){if(pdfCar.d===undefined)pdfCar.d=await urlToData("logo-car.png?v=2").catch(()=>null);return pdfCar.d}
+async function pdfCar(){if(pdfCar.d===undefined)pdfCar.d=await urlToData("logo-car.png?v=2").catch(()=>null);if(pdfCar.p===undefined)pdfCar.p=await urlToData("logo-prime.png?v=1").catch(()=>null);return pdfCar.d}
 function pdfBandeau(doc,car){const R=194,bw=50,bh=24,bx=R-bw,by=8,cw=38,ch=cw*191/817,cx=bx+bw/2;doc.setFillColor(0,0,0);doc.roundedRect(bx,by,bw,bh,2.5,2.5,"F");
+  if(entNomV()==="PrimeAuto"&&pdfCar.p){const lh=18.5,lw=lh*900/352;try{doc.addImage(pdfCar.p,"PNG",cx-lw/2,by+(bh-lh)/2,lw,lh,"primelogo","FAST")}catch(e){}doc.setTextColor(25,28,36);return by+bh+2}
   if(car)try{doc.addImage(car,"PNG",cx-cw/2,by+3.2,cw,ch,"gclogob","FAST")}catch(e){}
   const t=entNomV().toUpperCase(),cs=0.9;doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(11);const tw=doc.getTextWidth(t)+cs*(t.length-1);doc.text(t,cx-tw/2,by+bh-4,{charSpace:cs});doc.setTextColor(25,28,36);return by+bh+2}
 async function pdfEntete(doc,titre,num,date){

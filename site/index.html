@@ -9,8 +9,8 @@
 <meta property="og:description" content="Véhicules d'occasion vérifiées, contrôle technique, Car-Pass et garantie 12 mois.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#000000">
-<link rel="icon" href="favicon.png?v=2">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" href="favicon.png?v=3">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -21,6 +21,7 @@ body{overflow-x:clip;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-s
 a{color:inherit}
 img{display:block;max-width:100%}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header .logo .wmk{height:17px;width:auto;display:block;margin-top:3px;animation:none!important;filter:none!important;transform:none!important}@media(max-width:760px){header .logo .wmk{height:14px}}
 .brandtxt{font-family:"Archivo Black",Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 /* header */
 header{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.92);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);color:#fff}
@@ -594,7 +595,7 @@ header.scrolled .hbar{height:58px}
 <div id="pgwipe" aria-hidden="true"><div class="pgcar"><img src="logo-car.png" alt=""></div></div>
 <header><div class="wrap hbar">
   <button type="button" class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
-  <a class="logo" href="#top" aria-label="PrimeAuto, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">PrimeAuto</span></a>
+  <a class="logo" href="#top" aria-label="PrimeAuto, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname"><img class="wmk" src="wordmark-prime.png?v=1" alt="PrimeAuto"></span></a>
   <span class="hsp"></span>
   <nav class="tnav tl" aria-label="Menu"><a href="#top" data-nav="home">Accueil</a><a href="#occasions" data-nav="occ">Nos occasions</a></nav>
   <nav class="tnav tr" aria-label="Menu"><a href="#estimation" data-nav="est">Vendre mon véhicule</a><a href="#contact" data-nav="contact">Contact</a></nav>
@@ -697,7 +698,7 @@ const waLink=c=>INFO.whatsapp?"https://wa.me/"+waNum(INFO.whatsapp)+"?text="+enc
 const telLink=()=>INFO.tel?"tel:"+digits(INFO.tel):"#contact";
 const mailLink=c=>INFO.email?"mailto:"+INFO.email+"?subject="+encodeURIComponent(c?"Demande : "+title(c):"Demande d'information")+"&body="+encodeURIComponent(msg(c)):"#contact";
 
-function applyInfo(){if(/gc motor/i.test(INFO.nom||""))INFO.nom="PrimeAuto";const n=INFO.nom||"PrimeAuto";$("#hname").textContent=n;document.title=n+" · Véhicules d'occasion vérifiés et garantis";
+function applyInfo(){if(/gc motor/i.test(INFO.nom||""))INFO.nom="PrimeAuto";const n=INFO.nom||"PrimeAuto";if(n==="PrimeAuto")$("#hname").innerHTML='<img class="wmk" src="wordmark-prime.png?v=1" alt="PrimeAuto">';else $("#hname").textContent=n;document.title=n+" · Véhicules d'occasion vérifiés et garantis";
   document.querySelectorAll(".gmo").forEach(e=>e.textContent=INFO.garantie||12);
   
   const it=(cls,href,ic,lab,val,ext)=>'<a class="ci '+cls+'" href="'+href+'"'+(ext?' target="_blank" rel="noopener"':'')+'><span class="ic">'+ic+'</span><span><small>'+lab+'</small><b>'+esc(val)+'</b></span></a>';
