@@ -514,7 +514,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="22.0";
+const APP_VERSION="22.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -766,6 +766,7 @@ function docsHtml(v){
   let h='';
   h+='<div class="dgrp">Vente</div>'+(v.statut==="vendu"&&!v.demo?(()=>{const LL=L||[],ng=LL.filter(f=>f.jId||f.garage).length;return '<button type="button" class="doc dossv" data-act="dossierv"><span class="dico">📁</span><span class="dtx"><b>Dossier de vente</b><small>'+[v.factNum?"Facture":"",v.bdcNum?"bon de commande":"",ng?ng+" facture"+(ng>1?"s":"")+" d'entretien":"","suivi du véhicule"].filter(Boolean).join(" · ")+'</small></span></button>'})():"")+(v.bdcNum?it("BDC","Bon de commande n° "+esc(v.bdcNum),((L||[]).some(f=>f.cat==="bdc")?"Importé · ":"")+(v.bdcDate?fdate(v.bdcDate):"")+(clientNomV(v)?" · "+esc(clientNomV(v)):"")+(()=>{const g=(v.sigs||{}).bdc||{};const n=(g.client?1:0)+(g.moi?1:0);return n===2?" · signé":n===1?(g.client?" · ta signature manque":" · signature du client à faire"):""})(),'data-act="pdfbdc"',"ok",v.demo?"":"@bdc"):(v.statut==="vendu"?it("BDC","Bon de commande","Pas encore créé : touche pour le créer",'data-act="bdc"',"todo"):it("BDC","Bon de commande","Créé au passage en « Vendu »","","")));
   if(v.factNum)h+=it("FAC","Facture n° "+esc(v.factNum),((L||[]).some(f=>f.cat==="facturev")?"Importée · ":"")+(v.factDate?fdate(v.factDate):"")+" · régime de la marge",(()=>{const f=(L||[]).find(x=>x.cat==="facturev");return f?'data-factopen="'+f.id+'"':'data-act="pdffact"'})(),"ok",v.demo?"":"@fact");else if(v.statut==="vendu")h+=it("FAC","Facture","Pas encore créée : touche pour la créer",'data-act="pdffact"',"todo");else h+=it("FAC","Facture","À créer à la livraison, une fois la voiture vendue et payée",'data-act="pdffact"',"");
+  if(v.reprise&&v.reprise.on&&!v.demo)h+=it("REP","Bon de reprise",esc(v.reprise.mod||"Véhicule repris")+" · "+eur(num(v.reprise.prix))+" déduit du prix",'data-act="pdfrep"',"ok");
   if(v.statut==="vendu"&&v.dateVente){const f=finGarantie(v),enc=f&&f>=today();h+='<div class="doc ro info"><span class="dico">G</span><span class="dtx"><b>'+garLabel(v)+'</b><small>'+(f?(enc?"En cours jusqu'au ":"Terminée le ")+fdate(f):(v.clientType==="pro"?"Vente entre professionnels":""))+'</small></span></div>'}
   h+='<div class="dsub">Générés à la demande</div>'+it("PDF","Fiche détails du véhicule","Caractéristiques, options et photos",'data-act="pdf"');
   if(v.statut!=="vendu")h+=it("TXT","Texte d'annonce","Prêt à copier pour 2ememain ou AutoScout24",'data-act="annonce"');
@@ -986,11 +987,13 @@ async function facturePdf(v){
   doc.setFont("helvetica","normal");let tot=0;
   lignes.forEach(l=>{const ls=doc.splitTextToSize(PT(l.d),110);ls.forEach((t,i)=>doc.text(t,M+2,y+i*4.2));doc.text(String(l.q),R-62,y,{align:"right"});doc.text(fmtNum(l.p),R-34,y,{align:"right"});doc.text(fmtNum(l.p*l.q),R-2,y,{align:"right"});tot+=l.p*l.q;y+=Math.max(5,ls.length*4.2+1)});
   doc.line(M,y-2,R,y-2);y+=3;
-  const acomptes=(v.acomptes||[]).filter(a=>num(a.montant));const paye=acomptes.reduce((a,b)=>a+num(b.montant),0);
+  const acomptes=(v.acomptes||[]).filter(a=>num(a.montant));const repP=v.reprise&&v.reprise.on?num(v.reprise.prix):0;const paye=acomptes.reduce((a,b)=>a+num(b.montant),0)+repP;
   const tx=R-70,box=(lab,val,bold,shade)=>{if(shade){doc.setFillColor(...grey);doc.rect(tx,y,70,7,"F")}doc.setDrawColor(25,28,36);doc.rect(tx,y,70,7);doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(bold?9.5:8);doc.text(PT(lab),tx+2,y+4.7);doc.text(PT(val),R-2,y+4.7,{align:"right"});y+=7};
   box("Total à payer (TVA comprise)","€ "+fmtNum(tot),true,false);
   acomptes.forEach(a=>box("Acompte reçu"+(a.date?" le "+fdNum(a.date):""),"€ -"+fmtNum(num(a.montant)),false,false));
+  if(repP)box("Reprise de votre véhicule","€ -"+fmtNum(repP),false,false);
   const reste=Math.max(0,tot-paye);box(reste>0?"Solde à payer":"Payé","€ "+fmtNum(reste>0?reste:tot),true,true);
+  if(repP){y+=3;doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text(doc.splitTextToSize(PT("Reprise : "+[v.reprise.mod,v.reprise.vin?"châssis "+v.reprise.vin:""].filter(Boolean).join(" - ")+", déduite du solde à payer (voir bon de reprise)."),R-M),M,y);y+=4}
   y+=6;doc.setFont("helvetica","bold");doc.setFontSize(9);
   doc.text(PT("Livraison soumise au régime particulier d'imposition de la marge bénéficiaire. TVA non déductible."),M,y);y+=5;
   doc.setFont("helvetica","normal");doc.setFontSize(8.5);
@@ -1243,6 +1246,40 @@ async function recapPdf(annexe){
 }
 let pdfLibP=null;
 function loadPdfLib(){if(window.PDFLib)return Promise.resolve();if(pdfLibP)return pdfLibP;pdfLibP=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js";sc.onload=()=>res();sc.onerror=()=>{pdfLibP=null;rej()};document.head.appendChild(sc)});return pdfLibP}
+/* ===== Bon de reprise : document séparé pour le véhicule repris au client ===== */
+async function repriseDocPdf(v){
+  const Rp=v.reprise||{};if(!Rp.on)return null;
+  try{await loadJsPdf()}catch(e){toast("Connexion nécessaire pour créer le PDF.");return null}
+  const rv=Rp.vid&&S.vehicles.find(x=>x.id===Rp.vid)||{};
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});const M=16,R=194,grey=[236,238,242];
+  const NUM=v.bdcNum?"R"+v.bdcNum:"",D=v.dateVente||v.bdcDate||today();
+  let y=await pdfEntete(doc,"Bon de reprise",NUM,D);
+  const sec=t=>{doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(25,28,36);doc.text(PT(t),M,y);doc.setDrawColor(200,204,212);doc.line(M,y+2,R,y+2);y+=8};
+  sec("Client (cédant)");
+  y=kvBlock(doc,[["Nom",clientNomV(v)||"-"],["Client n°",v.clientNum],["Adresse",v.clientAdresse],["Téléphone",v.clientTel],["E-mail",v.clientEmail],v.clientType==="pro"?["TVA",v.clientTva]:null].filter(r=>r&&r[1]),M,y,30,140)+4;
+  sec("Véhicule repris");
+  const rows=[["Marque",rv.marque],["Modèle",[rv.modele,rv.moteur].filter(Boolean).join(" ")||Rp.mod],["N° de châssis (VIN)",rv.vin||Rp.vin],["1re immatriculation",moisAn(rv.premiereImmat||Rp.imm)],["Plaque",rv.plaque],["Kilométrage",(rv.km||Rp.km)?fmtNum(num(rv.km||Rp.km)).replace(",00","")+" km":""],["Carburant",rv.carburant],["Couleur",rv.couleur]].filter(r=>r[1]);
+  const half=Math.ceil(rows.length/2);kvBlock(doc,rows.slice(0,half),M,y,34,52);const ye=kvBlock(doc,rows.slice(half),112,y,30,50);y=Math.max(y+half*5,ye)+4;
+  sec("Conditions de la reprise");
+  const pv=num(v.prixVente)||num(v.bdcPrix)||num(v.prixAffiche),rp=num(Rp.prix);
+  doc.setFillColor(...grey);doc.rect(M,y-4,R-M,6.5,"F");doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text("Description",M+2,y);doc.text("Montant",R-2,y,{align:"right"});y+=7;doc.setFont("helvetica","normal");
+  const ln=(d,m,b)=>{doc.setFont("helvetica",b?"bold":"normal");doc.text(doc.splitTextToSize(PT(d),140)[0]||"",M+2,y);doc.text(PT(m),R-2,y,{align:"right"});y+=6};
+  ln("Véhicule acheté : "+[v.marque,v.modele,v.moteur].filter(Boolean).join(" "),"€ "+fmtNum(pv));
+  ln("Reprise du véhicule du client (déduite du prix)","€ -"+fmtNum(rp));
+  doc.setDrawColor(25,28,36);doc.line(M,y-3,R,y-3);ln("Solde à payer par le client","€ "+fmtNum(Math.max(0,pv-rp)),true);y+=2;
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+  const txt=["Le client cède le véhicule décrit ci-dessus à "+entNomV()+" pour un montant de € "+fmtNum(rp)+", déduit du prix du véhicule acheté (bon de commande "+(v.bdcNum||"-")+(v.factNum?", facture "+v.factNum:"")+").",
+    Rp.cond?"Conditions particulières : "+Rp.cond:"",
+    "Le client déclare être propriétaire du véhicule repris, que celui-ci est libre de tout gage, crédit ou saisie, et qu'il n'a pas connaissance de vices cachés autres que ceux signalés.",
+    "Le client remet le véhicule avec ses clés, le certificat d'immatriculation, le certificat de conformité et le Car-Pass. Le prix de reprise est garanti tant que l'état du véhicule à la remise correspond à sa description."].filter(Boolean);
+  txt.forEach(t=>{const ls=doc.splitTextToSize(PT(t),R-M);ls.forEach(l=>{doc.text(l,M,y);y+=4.2});y+=2});
+  y=Math.max(y+6,232);
+  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("Le client (cédant)",M,y);doc.text(PT(entNomV()),112,y);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text("Date et signature, précédées de « lu et approuvé »",M,y+4.5);doc.text("Date et signature",112,y+4.5);
+  doc.setDrawColor(200,204,212);doc.rect(M,y+7,80,26);doc.rect(112,y+7,R-112,26);
+  pdfPied(doc,1,1);
+  const name=("Bon-de-reprise-"+[rv.marque||"",rv.modele||""].join("-")+"-"+(clientNomV(v)||"client")).replace(/[^\w\-.àâäéèêëîïôöùûüç]/gi,"-")+".pdf";
+  return{blob:doc.output("blob"),name,titre:"Bon de reprise",doc};
+}
 /* ===== Dossier de vente : facture client, bon de commande, factures d'entretien / garage, suivi du véhicule ===== */
 async function dossierVentePdf(v){
   try{await loadJsPdf();await loadPdfLib()}catch(e){toast("Connexion nécessaire pour créer le dossier.");return}
@@ -1259,6 +1296,7 @@ async function dossierVentePdf(v){
   if(fb)pieces.push({t:"Bon de commande",d:"n° "+(v.bdcNum||""),f:fb});
   else if(v.bdcNum){const r=await bonCommandePdf(v);if(r)pieces.push({t:"Bon de commande",d:"n° "+v.bdcNum,blob:r.blob});else manques.push("Bon de commande")}
   else manques.push("Bon de commande (à créer dans Documents)");
+  if(v.reprise&&v.reprise.on){const r=await repriseDocPdf(v);if(r)pieces.push({t:"Bon de reprise",d:(v.reprise.mod||"")+" · € "+fmtNum(num(v.reprise.prix)),blob:r.blob})}
   // 3. factures d'entretien et de garage
   const J=v.journal||[];
   const gar=F.filter(x=>x.jId||x.garage).map(f=>{const e=J.find(j=>j.id===f.jId);return{f,e,dt:e?e.date:new Date(f.createdAt||0).toISOString().slice(0,10)}}).sort((a,b)=>(a.dt||"").localeCompare(b.dt||""));
@@ -2972,8 +3010,8 @@ function demanderBdc(v,vente){
       if(vente){const pv=num(g("bc-prix")),dv=g("bc-dvente")||today();if(v.statut!=="vendu")applyStatut(v,"vendu",{prixVente:pv,dateVente:dv});v.prixVente=pv;v.dateVente=dv}
       persistVehicle(v,true);ov.innerHTML="";const rv=repriseVeh(v);
       const goRep=async()=>{const y1=scrollY;render();scrollTo(0,y1);if(!rv)return;toast("Voiture reprise ajoutée au garage : "+vnum(rv)+" "+rv.marque+" "+rv.modele);const rc=await contratAchatPdf(rv);if(rc)apercuGen(rc,"Contrat d'achat · reprise "+vnum(rv),null,{v:rv,cat:"achat"},()=>{const y2=scrollY;render();scrollTo(0,y2)})};
-      if(vente){const y0=scrollY;render();scrollTo(0,y0);toast("Vente enregistrée.");(async()=>{const goFact=async()=>{const rf=await facturePdf(v);if(rf)apercuGen(rf,"Facture "+rf.num,null,{v,cat:"facturev"},goRep);else goRep()};const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,null,{v,cat:"bdc"},goFact);else goFact()})();return}
-      if(rv){(async()=>{const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,()=>demanderBdc(v),{v,cat:"bdc"},goRep);else goRep()})();return}
+      if(vente){const y0=scrollY;render();scrollTo(0,y0);toast("Vente enregistrée.");(async()=>{const goBR=async()=>{if(v.reprise&&v.reprise.on){const rr=await repriseDocPdf(v);if(rr){apercuGen(rr,rr.titre,null,null,goRep);return}}goRep()};const goFact=async()=>{const rf=await facturePdf(v);if(rf)apercuGen(rf,"Facture "+rf.num,null,{v,cat:"facturev"},goBR);else goBR()};const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,null,{v,cat:"bdc"},goFact);else goFact()})();return}
+      if(rv){(async()=>{const goBR=async()=>{const rr=await repriseDocPdf(v);if(rr)apercuGen(rr,rr.titre,null,null,goRep);else goRep()};const rb=await bonCommandePdf(v);if(rb)apercuGen(rb,rb.titre,()=>demanderBdc(v),{v,cat:"bdc"},goBR);else goBR()})();return}
       apercuPdf(v,"bdc")}};
 }
 function stSelect(v){return'<span class="stwrap st-'+v.statut+'"><select class="stsel" data-cstat="'+v.id+'" aria-label="Changer le statut">'+STATUTS.map(x=>'<option value="'+x.k+'"'+(x.k===v.statut?" selected":"")+'>'+x.l+'</option>').join("")+'</select><svg class="stico" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'}
@@ -3162,6 +3200,7 @@ document.addEventListener("click",async e=>{
   else if(act==="regendocs"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;try{await loadJsPdf();await regenDocs(b)}catch(e){toast("Mise à jour impossible : connexion nécessaire.")}b.disabled=false;b.textContent=t0}
   else if(act==="cgo"){S.cgo={to:b.dataset.to,m:b.dataset.m};location.hash=b.dataset.to}
   else if(act==="gorecap"){e.preventDefault();if(location.hash!=="#compta")location.hash="compta";setTimeout(()=>{const x=$("#recap");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},150)}
+  else if(act==="pdfrep"&&v){const r=await repriseDocPdf(v);if(r)apercuGen(r,r.titre)}
   else if(act==="dossierv"&&(v||b.dataset.id)){const vv=v||curVeh(b.dataset.id);if(!vv||vv.demo)return;if(b.disabled)return;b.disabled=true;try{const r=await dossierVentePdf(vv);if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false}}
   else if(act==="dossiercompta"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;b.textContent="Préparation…";try{const r=await dossierCompta();if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false;b.textContent=t0}}
   else if(act==="recappdf"){const r=await recapPdf();if(r)apercuGen(r,r.titre)}
