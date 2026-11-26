@@ -73,6 +73,7 @@ const CATALOGUE={
   "Zeekr":{r:3,m:{"001":[60000,1,2024],"X":[45000,1,2024],"7X":[55000,1,2025]}}
 };
 const ETATS=[["excellent","Excellent","Comme neuve, aucun défaut",1.06],["bon","Bon","Petites traces d'usage",1],["moyen","Moyen","Rayures, usure visible",0.9],["rafraichir","À rafraîchir","Gros défauts ou travaux",0.78]];
+const CALIB={"Volkswagen|Golf":[1.0,1.06],"Volkswagen|Polo":[1.07,1.17],"Peugeot|208":[1.01,1.01]};
 const DECOTE_MODELE={"Ford|Mustang":0.075,"Ford|Ranger":0.07,"Chevrolet|Camaro":0.075,"Chevrolet|Corvette":0.07,"Dodge|Challenger":0.075,
   "Porsche|911":0.045,"Porsche|Boxster / 718 Boxster":0.06,"Porsche|Cayman / 718 Cayman":0.06,"Toyota|Land Cruiser":0.055,"Toyota|Hilux":0.06,
   "Toyota|GT86 / GR86":0.065,"Toyota|Supra":0.065,"Jeep|Wrangler":0.06,"Mercedes|Classe G":0.045,"Land Rover|Defender":0.065,"Mazda|MX-5":0.065,"Suzuki|Jimny":0.045};
@@ -91,6 +92,7 @@ function estimer(o){
   const yr=num(o.annee);
   v*={"Essence":1,"Diesel":yr>=2018?0.97:0.88,"Hybride":1.08,"Électrique":0.9,"GPL":0.86}[o.carburant]||1;
   v*=num(o.coef)||1;
+  {const cb=CALIB[o.brand+"|"+o.model];if(cb){const t=Math.max(-0.6,Math.min(1.6,(age-5)/5));v*=cb[0]*Math.pow(cb[1]/cb[0],t)}}
   if(o.boite==="Automatique")v*=seg>=3&&neuf<20000?1.03:1.06;
   v*=(ETATS.find(e=>e[0]===o.etat)||ETATS[1])[3];
   if(o.entretien===false)v*=0.92;

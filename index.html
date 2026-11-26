@@ -516,7 +516,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="22.6";
+const APP_VERSION="22.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -2159,6 +2159,8 @@ function catMatch(marque,modele){
   return best?{brand:bk,model:best.k}:{brand:bk,model:null};
 }
 // décote annuelle propre à certains modèles qui gardent mieux leur valeur que leur marque
+// correction mesurée sur annonces de pros belges : [rapport à 5 ans, rapport à 10 ans]
+const CALIB={"Volkswagen|Golf":[1.0,1.06],"Volkswagen|Polo":[1.07,1.17],"Peugeot|208":[1.01,1.01]};
 const DECOTE_MODELE={"Ford|Mustang":0.075,"Ford|Ranger":0.07,"Chevrolet|Camaro":0.075,"Chevrolet|Corvette":0.07,"Dodge|Challenger":0.075,
   "Porsche|911":0.045,"Porsche|Boxster / 718 Boxster":0.06,"Porsche|Cayman / 718 Cayman":0.06,"Toyota|Land Cruiser":0.055,"Toyota|Hilux":0.06,
   "Toyota|GT86 / GR86":0.065,"Toyota|Supra":0.065,"Jeep|Wrangler":0.06,"Mercedes|Classe G":0.045,"Land Rover|Defender":0.065,"Mazda|MX-5":0.065,"Suzuki|Jimny":0.045};
@@ -2176,6 +2178,7 @@ function estimer(o){
   const yr=num(o.annee);
   v*={"Essence":1,"Diesel":yr>=2018?0.97:0.88,"Hybride":1.08,"Électrique":0.9,"GPL":0.86}[o.carburant]||1;
   v*=num(o.coef)||1;
+  {const cb=CALIB[o.brand+"|"+o.model];if(cb){const t=Math.max(-0.6,Math.min(1.6,(age-5)/5));v*=cb[0]*Math.pow(cb[1]/cb[0],t)}}
   if(o.boite==="Automatique")v*=seg>=3&&neuf<20000?1.03:1.06;
   v*=(ETATS.find(e=>e[0]===o.etat)||ETATS[1])[3];
   if(o.entretien===false)v*=0.92;
