@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>GC Motor's · Véhicules d'occasion vérifiés et garantis</title>
-<meta name="description" content="GC Motor's : véhicules d'occasion vérifiés, avec contrôle technique, Car-Pass et garantie 12 mois. Contact direct par téléphone ou WhatsApp.">
-<meta property="og:title" content="GC Motor's · Véhicules d'occasion">
+<title>PrimeAuto · Véhicules d'occasion vérifiés et garantis</title>
+<meta name="description" content="PrimeAuto : véhicules d'occasion vérifiés, avec contrôle technique, Car-Pass et garantie 12 mois. Contact direct par téléphone ou WhatsApp.">
+<meta property="og:title" content="PrimeAuto · Véhicules d'occasion">
 <meta property="og:description" content="Véhicules d'occasion vérifiées, contrôle technique, Car-Pass et garantie 12 mois.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#000000">
-<link rel="icon" href="favicon.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="favicon.png?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -594,7 +594,7 @@ header.scrolled .hbar{height:58px}
 <div id="pgwipe" aria-hidden="true"><div class="pgcar"><img src="logo-car.png" alt=""></div></div>
 <header><div class="wrap hbar">
   <button type="button" class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
-  <a class="logo" href="#top" aria-label="GC Motor's, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">GC Motor's</span></a>
+  <a class="logo" href="#top" aria-label="PrimeAuto, accueil"><img src="logo-car.png" alt=""><span class="brandtxt" id="hname">PrimeAuto</span></a>
   <span class="hsp"></span>
   <nav class="tnav tl" aria-label="Menu"><a href="#top" data-nav="home">Accueil</a><a href="#occasions" data-nav="occ">Nos occasions</a></nav>
   <nav class="tnav tr" aria-label="Menu"><a href="#estimation" data-nav="est">Vendre mon véhicule</a><a href="#contact" data-nav="contact">Contact</a></nav>
@@ -668,7 +668,7 @@ header.scrolled .hbar{height:58px}
     <p class="hnote">Nous sommes parfois en rendez-vous à l'extérieur : un petit appel avant de passer, et on vous attend.</p></div>
 </div></section>
 </main>
-<footer><div class="wrap fbar"><span id="fname">© GC Motor's</span><span id="ftva"></span></div></footer>
+<footer><div class="wrap fbar"><span id="fname">© PrimeAuto</span><span id="ftva"></span></div></footer>
 <a class="fwa" id="fwa" href="#contact" target="_blank" rel="noopener" aria-label="Écrire sur WhatsApp"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.1z"/></svg></a>
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-label="Détail du véhicule"></div>
 
@@ -683,7 +683,7 @@ const fE=new Intl.NumberFormat("fr-BE",{style:"currency",currency:"EUR",maximumF
 const eur=n=>n?(Number.isInteger(n)?fE:fE2).format(n):"Prix sur demande";
 const km=n=>n?fN.format(n)+" km":"";
 /* coordonnées par défaut (remplacées par celles de l'app dès qu'elles sont publiées) */
-const DEF_INFO={nom:"GC Motor's",tel:"+32 472 24 11 00",email:"collignon.guillian@gmail.com",whatsapp:"+32472241100",adresse:"",tva:"",garantie:12};
+const DEF_INFO={nom:"PrimeAuto",tel:"+32 472 24 11 00",email:"collignon.guillian@gmail.com",whatsapp:"+32472241100",adresse:"",tva:"",garantie:12};
 let CARS=[],INFO={...DEF_INFO};
 const ICON={tel:'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>',
  wa:$("#fwa").innerHTML,
@@ -697,7 +697,7 @@ const waLink=c=>INFO.whatsapp?"https://wa.me/"+waNum(INFO.whatsapp)+"?text="+enc
 const telLink=()=>INFO.tel?"tel:"+digits(INFO.tel):"#contact";
 const mailLink=c=>INFO.email?"mailto:"+INFO.email+"?subject="+encodeURIComponent(c?"Demande : "+title(c):"Demande d'information")+"&body="+encodeURIComponent(msg(c)):"#contact";
 
-function applyInfo(){const n=INFO.nom||"GC Motor's";$("#hname").textContent=n;document.title=n+" · Véhicules d'occasion vérifiés et garantis";
+function applyInfo(){if(/gc motor/i.test(INFO.nom||""))INFO.nom="PrimeAuto";const n=INFO.nom||"PrimeAuto";$("#hname").textContent=n;document.title=n+" · Véhicules d'occasion vérifiés et garantis";
   document.querySelectorAll(".gmo").forEach(e=>e.textContent=INFO.garantie||12);
   
   const it=(cls,href,ic,lab,val,ext)=>'<a class="ci '+cls+'" href="'+href+'"'+(ext?' target="_blank" rel="noopener"':'')+'><span class="ic">'+ic+'</span><span><small>'+lab+'</small><b>'+esc(val)+'</b></span></a>';
@@ -734,7 +734,7 @@ function apArrows(){const t=$("#aptrack");$("#apL").disabled=t.scrollLeft<8;$("#
 function apStep(d){const t=$("#aptrack"),c=t.querySelector(".card");const w=c?c.getBoundingClientRect().width+20:t.clientWidth;t.scrollBy({left:d*w,behavior:"smooth"})}
 function pageFx(from,to){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const O={home:0,occ:1,est:3},ix=x=>x&&x.startsWith("car")?2:(O[x]??0),dir="bw",m=document.querySelector("main"),w=$("#pgwipe");[m,w].forEach(el=>{if(!el)return;el.classList.remove("pgin","fw","bw");void el.offsetWidth;el.classList.add("pgin",dir)})}
 let lastOcc=null,loaded=false;function showPage(){const h=location.hash,m=h.match(/^#v-(.+)$/),pg=m?"car:"+m[1]:h==="#occasions"?"occ":h==="#estimation"?"est":"home";closeLb();document.body.classList.toggle("page-est",pg==="est");if(pg==="est"){const rf=$("#rpformE");if(!rf.innerHTML||RPR!==rf)rpInit(null,rf,"rpe")}
-  document.body.classList.toggle("page-occ",pg==="occ");document.body.classList.toggle("page-car",!!m);if(m)renderAnnonce(m[1]);else{curCar=null;document.title=(INFO.nom||"GC Motor's")+" · Véhicules d'occasion vérifiés et garantis"}
+  document.body.classList.toggle("page-occ",pg==="occ");document.body.classList.toggle("page-car",!!m);if(m)renderAnnonce(m[1]);else{curCar=null;document.title=(INFO.nom||"PrimeAuto")+" · Véhicules d'occasion vérifiés et garantis"}
   if(lastOcc!==null&&pg!==lastOcc){scrollTo({top:0,behavior:"instant"});pageFx(lastOcc,pg)}lastOcc=pg;document.querySelectorAll("nav .nl").forEach(a=>a.style.opacity=a.getAttribute("href")===location.hash?"1":"")}
 function fillBrands(){const s=$("#fbrand"),cur=s.value,B=[...new Set(CARS.map(c=>c.marque).filter(Boolean))].sort();s.innerHTML='<option value="">Toutes les marques</option>'+B.map(b=>'<option'+(b===cur?" selected":"")+'>'+esc(b)+'</option>').join("");s.style.display=B.length>1?"":"none"}
 
@@ -786,7 +786,7 @@ function annonceHtml(c){const P=c.photos||[],g=c.garantie||INFO.garantie||12;
    '</div><div class="dbar">'+(INFO.tel?'<a class="btn b-black" href="'+telLink()+'">'+ICON.tel+'Appeler</a>':'')+(INFO.email?'<a class="btn b-line" href="'+mailLink(c)+'">'+ICON.mail+'E-mail</a>':'')+'</div>'}
 function renderAnnonce(id){const c=CARS.find(x=>x.id===id);const box=$("#annonce");curCar=c||null;
   if(!c){box.innerHTML='<div class="wrap an"><div class="empty"><h3>'+(CARS.length||loaded?"Ce véhicule n'est plus en vente":"Chargement…")+'</h3>'+(CARS.length||loaded?'<p>Il vient peut-être d\'être vendu. Découvrez nos autres occasions.</p><div class="hacts"><a class="btn b-black" href="#occasions">Voir nos occasions</a></div>':'')+'</div></div>';return}
-  document.title=title(c)+(c.annee?" "+c.annee:"")+" · "+(INFO.nom||"GC Motor's");
+  document.title=title(c)+(c.annee?" "+c.annee:"")+" · "+(INFO.nom||"PrimeAuto");
   box.innerHTML=annonceHtml(c);reveal();
   const trk=$("#atrk");if(trk){const n=(c.photos||[]).length,upd=()=>{const i=Math.round(trk.scrollLeft/trk.clientWidth);$("#agc").textContent=(i+1)+" / "+n;document.querySelectorAll("#athb img").forEach((t,k)=>{t.classList.toggle("on",k===i);if(k===i)t.scrollIntoView({block:"nearest",inline:"nearest"})})};trk.addEventListener("scroll",()=>requestAnimationFrame(upd),{passive:true})}}
 $("#annonce").addEventListener("click",e=>{const g=e.target.closest("[data-ag]"),t=e.target.closest("[data-at]"),lb=e.target.closest("[data-lb]"),sh=e.target.closest("[data-share]"),cd=e.target.closest(".card"),trk=$("#atrk");

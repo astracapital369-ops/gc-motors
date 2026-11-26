@@ -1,4 +1,4 @@
-# GC Motor's
+# PrimeAuto
 
 Application d'achat-revente de voitures (garage, marges, ventes, garanties), installable sur téléphone et PC.
 

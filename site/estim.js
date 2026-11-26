@@ -1,4 +1,4 @@
-/* Généré automatiquement depuis l'app GC Motor's : ne pas modifier à la main. */
+/* Généré automatiquement depuis l'app PrimeAuto : ne pas modifier à la main. */
 (function(){
 const num=v=>{const n=parseFloat(String(v??"").replace(",","."));return isNaN(n)?0:n};
 const CATALOGUE={
