@@ -360,7 +360,7 @@ body.page-car .contact,body.page-occ .contact{position:relative;margin-top:60px}
 body.page-car .contact:before,body.page-occ .contact:before{content:"";position:absolute;left:0;right:0;bottom:calc(100% - 1px);height:60px;background:#000;clip-path:polygon(0 100%,100% 0,100% 100%);pointer-events:none}
 @media(max-width:700px){.rpa:before,body.page-car .contact:before,body.page-occ .contact:before{height:36px}.incx:before,.incx:after{height:30px}.rpa{margin-top:80px!important}.incx{margin-top:60px}}
 .hstats br.mb{display:none}@media(max-width:520px){.hstats br.mb{display:inline}.hero .hstats div{white-space:nowrap!important}}
-.hero .kick{display:table;margin-left:auto;margin-right:auto;text-align:center;position:relative;padding-bottom:6px}.hero .kick:after{content:"";position:absolute;left:25%;width:50%;bottom:0;height:1px;transform:scaleY(.5);transform-origin:bottom;background:var(--blue)}
+.hero .kick{display:table;margin-left:auto;margin-right:auto;text-align:center;position:relative;padding-bottom:6px}.hero .kick:after{display:none}
 /* en-tête : menu + logo centré */
 .hbar{display:grid;grid-template-columns:48px 1fr 48px;align-items:center}
 .hbar .logo{justify-self:center}
@@ -449,6 +449,7 @@ body .hero .hico div{display:flex;flex-direction:column;align-items:center;gap:1
 .hsvc a{display:flex;flex-direction:column;align-items:center;gap:9px;color:#d6d6da;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;transition:color .2s}
 .hsvc .hsi{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,255,255,.18);background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.08),transparent 70%);color:#fff;transition:border-color .2s,transform .25s}
 .hsvc .hsi svg{width:22px;height:22px}.hsvc a:hover{color:#fff}.hsvc a:hover .hsi{border-color:var(--blue);transform:translateY(-3px)}
+body .hero .kick{padding:7px 15px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.03);font-size:11px;font-weight:500;letter-spacing:.18em;color:rgba(255,255,255,.6)}body .hero .kick i{color:var(--blue);margin:0 .25em}
 .burger{width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 8px;margin-left:-8px}
 .burger span{display:block;height:2px;border-radius:2px;background:#fff;transition:transform .3s,opacity .3s,width .3s}
 .burger span:nth-child(2){width:70%}
@@ -605,7 +606,7 @@ header.scrolled .hbar{height:58px}
 <main id="top">
 <div class="hero"><span class="glow"></span><div class="wrap hgrid">
   <div>
-    <span class="kick">Véhicules d'occasion <i>·</i> Belgique</span>
+    <span class="kick">Négociant automobile <i>·</i> Belgique</span>
     <h1><span class="ln" style="animation-delay:0.20s">Des</span> <span class="ln" style="animation-delay:0.27s">occasions</span> <span class="ln" style="animation-delay:0.34s">sûres</span><br class="dk"> <span class="gr">et prêtes à prendre <span class="nw">la route.</span></span></h1>
     <p class="lead">Nous sélectionnons et préparons chaque véhicule avant de vous le proposer : non accidenté, historique et entretiens en ordre, kilométrage authentique. <span class="nw">Aucun frais ni consommable à prévoir.</span></p>
     <div class="hacts hcol"><a class="btn b-white hgo" href="#occasions">Voir nos occasions<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn hghost" href="#estimation"><svg class="bci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M3 13l2-5.5A2 2 0 0 1 6.9 6h10.2a2 2 0 0 1 1.9 1.5L21 13v4h-2M3 13v4h2M3 13h18"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></svg>Vendre un véhicule<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div><nav class="hsvc" aria-label="Nos services"><a href="#occasions"><span class="hsi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg></span>Achat</a><a href="#estimation"><span class="hsi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5A4 4 0 0 0 9 10v4a4 4 0 0 0 6.5 1.5M7.5 11h5M7.5 13.5h5"/></svg></span>Vente</a><a href="#estimation"><span class="hsi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3.5-3.5"/><path d="M20 16H7l3.5 3.5"/></svg></span>Reprise</a></nav>
