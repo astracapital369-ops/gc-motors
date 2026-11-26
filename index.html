@@ -485,6 +485,7 @@ nav.tabs{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .doc.dossv{border:1.5px solid var(--acc,#2f7bff);background:linear-gradient(180deg,rgba(47,123,255,.08),transparent)}.doc.dossv .dico{background:var(--acc,#2f7bff);color:#fff}
+.dosvb{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.dosvb .fico.s{font-size:9px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -513,7 +514,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="21.9";
+const APP_VERSION="22.0";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3065,8 +3066,8 @@ function vVentes(){
   if(!vendus.length)return h+'<div class="card empty">Aucune vente pour l\'instant.</div>';
   const T={achat:0,frais:0,vente:0,tva:0,net:0};
   const rows=vendus.map(v=>{const c=calc(v);T.achat+=c.achat;T.frais+=c.frais;T.vente+=c.ref||0;T.tva+=c.tva||0;T.net+=c.net||0;
-    return'<tr><td>'+(v.num?'<span class="vnum" style="margin:0 6px 0 0">'+vnum(v)+'</span>':'')+'<a href="#d-'+v.id+'">'+esc(v.marque+" "+v.modele)+'</a>'+(v.demo?' <span class="demo-tag">Exemple</span>':"")+'</td><td>'+esc(clientNomV(v)||"—")+(v.clientNum?' <span class="note">n° '+esc(v.clientNum)+'</span>':'')+'</td><td>'+fdate(v.dateVente)+'</td><td class="num">'+eur(c.achat)+'</td><td class="num">'+eur(c.frais)+'</td><td class="num">'+eur(c.ref)+'</td><td class="num">'+eur(c.tva)+'</td><td class="num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</td><td class="num">'+(joursStock(v)??"—")+' j</td>'+(()=>{const f=finGarantie(v);if(!f)return'<td>—</td>';const enc=f>=today();return'<td class="gar"><span class="'+(enc?"gok":"gend")+'">'+(enc?"En cours":"Terminée")+'</span><small>'+fdNum(v.dateVente)+' → '+fdNum(f)+'</small></td>'})()+'</tr>'}).join("");
-  h+='<div class="card"><div class="tablewrap"><table class="data vtab"><thead><tr><th>Voiture</th><th>Client</th><th>Vendue le</th><th>Achat</th><th>Frais</th><th>Vente</th><th>TVA marge</th><th>Net</th><th>Stock</th><th>Garantie</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>Total</td><td></td><td></td><td class="num">'+eur(T.achat)+'</td><td class="num">'+eur(T.frais)+'</td><td class="num">'+eur(T.vente)+'</td><td class="num">'+eur(T.tva)+'</td><td class="num">'+eur(T.net)+'</td><td></td><td></td></tr></tfoot></table></div></div>';
+    return'<tr><td>'+(v.num?'<span class="vnum" style="margin:0 6px 0 0">'+vnum(v)+'</span>':'')+'<a href="#d-'+v.id+'">'+esc(v.marque+" "+v.modele)+'</a>'+(v.demo?' <span class="demo-tag">Exemple</span>':"")+'</td><td>'+esc(clientNomV(v)||"—")+(v.clientNum?' <span class="note">n° '+esc(v.clientNum)+'</span>':'')+'</td><td>'+fdate(v.dateVente)+'</td><td class="num">'+eur(c.achat)+'</td><td class="num">'+eur(c.frais)+'</td><td class="num">'+eur(c.ref)+'</td><td class="num">'+eur(c.tva)+'</td><td class="num '+(c.net<0?"neg":"pos")+'">'+eur(c.net)+'</td><td class="num">'+(joursStock(v)??"—")+' j</td>'+'<td class="dosv">'+(v.demo?'—':'<button type="button" class="btn small dosvb" data-act="dossierv" data-id="'+v.id+'"><span class="fico s">PDF</span>Dossier</button>')+'</td>'+(()=>{const f=finGarantie(v);if(!f)return'<td>—</td>';const enc=f>=today();return'<td class="gar"><span class="'+(enc?"gok":"gend")+'">'+(enc?"En cours":"Terminée")+'</span><small>'+fdNum(v.dateVente)+' → '+fdNum(f)+'</small></td>'})()+'</tr>'}).join("");
+  h+='<div class="card"><div class="tablewrap"><table class="data vtab"><thead><tr><th>Voiture</th><th>Client</th><th>Vendue le</th><th>Achat</th><th>Frais</th><th>Vente</th><th>TVA marge</th><th>Net</th><th>Stock</th><th>Dossier de vente</th><th>Garantie</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>Total</td><td></td><td></td><td class="num">'+eur(T.achat)+'</td><td class="num">'+eur(T.frais)+'</td><td class="num">'+eur(T.vente)+'</td><td class="num">'+eur(T.tva)+'</td><td class="num">'+eur(T.net)+'</td><td></td><td></td><td></td></tr></tfoot></table></div></div>';
   const cliName=v=>[v.clientPrenom,v.clientNom||v.acheteur].filter(Boolean).join(" ");
   return h;
 }
@@ -3161,7 +3162,7 @@ document.addEventListener("click",async e=>{
   else if(act==="regendocs"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;try{await loadJsPdf();await regenDocs(b)}catch(e){toast("Mise à jour impossible : connexion nécessaire.")}b.disabled=false;b.textContent=t0}
   else if(act==="cgo"){S.cgo={to:b.dataset.to,m:b.dataset.m};location.hash=b.dataset.to}
   else if(act==="gorecap"){e.preventDefault();if(location.hash!=="#compta")location.hash="compta";setTimeout(()=>{const x=$("#recap");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},150)}
-  else if(act==="dossierv"&&v){if(b.disabled)return;b.disabled=true;try{const r=await dossierVentePdf(v);if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false}}
+  else if(act==="dossierv"&&(v||b.dataset.id)){const vv=v||curVeh(b.dataset.id);if(!vv||vv.demo)return;if(b.disabled)return;b.disabled=true;try{const r=await dossierVentePdf(vv);if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false}}
   else if(act==="dossiercompta"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;b.textContent="Préparation…";try{const r=await dossierCompta();if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false;b.textContent=t0}}
   else if(act==="recappdf"){const r=await recapPdf();if(r)apercuGen(r,r.titre)}
   else if(act==="recapcsv"){recapCsv()}
