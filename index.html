@@ -143,6 +143,7 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .stwrap.st-preparation{background:var(--warn-soft);color:var(--warn)}
 .stwrap.st-en_vente{background:var(--good-soft);color:var(--good)}
 .stwrap.st-vendu{background:var(--surface-2);color:var(--ink)}
+.stwrap.st-depot{background:#efe7ff;color:#6b3fd1}
 .stwrap:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .cacts{display:flex;gap:8px}
 .cacts .btn{flex:1;justify-content:center}
@@ -338,6 +339,7 @@ main{padding:24px 28px 40px;max-width:1180px;width:100%;min-width:0;margin:0 aut
 .st-preparation{background:var(--warn-soft);color:var(--warn)}
 .st-en_vente{background:var(--good-soft);color:var(--good)}
 .st-vendu{background:var(--surface-2);color:var(--ink)}
+.st-depot{background:#efe7ff;color:#6b3fd1}
 .demo-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--warn)}
 .banner{border:1px dashed var(--warn);background:var(--warn-soft);color:var(--ink);border-radius:var(--r);padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .banner.info{border-color:var(--line);background:var(--surface-2)}
@@ -507,14 +509,14 @@ nav.tabs{display:none}
 /* ---------- constantes ---------- */
 const STATUTS=[
   {k:"achete",l:"En stock"},{k:"preparation",l:"En réparation"},
-  {k:"en_vente",l:"En vente"},{k:"vendu",l:"Vendu"}];
-const EN_STOCK=["achete","preparation","en_vente"];
+  {k:"en_vente",l:"En vente"},{k:"depot",l:"Dépôt-vente"},{k:"vendu",l:"Vendu"}];
+const EN_STOCK=["achete","preparation","en_vente","depot"];
 const CATS=["Réparation","Entretien","Pneus","Contrôle technique","Car-Pass","Nettoyage","Garantie externe","Transport / plateau","Annonce","Autre"];
 const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="22.3";
+const APP_VERSION="22.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -620,9 +622,10 @@ function fraisTotal(v){if((v.frais||[]).length)migrateFrais(v);return fraisJ(v).
 function prixRef(v){if(v.statut==="vendu"&&v.prixVente)return num(v.prixVente);if(v.prixAffiche)return num(v.prixAffiche);if(v.estim&&v.estim.median)return num(v.estim.median);return null}
 function calc(v,taux){
   taux=taux??S.settings.tva;
-  const achat=num(v.prixAchat),fr=fraisTotal(v),ref=prixRef(v);
+  let achat=num(v.prixAchat);const fr=fraisTotal(v),ref=prixRef(v);
+  if(v.depot){taux=21;achat=ref!=null?Math.max(0,ref-depComm(v,ref)-num(v.depot.frais)):0}
   if(ref==null)return{achat,frais:fr,ref:null,brute:null,tva:null,net:null,cout:achat+fr};
-  const brute=ref-achat,tva=brute>0?brute*taux/(100+taux):0,net=brute-tva-fr;
+  const brute=ref-achat,tva=v.depot?depComm(v,ref)*21/121:(brute>0?brute*taux/(100+taux):0),net=brute-tva-fr;
   return{achat,frais:fr,ref,brute,tva,net,cout:achat+fr,pct:achat?net/(achat+fr)*100:null};
 }
 function joursStock(v){if(!v.dateAchat)return null;return daysBetween(v.dateAchat,v.statut==="vendu"&&v.dateVente?v.dateVente:today())}
@@ -661,7 +664,7 @@ async function syncVitrine(force){if(!isDb()||!db||!uid)return;if(vitBusy){vitAg
   try{const col=db.collection("vitrine"),seen=force?{}:vitLoad(),keep=new Set(),st=S.settings;let n=0;
     const info={uid,nom:entNomV(),tel:st.entTel||"",email:st.entEmail||"",adresse:st.entAdresse||"",tva:st.entTva||"",whatsapp:st.entWhatsapp||st.entTel||"",garantie:num(st.dureeGarantie)||12,marge:num(st.margeVisee)||1000,tvaTaux:num(st.tva)||21};const ih=JSON.stringify(info);
     if(seen._info!==ih){await db.collection("vitrine_info").doc(uid).set({...info,updatedAt:Date.now()});seen._info=ih}
-    for(const v of S.vehicles){if(v.demo||v.statut!=="en_vente")continue;keep.add(v.id);
+    for(const v of S.vehicles){if(v.demo||(v.statut!=="en_vente"&&v.statut!=="depot"))continue;keep.add(v.id);
       let ph=[];try{ph=await photosFor(v.id)}catch(e){ph=photoCache[v.id]||[]}if((photoCache[v.id]||[]).length>ph.length)ph=photoCache[v.id];else photoCache[v.id]=ph;
       ph=(ph||[]).slice(0,10);const pub=vitPub(v),sig=JSON.stringify(pub)+"|"+ph.map(p=>p.id).join(",");
       if(seen[v.id]===sig)continue;
@@ -772,12 +775,13 @@ function docsHtml(v){
   if(v.statut!=="vendu")h+=it("TXT","Texte d'annonce","Prêt à copier pour 2ememain ou AutoScout24",'data-act="annonce"');
   if(!L){return'<div class="dsum">Chargement…</div><div class="docs">'+h+'<p class="note">Chargement des factures…</p></div>'}
   const ach=L.filter(f=>!f.jId&&!f.garage&&(!f.cat||f.cat==="achat")&&!(f.cat==="achat"&&/^Contrat-achat-/.test(f.name||""))),gar=L.filter(f=>f.jId||f.garage),aut=L.filter(f=>f.cat==="autre"),sig=L.filter(f=>f.cat==="contrat"||(f.cat==="achat"&&/^Contrat-achat-/.test(f.name||""))).slice(0,1),sgC=(v.sigs||{}).contrat||{},sgOk=sgC.vendeur&&sgC.moi;
-  h+='<div class="dgrp">Achat</div>';
+  if(v.depot&&!v.demo)h+='<div class="dgrp">Dépôt-vente</div>'+it("DV","Contrat de dépôt-vente",esc(depNomV(v)||"Propriétaire")+" · "+(v.statut==="vendu"?"décompte inclus":"commission "+eur(depComm(v,num(v.prixAffiche)||num(v.depot.prix)))),'data-act="pdfdepot"',"ok")+it("✎","Modifier le dépôt-vente","Prix, commission, durée, propriétaire",'data-act="depotedit"',"");
+  else h+='<div class="dgrp">Achat</div>';
   const pro=v.vendeurType==="pro",rp0=v.statut==="reperage",inp=k=>'<label class="dst todo addin">+ Ajouter<input type="file" class="vh" data-docin="'+k+'" data-v="'+v.id+'" accept="image/*,application/pdf" multiple></label>';
-  if(sig.length){const f=sig[0],ok=sgOk||f.cat==="contrat";if(!ok)nTodo++;h+=it("CA",ok?"Contrat d'achat signé":"Contrat d'achat",ok?fdC(f):fdC(f)+" · "+(sgC.vendeur||sgC.moi?"une signature manque":"à faire signer"),ok?'data-factopen="'+f.id+'"':'data-act="pdfachat"',ok?"ok":"todo")}
+  if(v.depot){}else if(sig.length){const f=sig[0],ok=sgOk||f.cat==="contrat";if(!ok)nTodo++;h+=it("CA",ok?"Contrat d'achat signé":"Contrat d'achat",ok?fdC(f):fdC(f)+" · "+(sgC.vendeur||sgC.moi?"une signature manque":"à faire signer"),ok?'data-factopen="'+f.id+'"':'data-act="pdfachat"',ok?"ok":"todo")}
   else if(!pro&&!ach.length){if(rp0)h+=it("CA","Contrat d'achat","À faire le jour de l'achat",'data-act="pdfachat"',"");else{nTodo++;h+='<div class="doc ro todo"><span class="dico">CA</span><span class="dtx" data-act="pdfachat" style="cursor:pointer"><b>Contrat d\'achat</b><small>Touche ici pour le créer et le faire signer</small></span>'+inp("contrat")+'</div>'}}
   h+=ach.map(f=>it(f.mime==="application/pdf"?"PDF":"IMG",pro?"Facture du vendeur":"Facture d'achat",esc(f.name||"")+" · "+fdC(f),'data-factopen="'+f.id+'"',"ok")).join("");
-  if(pro&&!ach.length){if(rp0)h+=it("FA","Facture du vendeur","À demander au garage le jour de l'achat","","");else{nTodo++;h+='<div class="doc ro todo"><span class="dico">FA</span><span class="dtx"><b>Facture du vendeur</b><small>Demande sa facture au garage et ajoute-la ici</small></span>'+inp("achat")+'</div>'}}
+  if(!v.depot&&pro&&!ach.length){if(rp0)h+=it("FA","Facture du vendeur","À demander au garage le jour de l'achat","","");else{nTodo++;h+='<div class="doc ro todo"><span class="dico">FA</span><span class="dtx"><b>Facture du vendeur</b><small>Demande sa facture au garage et ajoute-la ici</small></span>'+inp("achat")+'</div>'}}
   const manq=(v.journal||[]).filter(e=>e.type!=="Statut"&&num(e.montant)&&(e.fait||(e.date&&e.date<today()))&&!L.some(f=>f.jId===e.id));
   h+='<div class="dgrp">Factures de garage / réparations</div>';
   h+=gar.map(f=>{const e=(v.journal||[]).find(x=>x.id===f.jId);return it(f.mime==="application/pdf"?"PDF":"IMG",esc(e?e.type+(e.texte?" · "+e.texte:""):(f.name||"Facture de garage")),(e?fdate(e.date):fdC(f))+(e&&e.montant?" · "+eur(num(e.montant)):""),'data-factopen="'+f.id+'"',"ok")}).join("");
@@ -1281,6 +1285,56 @@ async function repriseDocPdf(v){
   const name=("Bon-de-reprise-"+[rv.marque||"",rv.modele||""].join("-")+"-"+(clientNomV(v)||"client")).replace(/[^\w\-.àâäéèêëîïôöùûüç]/gi,"-")+".pdf";
   return{blob:doc.output("blob"),name,titre:"Bon de reprise",doc};
 }
+/* ===== Dépôt-vente : commission, contrat ===== */
+function depComm(v,p){const d=v.depot||{};p=num(p);if(!p)return 0;if(d.cm==="fixe")return num(d.fixe)||0;const t=d.taux===""||d.taux==null?8:num(d.taux),mn=d.min===""||d.min==null?500:num(d.min);return Math.round(Math.max(p*t/100,mn))}
+function depCommTxt(v){const d=v.depot||{};return d.cm==="fixe"?"Montant fixe de € "+fmtNum(num(d.fixe)):(d.taux===""||d.taux==null?8:num(d.taux)).toString().replace(".",",")+" % du prix de vente, avec un minimum de € "+fmtNum(d.min===""||d.min==null?500:num(d.min))}
+function depNomV(v){const d=v.depot||{};return d.type==="pro"?(d.soc||""):[d.prenom,d.nom].filter(Boolean).join(" ")}
+async function depotContratPdf(v){
+  const d=v.depot;if(!d)return null;
+  try{await loadJsPdf()}catch(e){toast("Connexion nécessaire pour créer le PDF.");return null}
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});const M=16,R=194,grey=[236,238,242];
+  const NUM="DV"+String(v.num||"").padStart(3,"0"),D=d.date||v.dateAchat||today();
+  let y=await pdfEntete(doc,"Contrat de dépôt-vente",NUM,D);
+  const sec=t=>{doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(25,28,36);doc.text(PT(t),M,y);doc.setDrawColor(200,204,212);doc.line(M,y+2,R,y+2);y+=8};
+  sec("Propriétaire du véhicule (déposant)");
+  y=kvBlock(doc,[["Nom",depNomV(v)||"-"],d.type==="pro"?["TVA",d.tva]:["Carte d'identité",d.cni],["Adresse",d.adr],["Téléphone",d.tel],["E-mail",d.email],["IBAN",d.iban]].filter(r=>r&&r[1]),M,y,34,140)+4;
+  sec("Véhicule déposé");
+  const rows=[["Marque",v.marque],["Modèle",[v.modele,v.moteur].filter(Boolean).join(" ")],["N° de châssis (VIN)",v.vin],["1re immatriculation",moisAn(v.premiereImmat)],["Plaque",v.plaque],["Kilométrage",v.km?fmtNum(num(v.km)).replace(",00","")+" km":""],["Carburant",v.carburant],["Boîte",v.boite],["Couleur",v.couleur]].filter(r=>r[1]);
+  const half=Math.ceil(rows.length/2);kvBlock(doc,rows.slice(0,half),M,y,34,52);const ye=kvBlock(doc,rows.slice(half),112,y,30,50);y=Math.max(y+half*5,ye)+4;
+  sec("Conditions financières");
+  const pa=num(v.prixAffiche)||num(d.prix),pm=num(d.min_prix),vendu=v.statut==="vendu"&&num(v.prixVente);
+  doc.setFillColor(...grey);doc.rect(M,y-4,R-M,6.5,"F");doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text("Description",M+2,y);doc.text("Montant",R-2,y,{align:"right"});y+=7;
+  const ln=(t,m,b)=>{doc.setFont("helvetica",b?"bold":"normal");doc.text(doc.splitTextToSize(PT(t),140)[0]||"",M+2,y);doc.text(PT(m),R-2,y,{align:"right"});y+=6};
+  ln("Prix de vente affiché","€ "+fmtNum(pa));
+  if(pm)ln("Prix de vente minimum accepté par le propriétaire","€ "+fmtNum(pm));
+  ln("Commission "+entNomV()+" (TVA comprise) : "+depCommTxt(v),"");
+  const fr=num(d.frais);
+  if(vendu){const p=num(v.prixVente),c=depComm(v,p);y+=1;doc.setDrawColor(25,28,36);doc.line(M,y-4,R,y-4);
+    ln("Décompte · vendu le "+fdNum(v.dateVente||today())+" au prix de","€ "+fmtNum(p));ln("Commission","€ -"+fmtNum(c));if(fr)ln("Frais acceptés par le propriétaire","€ -"+fmtNum(fr));
+    doc.line(M,y-3,R,y-3);ln("Montant net reversé au propriétaire","€ "+fmtNum(Math.max(0,p-c-fr)),true)}
+  else{const c=depComm(v,pa);ln("Montant net pour le propriétaire si vendu au prix affiché","€ "+fmtNum(Math.max(0,pa-c-fr)),true);if(pm){const c2=depComm(v,pm);ln("Montant net pour le propriétaire si vendu au prix minimum","€ "+fmtNum(Math.max(0,pm-c2-fr)))}if(fr)ln("Frais acceptés par le propriétaire (déduits à la vente)","€ "+fmtNum(fr))}
+  y+=2;sec("Conditions du dépôt");
+  doc.setFont("helvetica","normal");doc.setFontSize(7.9);
+  const mois=num(d.duree)||2,fin=d.fin||"";
+  const txt=[
+    "1. Objet. Le propriétaire confie son véhicule à "+entNomV()+", qui le met en vente en son nom propre pour le compte du propriétaire. Le propriétaire reste propriétaire du véhicule jusqu'à sa vente.",
+    "2. Durée. Le dépôt est conclu pour "+mois+" mois"+(fin?", jusqu'au "+fdNum(fin):"")+(d.excl!==false?", avec exclusivité : pendant cette période, le propriétaire ne vend pas le véhicule par lui-même ni par un autre intermédiaire":"")+". Il peut être prolongé d'un commun accord par écrit.",
+    "3. Prix. "+entNomV()+" ne vend pas le véhicule en dessous du prix minimum indiqué sans l'accord écrit (SMS ou e-mail) du propriétaire.",
+    "4. Paiement. Le montant net est versé au propriétaire par virement"+(d.iban?" sur le compte indiqué":"")+" dans les "+(num(d.delai)||7)+" jours suivant le paiement complet par l'acheteur. La commission n'est due qu'en cas de vente.",
+    "5. Préparation. "+entNomV()+" prépare, photographie et publie le véhicule. Tout frais supplémentaire (réparation, contrôle technique, detailing complet) n'est engagé qu'avec l'accord du propriétaire"+(d.fraisTxt?" ("+d.fraisTxt+")":"")+".",
+    "6. Garde et assurance. Pendant le dépôt, "+entNomV()+" garde le véhicule en bon père de famille. "+(d.assur==="ent"?"Le véhicule est couvert par l'assurance de "+entNomV()+" pendant le dépôt.":"Le propriétaire maintient l'assurance du véhicule jusqu'à la vente.")+" Les essais se font uniquement en présence de "+entNomV()+".",
+    "7. Déclarations. Le propriétaire déclare que le véhicule est libre de tout gage, crédit ou saisie, que le kilométrage est authentique et qu'il n'a pas connaissance d'autres défauts que ceux signalés"+(d.def?" : "+d.def:"")+". Il remet les clés, le certificat d'immatriculation, le certificat de conformité et le Car-Pass.",
+    "8. Fin du contrat. Sans vente à l'échéance, ou si le propriétaire reprend son véhicule plus tôt, le véhicule lui est restitué. Les frais engagés avec son accord lui sont alors facturés"+(num(d.retrait)?", ainsi qu'une indemnité de € "+fmtNum(num(d.retrait))+" en cas de retrait anticipé":"")+".",
+    d.cond?"Conditions particulières : "+d.cond:""].filter(Boolean);
+  txt.forEach(t=>{doc.splitTextToSize(PT(t),R-M).forEach(l=>{if(y>270){doc.addPage();y=20}doc.text(l,M,y);y+=3.6});y+=1.3});
+  if(y>247){doc.addPage();y=20}
+  y=Math.max(y+4,y>200?y+4:250);
+  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("Le propriétaire",M,y);doc.text(PT(entNomV()),112,y);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text("Date et signature, précédées de « lu et approuvé »",M,y+4.5);doc.text("Date et signature",112,y+4.5);
+  doc.setDrawColor(200,204,212);doc.rect(M,y+7,80,24);doc.rect(112,y+7,R-112,24);
+  const np=doc.getNumberOfPages();for(let i=1;i<=np;i++){doc.setPage(i);pdfPied(doc,i,np>1?np:0)}
+  const name=("Contrat-depot-vente-"+[v.marque||"",v.modele||""].join("-")+"-"+(depNomV(v)||"proprietaire")).replace(/[^\w\-.àâäéèêëîïôöùûüç]/gi,"-")+".pdf";
+  return{blob:doc.output("blob"),name,titre:"Contrat de dépôt-vente",doc};
+}
 /* ===== Dossier de vente : facture client, bon de commande, factures d'entretien / garage, suivi du véhicule ===== */
 async function dossierVentePdf(v){
   try{await loadJsPdf();await loadPdfLib()}catch(e){toast("Connexion nécessaire pour créer le dossier.");return}
@@ -1297,6 +1351,7 @@ async function dossierVentePdf(v){
   if(fb)pieces.push({t:"Bon de commande",d:"n° "+(v.bdcNum||""),f:fb});
   else if(v.bdcNum){const r=await bonCommandePdf(v);if(r)pieces.push({t:"Bon de commande",d:"n° "+v.bdcNum,blob:r.blob});else manques.push("Bon de commande")}
   else manques.push("Bon de commande (à créer dans Documents)");
+  if(v.depot){const r=await depotContratPdf(v);if(r)pieces.push({t:"Contrat de dépôt-vente",d:(depNomV(v)||"")+" · décompte",blob:r.blob})}
   if(v.reprise&&v.reprise.on){const r=await repriseDocPdf(v);if(r)pieces.push({t:"Bon de reprise",d:(v.reprise.mod||"")+" · € "+fmtNum(num(v.reprise.prix)),blob:r.blob})}
   // 3. factures d'entretien et de garage
   const J=v.journal||[];
@@ -1584,7 +1639,7 @@ function vGarage(){
   const L=list(),f=S.garageFilter,q=S.search.toLowerCase();
   let items=L.filter(v=>f==="tous"||(f==="stock"?EN_STOCK.includes(v.statut):v.statut===f));
   if(q)items=items.filter(v=>(v.marque+" "+v.modele+" "+(v.annee||"")+" "+vnum(v)+" "+(v.num||"")).toLowerCase().includes(q));
-  const order={en_vente:0,preparation:1,achete:2,reperage:3,vendu:4};
+  const order={en_vente:0,depot:1,preparation:2,achete:3,reperage:4,vendu:5};
   items.sort((a,b)=>(order[a.statut]-order[b.statut])||((b.dateAchat||"").localeCompare(a.dateAchat||"")));
   const chips=[["stock","Non vendus"],["achete","En stock"],["preparation","En réparation"],["en_vente","En vente"],["vendu","Vendus"],["tous","Tous"]];
   let h='<div class="top gtop"><div><h1>Garage</h1><p>'+L.filter(v=>EN_STOCK.includes(v.statut)).length+' voiture(s) à ta disposition</p></div><button class="btn primary" data-act="add">+ Ajouter une voiture</button></div>';
@@ -1612,7 +1667,7 @@ function carCard(v){
   const carIco='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16v-3l2-5h14l2 5v3M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6.5 13h.01M17.5 13h.01M5 8l1.5-3h11L19 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   return'<div class="car" role="link" tabindex="0" data-open="'+v.id+'"><div class="cover" data-cover="'+v.id+'">'+coverHtml(v,carIco)+'</div><div class="hd"><div>'+(v.num?'<span class="vnum">'+vnum(v)+'</span>':'')+'<div class="name">'+esc(v.marque)+' '+esc(v.modele)+'</div><div class="meta num">'+esc(v.annee||"—")+' · '+kmFmt(v.km)+' · '+esc(v.carburant||"")+'</div></div>'+(v.demo?'<span class="pill st-'+v.statut+'">'+stLabel(v.statut)+'</span>':stSelect(v))+'</div>'+
   (v.demo?'<span class="demo-tag">Exemple</span>':"")+
-  '<div class="figs num"><div>'+(v.statut==="reperage"?"Prix demandé":"Achat + frais")+'<b>'+eur(v.statut==="reperage"?c.achat:c.cout)+'</b></div><div>'+third[0]+'<b>'+third[1]+'</b></div><div>Marge nette<b class="'+(c.net==null?"":c.net<0?"neg":"pos")+'">'+(c.net==null?"—":eur(c.net))+'</b></div></div>'+
+  '<div class="figs num"><div>'+(v.statut==="reperage"?"Prix demandé":v.depot?"Pour le client":"Achat + frais")+'<b>'+eur(v.statut==="reperage"?c.achat:c.cout)+'</b></div><div>'+third[0]+'<b>'+third[1]+'</b></div><div>Marge nette<b class="'+(c.net==null?"":c.net<0?"neg":"pos")+'">'+(c.net==null?"—":eur(c.net))+'</b></div></div>'+
   '<div class="meta" style="display:flex;justify-content:space-between"><span>'+(j!=null?(v.statut==="vendu"?"Vendue en "+j+" j":"En stock depuis "+j+" j"):"Pas encore achetée")+'</span><span>Dossier '+p+' %</span></div><div class="bar"><i style="width:'+p+'%"></i></div>'+'<div class="cacts"><a class="btn small" href="#d-'+v.id+'">Détails du véhicule</a>'+(v.demo?'<button class="btn small danger" data-act="deldemo" data-id="'+v.id+'">Supprimer</button>':'<a class="btn small" href="#v-'+v.id+'">Modifier</a>')+'</div></div>';
 }
 
@@ -2838,11 +2893,12 @@ function autoSpecs(v,force){const lab=v.moteur||"";v.auto=v.auto||{};const set=(
   else if(force||v.auto.cylindree){v.cylindree="";}
   set("euronorm",euroNormeAuto(v.annee,v.carburant,v.premiereImmat))}
 function applyStatut(v,nv,extra){v.statut=nv;if(extra)Object.assign(v,extra);
-  if(nv==="vendu"&&!v.dateVente)v.dateVente=today();if(EN_STOCK.includes(nv)&&!v.dateAchat)v.dateAchat=today();
+  if(nv==="vendu"&&!v.dateVente)v.dateVente=today();if(nv==="vendu"&&v.depot&&num(v.prixVente))v.prixAchat=Math.max(0,num(v.prixVente)-depComm(v,v.prixVente)-num(v.depot.frais));if(EN_STOCK.includes(nv)&&!v.dateAchat)v.dateAchat=today();
   v.journal=v.journal||[];v.journal.push({id:newId(),t:Date.now(),date:today(),type:"Statut",texte:"Passage en « "+stLabel(nv)+" »"+(nv==="vendu"&&v.prixVente?" · vendue "+eur(num(v.prixVente)):"")});
   persistVehicle(v,true);if(nv==="vendu"&&!v.demo)setTimeout(()=>toast("📁 Dossier de vente créé : retrouve-le dans Documents."),2600)}
 function changerStatut(v,nv){
   if(nv===v.statut){render();return}
+  if(nv==="depot"&&!v.depot&&!v.demo){depotModal(v,true);return}
   if(nv!=="vendu"){applyStatut(v,nv);toast("Statut : "+stLabel(nv));const y0=window.scrollY;render();window.scrollTo(0,y0);return}
   if(!v.demo){demanderBdc(v,true);return}
   const prop=num(v.prixVente)||num(v.prixAffiche)||(v.estim?num(v.estim.median):0)||"";
@@ -2892,7 +2948,7 @@ function repriseVeh(v){const Rp=v.reprise||{};if(!Rp.on||!Rp.vid)return null;con
 function achatModal(ev){const ov=$("#overlay");loadJsPdf().catch(()=>{});loadPdfJs().catch(()=>{});pdfCar().catch(()=>{});const E=ev||{};let typ=E.vendeurType==="pro"?"pro":"part";const P=typ==="pro";
   const fi=(id,l,o)=>{o=o||{};return'<label class="f'+(o.full?" full":"")+(o.cls?" "+o.cls:"")+'"'+(o.hid?" hidden":"")+'>'+l+'<input id="as-'+id+'" type="'+(o.t||"text")+'" autocomplete="off"'+(o.v==null&&o.k&&E[o.k]!=null&&E[o.k]!==""?' value="'+esc(E[o.k])+'"':'')+''+(o.im?' inputmode="'+o.im+'"':'')+(o.ph?' placeholder="'+o.ph+'"':'')+(o.v?' value="'+esc(o.v)+'"':'')+'></label>'};
   const sec=(n,t)=>'<div class="bsec full"><span class="bsn">'+n+'</span>'+t+'</div>';
-  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="astit"><div class="card mcard"><button type="button" class="mclose" data-as="no" aria-label="Fermer">×</button><h2 id="astit">'+(ev?"Modifier le contrat d\'achat":"Ajouter une voiture")+'</h2>'+(ev?'<p class="note">'+esc(vnum(ev)+" "+(ev.marque||"")+" "+(ev.modele||""))+' · le contrat sera recréé'+(((ev.sigs||{}).contrat||{}).vendeur||((ev.sigs||{}).contrat||{}).moi?" et devra être signé à nouveau":"")+'.</p>':'<p class="note">Commence par le contrat d\'achat : une fois créé, la voiture est ajoutée au garage et le contrat est rangé dans ses documents.</p><p class="note" style="margin-top:4px"><button type="button" data-act="addvide" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline">Pas encore achetée ? Ajouter sans contrat (repérage)</button></p>')+''+
+  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="astit"><div class="card mcard"><button type="button" class="mclose" data-as="no" aria-label="Fermer">×</button><h2 id="astit">'+(ev?"Modifier le contrat d\'achat":"Ajouter une voiture")+'</h2>'+(ev?'<p class="note">'+esc(vnum(ev)+" "+(ev.marque||"")+" "+(ev.modele||""))+' · le contrat sera recréé'+(((ev.sigs||{}).contrat||{}).vendeur||((ev.sigs||{}).contrat||{}).moi?" et devra être signé à nouveau":"")+'.</p>':'<p class="note">Commence par le contrat d\'achat : une fois créé, la voiture est ajoutée au garage et le contrat est rangé dans ses documents.</p><p class="note" style="margin-top:4px"><button type="button" data-act="addvide" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline">Pas encore achetée ? Ajouter sans contrat (repérage)</button></p><p class="note" style="margin-top:4px"><button type="button" data-as="depot" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline">Voiture d\'un client en dépôt-vente ? Créer un contrat de dépôt-vente</button></p>')+''+
    '<div class="form">'+sec(1,"Vendeur")+'<div class="f full vtyp"><div class="seg"><button type="button" class="'+(P?"":"on ok")+'" data-ast="part">Particulier</button><button type="button" class="'+(P?"on ok":"")+'" data-ast="pro">Professionnel</button></div></div>'+
    fi("prenom","Prénom",{cls:"as-part",hid:P,k:"vendeurPrenom"})+fi("nom","Nom",{cls:"as-part",hid:P,k:"vendeurNom"})+fi("cni","N° de carte d\'identité",{full:true,cls:"as-part",hid:P,ph:"592-1234567-89",k:"vendeurCni"})+
    fi("soc","Nom du garage / société",{full:true,cls:"as-pro",hid:!P,k:"vendeurSociete"})+fi("tva","Numéro de TVA",{cls:"as-pro",hid:!P,ph:"BE0123.456.789",k:"vendeurTva"})+fi("fact","N° de sa facture",{cls:"as-pro",hid:!P,k:"vendeurFact"})+
@@ -2913,6 +2969,7 @@ function achatModal(ev){const ov=$("#overlay");loadJsPdf().catch(()=>{});loadPdf
     if(b.dataset.ast){typ=b.dataset.ast;box.querySelectorAll("[data-ast]").forEach(x=>{const on=x===b;x.classList.toggle("on",on);x.classList.toggle("ok",on)});box.querySelectorAll(".as-part").forEach(x=>x.hidden=typ==="pro");box.querySelectorAll(".as-pro").forEach(x=>x.hidden=typ!=="pro");return}
     const a=b.dataset.as;
     if(a==="no"){ov.innerHTML="";return}
+    if(a==="depot"){ov.innerHTML="";depotModal();return}
     if(a==="vierge"){const r=await contratAchatPdf({_blank:true,vendeurType:typ,sigs:{}});if(r){box.remove();apercuGen(r,"Contrat d'achat vierge · "+(typ==="pro"?"professionnel":"particulier"),null,null,()=>{ov.onclick=null;ov.innerHTML="";ov.appendChild(box)})}return}
     if(a==="ok"){const d=repRead();
       if(!d.marque||!d.modele){toast("Indique la marque et le modèle.");($("#rp-marque").value?$("#rp-modele"):$("#rp-marque")).focus();return}
@@ -2930,6 +2987,60 @@ function achatModal(ev){const ov=$("#overlay");loadJsPdf().catch(()=>{});loadPdf
       const r=await mk();if(!r){location.hash="v-"+nv.id;return}savePdfDoc(nv,r,"achat");
       apercuGen(r,"Contrat d'achat · "+vnum(nv),()=>achatModal(nv),null,()=>{if(route().id===nv.id){const y=scrollY;render();scrollTo(0,y)}else location.hash="d-"+nv.id;if(!ev)toast("Véhicule ajouté : le contrat est dans ses documents.")})}});
 }
+function depotModal(ev,fromStatut){const ov=$("#overlay");loadJsPdf().catch(()=>{});pdfCar().catch(()=>{});const E=ev||{},D=E.depot||{};let typ=D.type==="pro"?"pro":"part";const P=typ==="pro";let cm=D.cm==="fixe"?"fixe":"pct";
+  const fi=(id,l,o)=>{o=o||{};const val=o.v!=null?o.v:(D[o.k||id]!=null?D[o.k||id]:"");return'<label class="f'+(o.full?" full":"")+(o.cls?" "+o.cls:"")+'"'+(o.hid?" hidden":"")+'>'+l+'<input id="dv-'+id+'" type="'+(o.t||"text")+'" autocomplete="off"'+(val!==""?' value="'+esc(val)+'"':'')+(o.im?' inputmode="'+o.im+'"':'')+(o.ph?' placeholder="'+o.ph+'"':'')+'></label>'};
+  const sec=(n,t)=>'<div class="bsec full"><span class="bsn">'+n+'</span>'+t+'</div>';
+  const seg=(attr,cur,opts)=>'<div class="f full vtyp"><div class="seg">'+opts.map(([k,l])=>'<button type="button" class="'+(cur===k?"on ok":"")+'" data-'+attr+'="'+k+'">'+l+'</button>').join("")+'</div></div>';
+  ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="dvtit"><div class="card mcard"><button type="button" class="mclose" data-dv="no" aria-label="Fermer">×</button><h2 id="dvtit">'+(E.depot?"Modifier le dépôt-vente":"Dépôt-vente")+'</h2><p class="note">'+(ev&&ev.id?esc(vnum(ev)+" "+(ev.marque||"")+" "+(ev.modele||""))+' · ':'')+'Le propriétaire reste propriétaire jusqu\'à la vente. Le contrat de dépôt-vente est créé et rangé dans les documents du véhicule.</p>'+
+   '<div class="form">'+sec(1,"Propriétaire (déposant)")+seg("dvt",typ,[["part","Particulier"],["pro","Professionnel"]])+
+   fi("prenom","Prénom",{cls:"dv-part",hid:P})+fi("nom","Nom",{cls:"dv-part",hid:P})+fi("cni","N° de carte d\'identité",{full:true,cls:"dv-part",hid:P,ph:"592-1234567-89"})+
+   fi("soc","Société",{full:true,cls:"dv-pro",hid:!P})+fi("tva","Numéro de TVA",{cls:"dv-pro",hid:!P,ph:"BE0123.456.789"})+
+   fi("tel","Téléphone",{t:"tel",ph:"+32 …"})+fi("email","E-mail",{t:"email"})+fi("adr","Adresse",{full:true,ph:"Rue, numéro, code postal, ville"})+fi("iban","IBAN (pour le versement)",{full:true,ph:"BE00 0000 0000 0000"})+
+   sec(2,"Véhicule")+repFormHtml(ev&&ev.id?{reprise:{vid:ev.id}}:{})+'<label class="f">Plaque<input id="dv-plaque" autocomplete="off" value="'+esc(E.plaque||"")+'" placeholder="1-ABC-123"></label><label class="f">Couleur<input id="dv-couleur" autocomplete="off" value="'+esc(E.couleur||"")+'"></label>'+fi("def","Défauts connus",{full:true,ph:"Rayures, voyant, entretien à prévoir…"})+
+   sec(3,"Prix et commission")+fi("prix","Prix de vente affiché (€)",{t:"number",im:"decimal",v:E.prixAffiche||D.prix||""})+fi("min_prix","Prix minimum accepté (€)",{t:"number",im:"decimal"})+
+   seg("dvc",cm,[["pct","Pourcentage"],["fixe","Montant fixe"]])+
+   fi("taux","Commission (%)",{t:"number",im:"decimal",cls:"dv-pct",hid:cm!=="pct",v:D.taux!=null&&D.taux!==""?D.taux:8})+fi("min","Minimum (€)",{t:"number",im:"decimal",cls:"dv-pct",hid:cm!=="pct",v:D.min!=null&&D.min!==""?D.min:500})+
+   fi("fixe","Commission fixe (€)",{t:"number",im:"decimal",full:true,cls:"dv-fixe",hid:cm!=="fixe"})+
+   fi("frais","Frais acceptés par le propriétaire (€)",{t:"number",im:"decimal",ph:"0"})+fi("fraisTxt","Détail des frais",{ph:"ex. CT, pneus"})+
+   '<div class="f full"><div class="calc" id="dv-calc"></div></div>'+
+   sec(4,"Durée et conditions")+fi("date","Date du dépôt",{t:"date",v:D.date||E.dateAchat||today()})+'<label class="f">Durée<select id="dv-duree">'+[1,2,3,6].map(m=>'<option value="'+m+'"'+((num(D.duree)||2)===m?" selected":"")+'>'+m+' mois</option>').join("")+'</select></label>'+
+   '<label class="f">Assurance pendant le dépôt<select id="dv-assur"><option value="prop"'+(D.assur!=="ent"?" selected":"")+'>Le propriétaire</option><option value="ent"'+(D.assur==="ent"?" selected":"")+'>'+esc(entNomV())+'</option></select></label>'+
+   '<label class="f">Exclusivité<select id="dv-excl"><option value="1"'+(D.excl!==false?" selected":"")+'>Oui</option><option value="0"'+(D.excl===false?" selected":"")+'>Non</option></select></label>'+
+   fi("delai","Versement sous (jours)",{t:"number",im:"numeric",v:D.delai||7})+fi("retrait","Indemnité retrait anticipé (€)",{t:"number",im:"decimal",ph:"0"})+
+   fi("cond","Conditions particulières",{full:true})+'</div>'+
+   '<div class="acts"><button class="btn primary" data-dv="ok" style="flex:1;justify-content:center">'+(E.depot?"Mettre à jour le contrat":ev&&ev.id?"Passer en dépôt-vente et créer le contrat":"Créer le contrat et la voiture")+'</button></div></div></div>';
+  const box=ov.querySelector(".modal");const g=id=>{const e=$("#dv-"+id);return e?e.value.trim():""};
+  const rd=()=>({type:typ,prenom:g("prenom"),nom:g("nom"),cni:g("cni"),soc:g("soc"),tva:g("tva"),tel:g("tel"),email:g("email"),adr:g("adr"),iban:g("iban").toUpperCase(),def:g("def"),prix:num(g("prix"))||"",min_prix:num(g("min_prix"))||"",cm,taux:g("taux")===""?8:num(g("taux")),min:g("min")===""?500:num(g("min")),fixe:num(g("fixe"))||"",frais:num(g("frais"))||"",fraisTxt:g("fraisTxt"),date:g("date")||today(),duree:num(g("duree"))||2,assur:g("assur"),excl:g("excl")!=="0",delai:num(g("delai"))||7,retrait:num(g("retrait"))||"",cond:g("cond")});
+  const upd=()=>{const d=rd(),x={depot:d},b=$("#dv-calc");if(!b)return;const p=num(d.prix);if(!p){b.innerHTML='<p class="note">Indique le prix affiché pour voir la commission.</p>';return}
+    const c=depComm(x,p),fr=num(d.frais);let h=row("Commission (TVA comprise)",eur(c))+row("TVA incluse (21 %)",eur(c*21/121))+(fr?row("Frais acceptés","− "+eur(fr)):"")+'<div class="row total"><span>Pour le propriétaire</span><span class="num">'+eur(Math.max(0,p-c-fr))+'</span></div>';
+    if(num(d.min_prix)){const pm=num(d.min_prix);h+=row("Au prix minimum ("+eur(pm)+")",eur(Math.max(0,pm-depComm(x,pm)-fr))+" pour lui · "+eur(depComm(x,pm))+" pour toi")}b.innerHTML=h};
+  upd();box.addEventListener("input",upd);
+  box.addEventListener("change",e=>{const t=e.target;upd();
+    if(t.id==="rp-marque"){const b=t.value;$("#rp-modele-w").innerHTML="Modèle"+repModeles(b,"");$("#rp-moteur-w").innerHTML="Motorisation"+repMoteurs(b==="__autre"?"":b,"","");$("#rp-autre-w").hidden=b!=="__autre";$("#rp-moteur-w").hidden=b==="__autre"}
+    if(t.id==="rp-modele"){$("#rp-moteur-w").innerHTML="Motorisation"+repMoteurs($("#rp-marque").value,t.value,"")}
+    if(t.id==="rp-moteur"){const o=t.selectedOptions[0];const f=o&&o.dataset.f;if(f&&FUEL[f])$("#rp-carb").value=FUEL[f]}});
+  box.addEventListener("click",async e=>{const b=e.target.closest("[data-dvt],[data-dvc],[data-dv]");if(!b)return;e.preventDefault();
+    const tog=(attr,btn)=>box.querySelectorAll("[data-"+attr+"]").forEach(x=>{const on=x===btn;x.classList.toggle("on",on);x.classList.toggle("ok",on)});
+    if(b.dataset.dvt){typ=b.dataset.dvt;tog("dvt",b);box.querySelectorAll(".dv-part").forEach(x=>x.hidden=typ==="pro");box.querySelectorAll(".dv-pro").forEach(x=>x.hidden=typ!=="pro");return}
+    if(b.dataset.dvc){cm=b.dataset.dvc;tog("dvc",b);box.querySelectorAll(".dv-pct").forEach(x=>x.hidden=cm!=="pct");box.querySelectorAll(".dv-fixe").forEach(x=>x.hidden=cm!=="fixe");upd();return}
+    const a=b.dataset.dv;
+    if(a==="no"){ov.innerHTML="";if(fromStatut)render();return}
+    if(a!=="ok")return;
+    const vd=repRead(),d=rd();
+    if(!vd.marque||!vd.modele){toast("Indique la marque et le modèle.");($("#rp-marque").value?$("#rp-modele"):$("#rp-marque")).focus();return}
+    if(typ==="pro"?!d.soc:!d.nom){toast("Indique le nom du propriétaire.");$(typ==="pro"?"#dv-soc":"#dv-nom").focus();return}
+    if(!num(d.prix)){toast("Indique le prix de vente affiché.");$("#dv-prix").focus();return}
+    d.fin=addMonthsISO(d.date,d.duree);
+    const F={...vd,plaque:g("plaque").toUpperCase(),couleur:g("couleur"),depot:d,prixAffiche:num(d.prix),source:"Dépôt-vente : "+(typ==="pro"?d.soc:[d.prenom,d.nom].filter(Boolean).join(" ")),dateAchat:(ev&&ev.dateAchat)||d.date,
+      vendeurType:typ,vendeurPrenom:d.prenom,vendeurNom:d.nom,vendeurSociete:d.soc,vendeurTva:d.tva,vendeurTel:d.tel,vendeurEmail:d.email,vendeurAdresse:d.adr};
+    let nv;
+    if(ev&&ev.id){nv=ev;const was=nv.statut;Object.assign(nv,F);if(!E.depot||was!=="depot"){if(was!=="vendu")applyStatut(nv,"depot");else persistVehicle(nv,true)}else persistVehicle(nv,true);ov.innerHTML="";toast(E.depot?"Contrat de dépôt-vente mis à jour.":"Voiture passée en dépôt-vente.")}
+    else{nv={id:newId(),annee:"",km:"",statut:"depot",prixAchat:"",frais:[],check:{},etat:"bon",entretien:true,proprios:2,options:[],journal:[{id:newId(),t:Date.now(),date:d.date,type:"Statut",texte:"Entrée en dépôt-vente"}],createdAt:Date.now(),...F};
+      migrateFrais(nv);nv.num=S.vehicles.filter(x=>!x.demo).reduce((m,x)=>Math.max(m,num(x.num)),0)+1;S.vehicles.push(nv);persistVehicle(nv,true);factCache[nv.id]=factCache[nv.id]||[];ov.innerHTML="";toast("Voiture en dépôt-vente ajoutée : "+vnum(nv)+" "+nv.marque+" "+nv.modele)}
+    const r=await depotContratPdf(nv);if(!r){location.hash="d-"+nv.id;return}
+    apercuGen(r,"Contrat de dépôt-vente · "+vnum(nv),()=>depotModal(nv),null,()=>{if(route().id===nv.id){const y=scrollY;render();scrollTo(0,y)}else location.hash="d-"+nv.id})});
+}
+function addMonthsISO(iso,m){const d=new Date((iso||today())+"T12:00:00");d.setMonth(d.getMonth()+num(m));return d.toISOString().slice(0,10)}
 function demanderBdc(v,vente){
   const cl=clientsConnus();const ov=$("#overlay");
   const bA=(v.acomptes||[]).find(a=>a.bdc),autres=(v.acomptes||[]).filter(a=>!a.bdc&&num(a.montant));
@@ -3201,6 +3312,8 @@ document.addEventListener("click",async e=>{
   else if(act==="regendocs"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;try{await loadJsPdf();await regenDocs(b)}catch(e){toast("Mise à jour impossible : connexion nécessaire.")}b.disabled=false;b.textContent=t0}
   else if(act==="cgo"){S.cgo={to:b.dataset.to,m:b.dataset.m};location.hash=b.dataset.to}
   else if(act==="gorecap"){e.preventDefault();if(location.hash!=="#compta")location.hash="compta";setTimeout(()=>{const x=$("#recap");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},150)}
+  else if(act==="pdfdepot"&&v){const r=await depotContratPdf(v);if(r)apercuGen(r,r.titre)}
+  else if(act==="depotedit"&&v){depotModal(v)}
   else if(act==="pdfrep"&&v){const r=await repriseDocPdf(v);if(r)apercuGen(r,r.titre)}
   else if(act==="dossierv"&&(v||b.dataset.id)){const vv=v||curVeh(b.dataset.id);if(!vv||vv.demo)return;if(b.disabled)return;b.disabled=true;try{const r=await dossierVentePdf(vv);if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false}}
   else if(act==="dossiercompta"){if(b.disabled)return;b.disabled=true;const t0=b.textContent;b.textContent="Préparation…";try{const r=await dossierCompta();if(r)apercuGen(r,r.titre)}catch(e){console.error(e);toast("Création du dossier impossible.")}finally{b.disabled=false;b.textContent=t0}}
