@@ -598,7 +598,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="26.5";
+const APP_VERSION="26.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1529,7 +1529,7 @@ function rdvModal(r){const ov=$("#overlay"),E=r||{},isNew=!E.id;const g=k=>E[k]=
    '<div class="f full"><span>Date</span><input id="rv-date" type="hidden" value="'+esc(g("date")||today())+'"><div class="rvcal" id="rv-cal"></div></div><label class="f">Heure<input id="rv-heure" type="time" step="900" value="'+esc(g("heure")||"09:00")+'"></label>'+
    '<label class="f">Durée<select id="rv-duree">'+[[30,"30 min"],[60,"1 h"],[90,"1 h 30"],[120,"2 h"],[180,"3 h"],[240,"4 h (demi-journée)"],[480,"Journée"]].map(([m,l])=>'<option value="'+m+'"'+((num(E.duree)||60)===m?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+
    '<label class="f">Formule / objet<input id="rv-formule" value="'+esc(g("formule"))+'" placeholder="ex. Detailing complet"></label>'+
-   '<label class="f">Client<input id="rv-client" value="'+esc(g("client"))+'" autocomplete="off"></label><label class="f">Téléphone<input id="rv-tel" type="tel" value="'+esc(g("tel"))+'" placeholder="+32 …"></label><label class="f full">E-mail<input id="rv-email" type="email" value="'+esc(g("email"))+'" placeholder="Pour lui envoyer une confirmation"></label>'+
+   '<label class="f">Client<input id="rv-client" value="'+esc(g("client"))+'" autocomplete="off"></label><label class="f">Téléphone<input id="rv-tel" type="tel" value="'+esc(g("tel"))+'" placeholder="+32 …"></label><label class="f full">E-mail<input id="rv-email" type="email" value="'+esc(g("email"))+'" placeholder="Pour lui envoyer une confirmation"></label><label class="f full rvmail"><span style="display:flex;align-items:center;gap:8px;font-weight:500"><input type="checkbox" id="rv-sendmail"'+(isNew?" checked":"")+' style="width:18px;height:18px;margin:0">'+(isNew?"Envoyer l\'e-mail de confirmation au client":"Renvoyer un e-mail de confirmation (date ou heure modifiée)")+'</span></label>'+
    '<label class="f full">Véhicule du garage<select id="rv-vid"><option value="">Aucun / véhicule du client</option>'+vs.map(v=>'<option value="'+v.id+'"'+(v.id===E.vid?" selected":"")+'>'+esc(vnum(v)+" "+v.marque+" "+v.modele+(v.plaque?" · "+v.plaque:"")+(v.statut==="vendu"?" (vendue"+(clientNomV(v)?" à "+clientNomV(v):"")+")":v.depot?" (dépôt)":""))+'</option>').join("")+'</select></label>'+
    '<label class="f full">Véhicule du client<input id="rv-veh" value="'+esc(g("vehicule"))+'" placeholder="Marque, modèle, plaque"></label>'+
    '<label class="f full">Note<textarea id="rv-note" rows="2">'+esc(g("note"))+'</textarea></label></div>'+
@@ -1552,7 +1552,10 @@ function rdvModal(r){const ov=$("#overlay"),E=r||{},isNew=!E.id;const g=k=>E[k]=
     if(t.dataset.rdv==="no"){ov.innerHTML="";return}
     const v=id=>$("#rv-"+id).value.trim(),d=v("date");if(!d){toast("Indique la date.");return}
     typ=$("#rv-type").value||typ;if(E.rq&&(v("date")!==E.date||v("heure")!==E.heure))rdvUnlock(E.rq);const o={id:E.id||newId(),type:typ,date:d,heure:v("heure"),duree:num(v("duree"))||60,formule:v("formule"),client:v("client"),tel:v("tel"),email:v("email"),vid:v("vid"),vehicule:v("veh"),note:v("note")};if(E.src)o.src=E.src;if(!o.email)delete o.email;if(E.rq&&v("date")===E.date&&v("heure")===E.heure)o.rq=E.rq;
-    S.settings.rdv=[...rdvList().filter(x=>x.id!==o.id),o];persistSettings();ov.innerHTML="";S.ag=S.ag||{};S.ag.sel=d;S.ag.y=+d.slice(0,4);S.ag.m=+d.slice(5,7)-1;toast(isNew?"Rendez-vous ajouté.":"Rendez-vous modifié.");render()});
+    const sendM=$("#rv-sendmail")&&$("#rv-sendmail").checked&&o.email;
+    S.settings.rdv=[...rdvList().filter(x=>x.id!==o.id),o];persistSettings();ov.innerHTML="";
+    if(sendM){if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(o.email))toast("E-mail du client invalide : aucun e-mail envoyé.");else rdvMail({nom:o.client,email:o.email,date:o.date,heure:o.heure,duree:o.duree,formule:o.formule||svcLab(o),vehicule:o.vehicule,note:o.note},true)}
+    S.ag=S.ag||{};S.ag.sel=d;S.ag.y=+d.slice(0,4);S.ag.m=+d.slice(5,7)-1;if(!sendM)toast(isNew?"Rendez-vous ajouté.":"Rendez-vous modifié.");render()});
 }
 document.addEventListener("click",e=>{const t=e.target.closest("[data-rqtog]");if(!t||innerWidth>980)return;const c=t.closest(".rqc");c.classList.toggle("open");t.setAttribute("aria-expanded",c.classList.contains("open"))});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-agday],[data-agm]");if(!b||!$("#app").contains(b))return;S.ag=S.ag||{};
