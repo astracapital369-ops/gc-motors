@@ -598,7 +598,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="26.4";
+const APP_VERSION="26.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1371,7 +1371,7 @@ async function repriseDocPdf(v){
   return{blob:doc.output("blob"),name,titre:"Bon de reprise",doc};
 }
 /* ===== Service detailing : prestations et factures ===== */
-const DET_F=["Detailing intérieur","Detailing extérieur","Detailing intérieur et extérieur","Detailing polish carrosserie","Detailing complet","Autre prestation"];
+const DET_F=["Detailing intérieur","Detailing intérieur et extérieur","Detailing polish carrosserie","Detailing complet","Autre prestation"];
 function detList(){return S.settings.detail||[]}
 function detTot(d){const ttc=num(d.prix),ht=Math.round(ttc/1.21*100)/100;return{ttc,ht,tva:Math.round((ttc-ht)*100)/100}}
 function detClient(d){return d.ctype==="pro"?(d.soc||""):[d.prenom,d.nom].filter(Boolean).join(" ")}
