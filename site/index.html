@@ -131,6 +131,7 @@ body.page-rdv .hero,body.page-rdv .marq,body.page-rdv #apercu,body.page-rdv #ser
 .rdsub{width:100%;justify-content:center;font-size:16px;padding:16px}
 .rdalt{text-align:center;font-size:13.5px;color:#6b6b72;margin-top:12px}.rdalt a{color:#111;font-weight:600}
 .rdok{text-align:center;padding:20px 6px}.rdok i{width:64px;height:64px;border-radius:50%;background:#eef4ff;color:#2f7bff;display:grid;place-items:center;margin:0 auto 16px}.rdok i svg{width:30px;height:30px}.rdok h3{font-size:22px;margin-bottom:8px}.rdok p{color:#55555c;line-height:1.6}
+.rdback{margin-top:20px;display:inline-flex;gap:8px}.rdok .rdalt{margin-top:16px}
 .rderr{color:#c62828;font-size:13.5px;margin-top:10px;text-align:center}
 @media(max-width:700px){.rdf{grid-template-columns:1fr}.rdo{flex-direction:row;align-items:center;gap:12px;padding:13px}.rdo>div{gap:2px}.rdg{grid-template-columns:1fr}.rdt{min-width:calc(50% - 4px);flex:1}}
 body:not(.page-est) #estpage{display:none}
@@ -818,7 +819,11 @@ function rdSlots(iso,f){const d=new Date(iso+"T12:00:00"),we=d.getDay()===0||d.g
   let occ=[];try{occ=JSON.parse(INFO.occ||"[]")}catch(e){}
   const now=new Date(),isT=iso===rdIso(now),nm=now.getHours()*60+now.getMinutes()+120;
   return base.map(h=>{const a=rdMin(h),b=a+dur;const busy=occ.some(o=>o[0]===iso&&rdMin(o[1])<b&&rdMin(o[1])+(+o[2]||60)>a);return{h,fin:String(Math.floor(b/60)).padStart(2,"0")+":"+String(b%60).padStart(2,"0"),off:busy||(isT&&a<nm)}})}
-function rdvInit(){const el=$("#rdvform");if(!el)return;if(RD.sent){el.innerHTML='<div class="rdok"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><h3>Demande envoyée</h3><p>Merci ! Nous vous recontactons rapidement pour confirmer votre rendez-vous du <b>'+esc(RD.lab)+'</b>.</p></div>';return}
+function rdLog(){let a=[];try{a=JSON.parse(localStorage.getItem("rdv-sent")||"[]")}catch(e){}return a.filter(t=>Date.now()-t<864e5)}
+function rdBlocked(){return rdLog().length>=3}
+function rdvInit(){const el=$("#rdvform");if(!el)return;const alt=(INFO.whatsapp||INFO.tel?'<p class="rdalt">'+(INFO.whatsapp?'<a href="'+rdWa("Bonjour, je souhaite un rendez-vous pour un detailing.")+'" target="_blank" rel="noopener">WhatsApp</a>':'')+(INFO.whatsapp&&INFO.tel?' ou ':'')+(INFO.tel?'<a href="'+telLink()+'">appelez-nous</a>':'')+'</p>':'');
+  if(!RD.sent&&rdBlocked()){el.innerHTML='<div class="rdok"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i><h3>Vos demandes sont bien reçues</h3><p>Vous avez déjà envoyé 3 demandes de rendez-vous. Nous revenons vers vous rapidement. Pour une autre demande, contactez-nous directement.</p>'+alt+'</div>';return}
+  if(RD.sent){el.innerHTML='<div class="rdok"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><h3>Demande envoyée</h3><p>Merci ! Nous vous recontactons rapidement pour confirmer votre rendez-vous du <b>'+esc(RD.lab)+'</b>.</p>'+(rdBlocked()?'':'<button type="button" class="btn b-black rdback" data-rdback><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Retour</button>')+'</div>';return}
   const days=[];const t0=new Date();for(let i=0;i<21;i++){const d=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i),iso=rdIso(d),sl=rdSlots(iso,RD.f);days.push({iso,d,full:!sl.some(x=>!x.off)})}
   if(!RD.d||(days.find(x=>x.iso===RD.d)||{full:true}).full){const f=days.find(x=>!x.full);RD.d=f?f.iso:days[0].iso;RD.h=null}
   const sl=rdSlots(RD.d,RD.f);if(RD.h&&(sl.find(x=>x.h===RD.h)||{off:true}).off)RD.h=null;
@@ -834,16 +839,18 @@ function rdvInit(){const el=$("#rdvform");if(!el)return;if(RD.sent){el.innerHTML
    '<button type="button" class="btn b-black rdsub" data-rdsend>Envoyer ma demande<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><div class="rderr" id="rd-err"></div>'+
    (INFO.whatsapp||INFO.tel?'<p class="rdalt">Vous préférez en parler ? '+(INFO.whatsapp?'<a href="'+rdWa("Bonjour, je souhaite un rendez-vous pour un detailing.")+'" target="_blank" rel="noopener">WhatsApp</a>':'')+(INFO.whatsapp&&INFO.tel?' ou ':'')+(INFO.tel?'<a href="'+telLink()+'">appelez-nous</a>':'')+'</p>':'');
   Object.entries(keep).forEach(([k,x])=>{const e=$("#rd-"+k);if(e&&x)e.value=x});RD.lab=lab}
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-rdf],[data-rdd],[data-rdh],[data-rdsend]");if(!b||!$("#rdvform").contains(b))return;
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-rdf],[data-rdd],[data-rdh],[data-rdsend],[data-rdback]");if(!b||!$("#rdvform").contains(b))return;
+  if(b.hasAttribute("data-rdback")){RD.sent=false;RD.h=null;RD.f="comp";RD.d=null;rdvInit();scrollTo({top:$("#rdvform").getBoundingClientRect().top+scrollY-120,behavior:"smooth"});return}
   if(b.dataset.rdf){RD.f=b.dataset.rdf;RD.h=null;rdvInit();return}
   if(b.dataset.rdd){RD.d=b.dataset.rdd;RD.h=null;rdvInit();return}
   if(b.dataset.rdh){RD.h=b.dataset.rdh;rdvInit();return}
   const v=id=>($("#rd-"+id).value||"").trim(),err=$("#rd-err");err.textContent="";
+  if(rdBlocked()){rdvInit();return}
   if(!RD.h){err.textContent="Choisissez une heure.";return}
   if(!v("nom")||!v("tel")||!v("veh")){err.textContent="Indiquez votre nom, votre téléphone et votre véhicule.";(!v("nom")?$("#rd-nom"):!v("tel")?$("#rd-tel"):$("#rd-veh")).focus();return}
   const F=RDF.find(x=>x.k===RD.f),doc={uid:INFO._uid||"",nom:v("nom").slice(0,99),tel:v("tel").slice(0,39),email:v("email").slice(0,99),vehicule:v("veh").slice(0,99),formule:"Detailing "+F.t.toLowerCase(),date:RD.d,heure:RD.h,duree:F.min,note:v("note").slice(0,999),createdAt:Date.now(),statut:"nouveau"};
   b.disabled=true;b.style.opacity=".6";
-  try{if(!window.__db||!doc.uid)throw new Error("db");await window.__db.collection("rdv_demandes").add(doc);RD.sent=true;rdvInit();scrollTo({top:$("#rdvform").getBoundingClientRect().top+scrollY-120,behavior:"smooth"})}
+  try{if(!window.__db||!doc.uid)throw new Error("db");await window.__db.collection("rdv_demandes").add(doc);try{localStorage.setItem("rdv-sent",JSON.stringify([...rdLog(),Date.now()]))}catch(e){}RD.sent=true;rdvInit();scrollTo({top:$("#rdvform").getBoundingClientRect().top+scrollY-120,behavior:"smooth"})}
   catch(x){b.disabled=false;b.style.opacity="";const msg="Bonjour, je souhaite un rendez-vous : "+doc.formule+" le "+RD.lab+". Nom : "+doc.nom+", tél : "+doc.tel+", véhicule : "+doc.vehicule+(doc.note?". "+doc.note:"");
     err.innerHTML='La demande n\'a pas pu être envoyée automatiquement. '+(INFO.whatsapp?'<a href="'+rdWa(msg)+'" target="_blank" rel="noopener">Envoyez-la par WhatsApp</a>':INFO.email?'<a href="mailto:'+esc(INFO.email)+'?subject=Rendez-vous detailing&body='+encodeURIComponent(msg)+'">Envoyez-la par e-mail</a>':'Appelez-nous.')}});
 function fillBrands(){const s=$("#fbrand"),cur=s.value,B=[...new Set(CARS.map(c=>c.marque).filter(Boolean))].sort();s.innerHTML='<option value="">Toutes les marques</option>'+B.map(b=>'<option'+(b===cur?" selected":"")+'>'+esc(b)+'</option>').join("");s.style.display=B.length>1?"":"none"}
