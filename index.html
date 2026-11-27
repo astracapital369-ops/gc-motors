@@ -578,7 +578,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="23.8";
+const APP_VERSION="23.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1383,6 +1383,7 @@ function agItem(r){const t=rdvT(r),wa=rdvWa(r),v=r.vid&&S.vehicles.find(x=>x.id=
 function rqItem(q,wd){const fin=q.heure?hm(hmMin(q.heure)+(num(q.duree)||120)):"",t=RDV_T[q.type]||RDV_T.detailing,nm=q.type&&RDV_T[q.type]?t[0]:"Detailing / Nettoyage",dd=q.date?new Date(q.date+"T12:00:00"):null;
   const when=(wd&&dd?["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][dd.getDay()]+' '+dd.getDate()+' '+['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][dd.getMonth()]+' · ':'')+esc(q.heure||"")+(fin?' – '+fin:'');
   return'<div class="rqc" style="--c:'+t[1]+'"><button type="button" class="rqs" data-rqtog aria-expanded="false"><span class="rqd">Demande du site · '+esc(nm)+'</span><span class="rqt">'+when+'</span><b class="rqn">'+esc(q.nom||"Sans nom")+'</b><svg class="rqchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="rqx"><div class="rqm">'+esc(q.formule||"Detailing")+(q.vehicule?' · '+esc(q.vehicule):'')+'</div>'+(q.tel||q.email?'<div class="rqm">'+(q.tel?'<a href="tel:'+esc(q.tel)+'">'+esc(q.tel)+'</a>':'')+(q.tel&&q.email?' · ':'')+(q.email?esc(q.email):'')+'</div>':'')+(q.note?'<p class="rqnote">'+esc(q.note)+'</p>':'')+'</div><div class="rqa"><button class="btn primary" data-act="rdvok" data-id="'+q.id+'">Accepter</button><button class="btn rqno" data-act="rdvno" data-id="'+q.id+'">Refuser</button>'+(q.tel?'<a class="btn" href="tel:'+esc(q.tel)+'">Appeler</a>':'')+'</div></div>'}
+function rdvUnlock(id){try{if(isDb()&&db&&id)db.collection("rdv_occ").doc(id).delete().catch(()=>{})}catch(e){}}
 function rqDay(iso){return(S.rdvReq||[]).filter(q=>q.date===iso).sort((a,b)=>String(a.heure).localeCompare(String(b.heure)))}
 function rqModal(){const ov=$("#overlay"),Q=(S.rdvReq||[]).slice().sort((a,b)=>(a.date+a.heure).localeCompare(b.date+b.heure));if(!Q.length){if($("#overlay .agrqmod"))ov.innerHTML="";return}
   ov.innerHTML='<div class="modal agrqmod" role="dialog" aria-modal="true" aria-labelledby="agrt"><div class="card mcard"><button type="button" class="mclose" data-agclose aria-label="Fermer">×</button><h2 id="agrt">Demandes de rendez-vous</h2><p class="note" style="margin:-4px 0 8px">'+Q.length+' demande'+(Q.length>1?"s":"")+' envoyée'+(Q.length>1?"s":"")+' depuis le site, à accepter ou refuser.<span class="rqhint"> Touche une demande pour voir le détail.</span></p>'+Q.map(q=>rqItem(q,true)).join("")+'</div></div>';
@@ -1408,7 +1409,7 @@ function rdvModal(r){const ov=$("#overlay"),E=r||{},isNew=!E.id;const g=k=>E[k]=
   box.addEventListener("click",e=>{const t=e.target.closest("[data-rdvt],[data-rdv]");if(!t)return;
     if(t.dataset.rdv==="no"){ov.innerHTML="";return}
     const v=id=>$("#rv-"+id).value.trim(),d=v("date");if(!d){toast("Indique la date.");return}
-    typ=$("#rv-type").value||typ;const o={id:E.id||newId(),type:typ,date:d,heure:v("heure"),duree:num(v("duree"))||60,formule:v("formule"),client:v("client"),tel:v("tel"),vid:v("vid"),vehicule:v("veh"),note:v("note")};if(E.src)o.src=E.src;if(E.email)o.email=E.email;
+    typ=$("#rv-type").value||typ;if(E.rq&&(v("date")!==E.date||v("heure")!==E.heure))rdvUnlock(E.rq);const o={id:E.id||newId(),type:typ,date:d,heure:v("heure"),duree:num(v("duree"))||60,formule:v("formule"),client:v("client"),tel:v("tel"),vid:v("vid"),vehicule:v("veh"),note:v("note")};if(E.src)o.src=E.src;if(E.rq&&v("date")===E.date&&v("heure")===E.heure)o.rq=E.rq;if(E.email)o.email=E.email;
     S.settings.rdv=[...rdvList().filter(x=>x.id!==o.id),o];persistSettings();ov.innerHTML="";S.ag=S.ag||{};S.ag.sel=d;S.ag.y=+d.slice(0,4);S.ag.m=+d.slice(5,7)-1;toast(isNew?"Rendez-vous ajouté.":"Rendez-vous modifié.");render()});
 }
 document.addEventListener("click",e=>{const t=e.target.closest("[data-rqtog]");if(!t||innerWidth>980)return;const c=t.closest(".rqc");c.classList.toggle("open");t.setAttribute("aria-expanded",c.classList.contains("open"))});
@@ -3449,11 +3450,11 @@ document.addEventListener("click",async e=>{
   else if(act==="gorecap"){e.preventDefault();if(location.hash!=="#compta")location.hash="compta";setTimeout(()=>{const x=$("#recap");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},150)}
   else if(act==="rdvnew"){rdvModal(b.dataset.date?{date:b.dataset.date}:null)}
   else if(act==="rdvedit"){const r=rdvList().find(x=>x.id===b.dataset.id);if(r)rdvModal(r)}
-  else if(act==="rdvdel"){const r=rdvList().find(x=>x.id===b.dataset.id);if(!r)return;S.settings.rdv=rdvList().filter(x=>x.id!==r.id);persistSettings();render();toast("Rendez-vous supprimé.",()=>{S.settings.rdv=[...rdvList(),r];persistSettings();render()})}
+  else if(act==="rdvdel"){const r=rdvList().find(x=>x.id===b.dataset.id);if(!r)return;if(r.rq)rdvUnlock(r.rq);S.settings.rdv=rdvList().filter(x=>x.id!==r.id);persistSettings();render();toast("Rendez-vous supprimé.",()=>{S.settings.rdv=[...rdvList(),r];persistSettings();render()})}
   else if(act==="rqall"){rqModal()}
   else if(act==="rdvok"||act==="rdvno"){const q=(S.rdvReq||[]).find(x=>x.id===b.dataset.id);if(!q)return;
-    if(act==="rdvok"){const r={id:newId(),type:"detailing",date:q.date,heure:q.heure,duree:num(q.duree)||120,formule:q.formule||"",client:q.nom||"",tel:q.tel||"",email:q.email||"",vehicule:q.vehicule||"",note:q.note||"",src:"site"};S.settings.rdv=[...rdvList(),r];persistSettings();S.ag={y:+q.date.slice(0,4),m:+q.date.slice(5,7)-1,sel:q.date}}
-    S.rdvReq=S.rdvReq.filter(x=>x.id!==q.id);render();try{await db.collection("rdv_demandes").doc(q.id).delete()}catch(e){}setTimeout(()=>{try{db.collection("rdv_occ").doc(q.id).delete().catch(()=>{})}catch(e){}},act==="rdvok"?8000:0);
+    if(act==="rdvok"){const r={id:newId(),rq:q.id,type:"detailing",date:q.date,heure:q.heure,duree:num(q.duree)||120,formule:q.formule||"",client:q.nom||"",tel:q.tel||"",email:q.email||"",vehicule:q.vehicule||"",note:q.note||"",src:"site"};S.settings.rdv=[...rdvList(),r];persistSettings();S.ag={y:+q.date.slice(0,4),m:+q.date.slice(5,7)-1,sel:q.date}}
+    S.rdvReq=S.rdvReq.filter(x=>x.id!==q.id);render();try{await db.collection("rdv_demandes").doc(q.id).delete()}catch(e){}if(act==="rdvno")rdvUnlock(q.id);
     {const m=$("#overlay .agmod");if(m)agDayModal(m.dataset.iso);if($("#overlay .agrqmod"))rqModal()}
     toast(act==="rdvok"?"Ajouté à l'agenda. Pense à confirmer au client.":"Demande refusée.")}
   else if(act==="pdfdepot"&&v){const r=await depotContratPdf(v);if(r)apercuGen(r,r.titre)}
