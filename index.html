@@ -587,7 +587,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="24.5";
+const APP_VERSION="24.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1794,7 +1794,7 @@ function alertes(L){
   const out=[];const seuil=S.settings.seuilJours;const hid=new Set(S.settings.hiddenAlerts||[]);
   const X=k=>'<button type="button" class="alx" data-dismiss="'+esc(k)+'" aria-label="Supprimer ce rappel">×</button>';
   const al=(k,cls,href,inner)=>{if(hid.has(k))return;out.push('<div class="alert rpa '+cls+'">'+(href?'<a href="'+href+'">':'<div class="alin">')+inner+(href?'</a>':'</div>')+X(k)+'</div>')};
-  {const nq=(S.rdvReq||[]).length;if(nq)al("rdvq:"+nq,"",'#agenda','<b>'+nq+' demande'+(nq>1?"s":"")+' de rendez-vous du site</b><small>À accepter ou refuser dans l\'Agenda.</small>');
+  {const nq=(S.rdvReq||[]).length;if(nq)al("rdvq:"+nq,"bad",'#agenda','<b>'+nq+' demande'+(nq>1?"s":"")+' de rendez-vous du site</b><small>À accepter ou refuser dans l\'Agenda.</small>');
    const tr=rdvDay(today());if(tr.length)al("rdvj:"+today()+":"+tr.length,"",'#agenda','<b>'+tr.length+' rendez-vous aujourd\'hui</b><small>'+tr.map(r=>esc(r.heure+" "+rdvT(r)[0]+(r.client?" · "+r.client:""))).join(" · ")+'</small>')}
   const rps=[];const td=today();L.forEach(v=>(v.journal||[]).forEach(r=>{if(!r.fait&&r.date&&r.date>=td&&r.type!=="Statut")rps.push({v,r})}));
   rps.sort((a,b)=>a.r.date.localeCompare(b.r.date)).forEach(({v,r})=>{const k="j:"+r.id;if(hid.has(k))return;const d=daysBetween(today(),r.date),n=esc(v.marque+" "+v.modele);
