@@ -556,7 +556,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="23.2";
+const APP_VERSION="23.3";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1369,7 +1369,7 @@ function agDayModal(iso){const ov=$("#overlay"),Q=rqDay(iso),L=rdvDay(iso);
 function rdvModal(r){const ov=$("#overlay"),E=r||{},isNew=!E.id;const g=k=>E[k]==null?"":E[k];
   const vs=S.vehicles.filter(v=>!v.demo&&v.statut!=="vendu"||v.id===E.vid);
   ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rdvtit"><div class="card mcard"><button type="button" class="mclose" data-rdv="no" aria-label="Fermer">×</button><h2 id="rdvtit">'+(isNew?"Nouveau rendez-vous":"Modifier le rendez-vous")+'</h2><div class="form">'+
-   '<div class="f full"><div class="agtypes">'+Object.entries(RDV_T).map(([k,t])=>'<button type="button" class="'+((E.type||"detailing")===k?"on":"")+'" data-rdvt="'+k+'" style="--c:'+t[1]+'">'+t[0]+'</button>').join("")+'</div></div>'+
+   '<label class="f full">Type de rendez-vous<select id="rv-type">'+Object.entries(RDV_T).map(([k,t])=>'<option value="'+k+'"'+((E.type||"detailing")===k?" selected":"")+'>'+t[0]+'</option>').join("")+'</select></label>'+
    '<label class="f">Date<input id="rv-date" type="date" value="'+esc(g("date")||today())+'"></label><label class="f">Heure<input id="rv-heure" type="time" step="900" value="'+esc(g("heure")||"09:00")+'"></label>'+
    '<label class="f">Durée<select id="rv-duree">'+[[30,"30 min"],[60,"1 h"],[90,"1 h 30"],[120,"2 h"],[180,"3 h"],[240,"4 h (demi-journée)"],[480,"Journée"]].map(([m,l])=>'<option value="'+m+'"'+((num(E.duree)||60)===m?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+
    '<label class="f">Formule / objet<input id="rv-formule" value="'+esc(g("formule"))+'" placeholder="ex. Detailing complet"></label>'+
@@ -1380,10 +1380,9 @@ function rdvModal(r){const ov=$("#overlay"),E=r||{},isNew=!E.id;const g=k=>E[k]=
    '<div class="acts"><button class="btn primary" data-rdv="ok" style="flex:1;justify-content:center">'+(isNew?"Ajouter à l'agenda":"Enregistrer")+'</button></div></div></div>';
   let typ=E.type||"detailing";const box=ov.querySelector(".modal");
   box.addEventListener("click",e=>{const t=e.target.closest("[data-rdvt],[data-rdv]");if(!t)return;
-    if(t.dataset.rdvt){typ=t.dataset.rdvt;box.querySelectorAll("[data-rdvt]").forEach(x=>x.classList.toggle("on",x===t));return}
     if(t.dataset.rdv==="no"){ov.innerHTML="";return}
     const v=id=>$("#rv-"+id).value.trim(),d=v("date");if(!d){toast("Indique la date.");return}
-    const o={id:E.id||newId(),type:typ,date:d,heure:v("heure"),duree:num(v("duree"))||60,formule:v("formule"),client:v("client"),tel:v("tel"),vid:v("vid"),vehicule:v("veh"),note:v("note")};if(E.src)o.src=E.src;if(E.email)o.email=E.email;
+    typ=$("#rv-type").value||typ;const o={id:E.id||newId(),type:typ,date:d,heure:v("heure"),duree:num(v("duree"))||60,formule:v("formule"),client:v("client"),tel:v("tel"),vid:v("vid"),vehicule:v("veh"),note:v("note")};if(E.src)o.src=E.src;if(E.email)o.email=E.email;
     S.settings.rdv=[...rdvList().filter(x=>x.id!==o.id),o];persistSettings();ov.innerHTML="";S.ag=S.ag||{};S.ag.sel=d;S.ag.y=+d.slice(0,4);S.ag.m=+d.slice(5,7)-1;toast(isNew?"Rendez-vous ajouté.":"Rendez-vous modifié.");render()});
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-agday],[data-agm]");if(!b||!$("#app").contains(b))return;S.ag=S.ag||{};
