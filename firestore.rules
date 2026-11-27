@@ -11,6 +11,23 @@ service cloud.firestore {
       allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
+    // Demandes de rendez-vous du site : tout le monde peut en créer une (champs contrôlés),
+    // seul le propriétaire peut les lire, les modifier ou les supprimer.
+    match /rdv_demandes/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['uid','nom','tel','email','vehicule','formule','date','heure','duree','note','createdAt','statut'])
+        && request.resource.data.uid is string && exists(/databases/$(database)/documents/vitrine_info/$(request.resource.data.uid))
+        && request.resource.data.nom is string && request.resource.data.nom.size() > 0 && request.resource.data.nom.size() < 100
+        && request.resource.data.tel is string && request.resource.data.tel.size() > 0 && request.resource.data.tel.size() < 40
+        && request.resource.data.email is string && request.resource.data.email.size() < 100
+        && request.resource.data.vehicule is string && request.resource.data.vehicule.size() < 100
+        && request.resource.data.formule is string && request.resource.data.formule.size() < 60
+        && request.resource.data.date is string && request.resource.data.date.size() == 10
+        && request.resource.data.heure is string && request.resource.data.heure.size() == 5
+        && request.resource.data.duree is int && request.resource.data.duree <= 480
+        && request.resource.data.note is string && request.resource.data.note.size() < 1000
+        && request.resource.data.statut == 'nouveau';
+      allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
     match /vitrine_info/{userId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
