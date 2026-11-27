@@ -587,7 +587,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="25.0";
+const APP_VERSION="25.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -1360,7 +1360,7 @@ async function repriseDocPdf(v){
   return{blob:doc.output("blob"),name,titre:"Bon de reprise",doc};
 }
 /* ===== Service detailing : prestations et factures ===== */
-const DET_F=["Detailing intérieur","Detailing extérieur","Detailing polish carrosserie","Detailing complet","Autre prestation"];
+const DET_F=["Detailing intérieur","Detailing extérieur","Detailing intérieur et extérieur","Detailing polish carrosserie","Detailing complet","Autre prestation"];
 function detList(){return S.settings.detail||[]}
 function detTot(d){const ttc=num(d.prix),ht=Math.round(ttc/1.21*100)/100;return{ttc,ht,tva:Math.round((ttc-ht)*100)/100}}
 function detClient(d){return d.ctype==="pro"?(d.soc||""):[d.prenom,d.nom].filter(Boolean).join(" ")}
@@ -1371,7 +1371,7 @@ function detCard(){const L=detList().slice().sort((a,b)=>(b.date||"").localeComp
 function detModal(d){const ov=$("#overlay"),E=d||{},isNew=!E.id;const g=k=>E[k]==null?"":E[k];let ct=E.ctype==="pro"?"pro":"part";
   const f=(id,l,o)=>{o=o||{};return'<label class="f'+(o.full?" full":"")+(o.cls?" "+o.cls:"")+'"'+(o.hid?" hidden":"")+'>'+l+'<input id="dt-'+id+'" type="'+(o.t||"text")+'"'+(o.im?' inputmode="'+o.im+'"':'')+' value="'+esc(o.v!=null?o.v:g(id))+'"'+(o.ph?' placeholder="'+o.ph+'"':'')+' autocomplete="off"></label>'};
   ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="dttit"><div class="card mcard"><button type="button" class="mclose" data-dt="no" aria-label="Fermer">×</button><h2 id="dttit">'+(isNew?"Nouvelle prestation detailing":"Prestation detailing")+'</h2>'+(E.factNum?'<p class="note">Facture '+esc(E.factNum)+' : elle est mise à jour automatiquement quand tu enregistres.</p>':'')+'<div class="form">'+
-   f("date","Date",{t:"date",v:g("date")||today()})+'<label class="f">Formule<select id="dt-formule">'+DET_F.map(x=>'<option'+((E.formule||"Detailing complet")===x?" selected":"")+'>'+x+'</option>').join("")+'</select></label>'+
+   f("date","Date",{t:"date",v:g("date")||today()})+'<label class="f">Formule<select id="dt-formule">'+DET_F.map(x=>'<option'+((E.formule||"Detailing intérieur et extérieur")===x?" selected":"")+'>'+x+'</option>').join("")+'</select></label>'+
    f("desc","Détail (facultatif)",{full:true,ph:"ex. Shampoing sièges, rénovation plastiques, polish"})+
    f("prix","Prix TVA comprise (€)",{t:"number",im:"decimal"})+'<div class="f"><div class="calc" id="dt-calc" style="padding:8px 12px"></div></div>'+
    '<div class="f full vtyp"><div class="seg"><button type="button" class="'+(ct==="part"?"on ok":"")+'" data-dtc="part">Particulier</button><button type="button" class="'+(ct==="pro"?"on ok":"")+'" data-dtc="pro">Professionnel</button></div></div>'+
