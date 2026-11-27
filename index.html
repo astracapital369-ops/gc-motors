@@ -183,6 +183,7 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .dth{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}.dth h2{margin:2px 0 2px}.dth .note{margin:0}
 .dtk{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.dtcard{border-top:3px solid #2f7bff}.dtcard .dtk{color:#2f7bff}.vtcard{border-top:3px solid var(--ink)}
 .dtpay{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:#fef3c7;color:#92400e;white-space:nowrap}.dtpay.ok{background:#dcfce7;color:#166534}
+.modal.agrqmod,.modal.agmod{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(15,18,25,.35)}
 .agtypes{display:flex;flex-wrap:wrap;gap:6px}.agtypes button{all:unset;cursor:pointer;font-size:13px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--ink)}.agtypes button.on{background:var(--c);border-color:var(--c);color:#fff}
 @media (max-width:980px){.agw{grid-template-columns:1fr}.agc{min-height:54px;padding:5px 2px;align-items:center;gap:4px;border-radius:10px}.agch{display:none}.agdots{display:flex;gap:3px;justify-content:center}.agdots b{width:6px;height:6px;border-radius:50%}.agg{gap:4px}.agd{font-size:13px}.agnav h2{font-size:16px;white-space:nowrap}.agtd{padding-left:8px;padding-right:8px}.agq{flex-direction:column;align-items:stretch}.agqa .btn{flex:1;justify-content:center}}
 .fmrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.fmrow .btn{justify-content:center;width:100%;padding:11px 8px}
@@ -581,7 +582,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="24.0";
+const APP_VERSION="24.1";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
