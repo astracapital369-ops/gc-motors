@@ -122,7 +122,7 @@ nav.side{background:var(--surface);border-right:1px solid var(--line);padding:20
 .fminfo{background:var(--surface-2);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px}.fminfo b{font-size:15.5px}.fminfo small{color:var(--muted);font-size:13px}
 .fmq{color:var(--muted);margin:16px 0 12px;font-size:14.5px}
 .fmbig{position:relative;width:100%;box-sizing:border-box;justify-content:center;padding:13px;font-size:15.5px}
-.agw{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:16px;align-items:start}
+.agw{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
 .agside{display:flex;flex-direction:column;gap:16px}
 .agnav{display:flex;align-items:center;gap:8px;margin-bottom:12px}.agnav h2{margin:0;flex:1;text-align:center;font-size:20px}.agnav .btn{min-width:38px;justify-content:center}.agtd{order:-1}
 .agg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
@@ -598,7 +598,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="26.1";
+const APP_VERSION="26.2";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
