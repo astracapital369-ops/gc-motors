@@ -570,7 +570,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="23.5";
+const APP_VERSION="23.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3442,7 +3442,7 @@ document.addEventListener("click",async e=>{
   else if(act==="rqall"){rqModal()}
   else if(act==="rdvok"||act==="rdvno"){const q=(S.rdvReq||[]).find(x=>x.id===b.dataset.id);if(!q)return;
     if(act==="rdvok"){const r={id:newId(),type:"detailing",date:q.date,heure:q.heure,duree:num(q.duree)||120,formule:q.formule||"",client:q.nom||"",tel:q.tel||"",email:q.email||"",vehicule:q.vehicule||"",note:q.note||"",src:"site"};S.settings.rdv=[...rdvList(),r];persistSettings();S.ag={y:+q.date.slice(0,4),m:+q.date.slice(5,7)-1,sel:q.date}}
-    S.rdvReq=S.rdvReq.filter(x=>x.id!==q.id);render();try{await db.collection("rdv_demandes").doc(q.id).delete()}catch(e){}
+    S.rdvReq=S.rdvReq.filter(x=>x.id!==q.id);render();try{await db.collection("rdv_demandes").doc(q.id).delete()}catch(e){}setTimeout(()=>{try{db.collection("rdv_occ").doc(q.id).delete().catch(()=>{})}catch(e){}},act==="rdvok"?8000:0);
     {const m=$("#overlay .agmod");if(m)agDayModal(m.dataset.iso);if($("#overlay .agrqmod"))rqModal()}
     toast(act==="rdvok"?"Ajouté à l'agenda. Pense à confirmer au client.":"Demande refusée.")}
   else if(act==="pdfdepot"&&v){const r=await depotContratPdf(v);if(r)apercuGen(r,r.titre)}

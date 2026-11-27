@@ -28,6 +28,18 @@ service cloud.firestore {
         && request.resource.data.statut == 'nouveau';
       allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
+    // Créneaux bloqués par une demande en attente : visibles par le site (date et heure seulement),
+    // créés uniquement avec une demande, supprimés par le propriétaire (acceptée ou refusée).
+    match /rdv_occ/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['uid','date','heure','duree','createdAt'])
+        && existsAfter(/databases/$(database)/documents/rdv_demandes/$(id))
+        && getAfter(/databases/$(database)/documents/rdv_demandes/$(id)).data.uid == request.resource.data.uid
+        && request.resource.data.date is string && request.resource.data.date.size() == 10
+        && request.resource.data.heure is string && request.resource.data.heure.size() == 5
+        && request.resource.data.duree is int && request.resource.data.duree <= 480;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
     match /vitrine_info/{userId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
