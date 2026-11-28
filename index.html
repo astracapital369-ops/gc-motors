@@ -584,7 +584,7 @@ nav.tabs{display:none}
 .aihd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.aihd h2{margin:0}
 .ailog{display:flex;flex-direction:column;gap:10px}.aimsg{max-width:92%;padding:10px 13px;border-radius:14px;line-height:1.5;overflow-wrap:anywhere}.aimsg p{margin:0 0 6px}.aimsg p:last-child{margin-bottom:0}
 .aimsg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}.aimsg.me .note{color:inherit;opacity:.8}
-.aimsg.bot{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:4px}.aimsg.bot ul{margin:2px 0 8px;padding-left:20px}.aimsg.bot li{margin:2px 0}.aih{font-weight:700;margin-top:6px!important}.aisp{height:4px}.aiweb{margin-top:6px;font-size:12px}
+.aimsg.bot{align-self:stretch;max-width:100%;background:var(--surface-2);border-bottom-left-radius:4px}.aimsg.bot ul{margin:2px 0 8px;padding-left:20px}.aimsg.bot li{margin:2px 0}.aih{font-weight:700;margin-top:6px!important}.aisp{height:4px}.aiweb{margin-top:6px;font-size:12px}
 .aipics{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.aipics img{width:72px;height:72px;object-fit:cover;border-radius:8px}
 .aiempty{background:var(--surface-2);border-radius:12px;padding:14px}.aiempty p{margin:0;color:var(--muted)}
 .aidots span{animation:aib 1.2s infinite both}.aidots span:nth-child(2){animation-delay:.2s}.aidots span:nth-child(3){animation-delay:.4s}@keyframes aib{0%,80%,100%{opacity:.2}40%{opacity:1}}
@@ -600,6 +600,11 @@ body{height:auto;min-height:100%}
 @media(max-width:980px){.aiin{bottom:calc(66px + env(safe-area-inset-bottom));box-shadow:0 0 0 10px var(--surface),0 4px 14px rgba(0,0,0,.08)}}
 @media(max-width:980px){body.kbd nav.tabs{display:none!important}body.kbd .aiin{bottom:calc(8px + env(safe-area-inset-bottom))}body.kbd .aiin textarea{max-height:110px}}
 .aiin.aifix{position:fixed;left:10px;right:10px;margin:0;z-index:50;box-shadow:0 0 0 10px var(--bg),0 4px 14px rgba(0,0,0,.12)}body.kbd .ailog{padding-bottom:20px}
+.aiv{border-radius:12px;padding:10px 12px;margin:0 0 10px;display:flex;flex-direction:column;gap:3px;border-left:5px solid}.aiv b{font-size:16px}.aiv span{font-size:14px;opacity:.85}
+.aiv.g{background:rgba(22,163,74,.14);border-color:#16a34a}.aiv.y{background:rgba(202,138,4,.16);border-color:#ca8a04}.aiv.o{background:rgba(234,88,12,.15);border-color:#ea580c}.aiv.r{background:rgba(220,38,38,.15);border-color:#dc2626}.aiv b{color:var(--ink)}
+.aimsg.bot .aih{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px!important;padding-top:10px;border-top:1px solid var(--line)}
+.aimsg.bot .aiv+.aih{border-top:0;padding-top:0}
+.airows{display:flex;flex-direction:column;gap:3px;margin:2px 0}.air{display:flex;justify-content:space-between;gap:12px;align-items:baseline}.air span{color:var(--muted);font-size:14px;flex:none;max-width:55%}.air b{text-align:right;font-weight:600}.air.tot{border-top:1px dashed var(--line);padding-top:4px;margin-top:2px}.air.tot b{font-weight:800}.air b.neg{color:var(--bad,#dc2626)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -628,7 +633,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="29.4";
+const APP_VERSION="29.5";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3617,17 +3622,24 @@ function aiModel(){try{return localStorage.getItem(AI_MODEL_LS)||AI_MODELS[0][0]
 function aiState(){if(!S.ai){let msgs=[];try{msgs=JSON.parse(localStorage.getItem(AI_CHAT_LS)||"[]")}catch(e){}S.ai={msgs:Array.isArray(msgs)?msgs:[],draft:"",pics:[],busy:false,err:"",withSim:true}}return S.ai}
 function aiSave(){const a=aiState();try{localStorage.setItem(AI_CHAT_LS,JSON.stringify(a.msgs.slice(-40).map(m=>({role:m.role,text:m.text,nPics:m.nPics||0}))))}catch(e){}}
 function aiMd(t){
-  const inl=s=>esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<i>$2</i>");
-  let h="",inUl=false;
-  String(t||"").split("\n").forEach(l=>{const L=l.trim();
-    const li=L.match(/^(?:[-•*]|\d+[.)])\s+(.*)$/);
-    if(li&&!/^\d+[.)]\s/.test(L)){if(!inUl){h+="<ul>";inUl=true}h+="<li>"+inl(li[1])+"</li>";return}
-    if(inUl){h+="</ul>";inUl=false}
-    if(!L){h+='<div class="aisp"></div>';return}
-    const hd=L.match(/^#{1,4}\s+(.*)$/);if(hd){h+='<p class="aih">'+inl(hd[1])+"</p>";return}
-    if(/^-{3,}$/.test(L))return;
-    h+="<p>"+inl(L)+"</p>"});
-  if(inUl)h+="</ul>";return h}
+  const inl=x=>esc(x).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<i>$2</i>");
+  let h="",inUl=false,inRows=false;const close=()=>{if(inUl){h+="</ul>";inUl=false}if(inRows){h+="</div>";inRows=false}};
+  const lines=String(t||"").split("\n");
+  for(let n=0;n<lines.length;n++){let L=lines[n].trim().replace(/^\*\*(.+)\*\*$/,"$1");
+    const vd=L.match(/^\**\s*VERDICT\s*\**\s*:\s*\**\s*(.*?)\**$/i);
+    if(vd){close();const v=vd[1],c=/🟢|✅|bonne/i.test(v)?"g":/🟡|jouable/i.test(v)?"y":/🔴|éviter/i.test(v)?"r":"o";
+      let sub="";while(n+1<lines.length&&!lines[n+1].trim())n++;{const nx=(lines[n+1]||"").trim();if(nx&&!/^#|^[-•*]\s/.test(nx)&&!/^[^:]{2,42}?\s*:\s+\S/.test(nx.replace(/\*\*/g,""))){sub=nx;n++}}
+      h+='<div class="aiv '+c+'"><b>'+inl(v.replace(/^[🟢✅🟡🟠🔴]\s*/u,""))+'</b>'+(sub?'<span>'+inl(sub)+'</span>':"")+'</div>';continue}
+    const hd=L.match(/^#{1,4}\s+(.*)$/);if(hd){close();h+='<div class="aih">'+inl(hd[1].replace(/\*\*/g,""))+'</div>';continue}
+    if(!L||/^-{3,}$/.test(L)){if(inUl){h+="</ul>";inUl=false}continue}
+    const li=L.match(/^(?:[-•*])\s+(.*)$/);
+    if(li){if(inRows){h+="</div>";inRows=false}if(!inUl){h+="<ul>";inUl=true}h+="<li>"+inl(li[1])+"</li>";continue}
+    const kv=L.replace(/\*\*/g,"").match(/^([^:]{2,42}?)\s*:\s+(.+)$/);
+    if(kv&&!/https?$/i.test(kv[1])){if(inUl){h+="</ul>";inUl=false}if(!inRows){h+='<div class="airows">';inRows=true}
+      const tot=/^(total|prix d'achat maximum|première offre)/i.test(kv[1]);const neg=/[−-]\s?\d/.test(kv[2])&&/marge|scénario/i.test(kv[1]);
+      h+='<div class="air'+(tot?" tot":"")+'"><span>'+inl(kv[1])+'</span><b'+(neg?' class="neg"':'')+'>'+inl(kv[2])+'</b></div>';continue}
+    close();h+="<p>"+inl(L)+"</p>"}
+  close();return h}
 function aiSimTexte(){const s=S.sim;if(!s||!simReady(s))return"";
   const nom=s.brand==="Autre"?(s.libre||"Véhicule"):s.brand+" "+s.model;
   let t="Simulation remplie dans l'app : "+nom+(s.moteur?" "+s.moteur:"")+", "+s.anneeMin+", "+kmLab(s)+", "+s.boite+", "+s.carburant+(s.options&&s.options.length?", équipements : "+s.options.join(", "):"")+".";
@@ -3641,15 +3653,7 @@ function aiSystem(){const st=S.settings,a=aiState();
   let p="Tu es le conseiller achat de "+(st.entNom||"PrimeAuto")+", un petit négociant indépendant en voitures d'occasion en Belgique. Nous sommes le "+today+".\n"+
   "L'utilisateur te décrit une voiture qu'il envisage d'acheter pour la revendre (souvent avec des défauts). Ton rôle : estimer les réparations et dire franchement si l'opération est bonne ou risquée.\n\n"+
   "Paramètres de l'activité :\n- Vendeur professionnel au régime de la marge : TVA "+st.tva+" % sur la marge = (prix de vente − prix d'achat) × "+st.tva+"/"+(100+num(st.tva))+".\n- Garantie légale de 12 mois minimum à la revente : un défaut mal réparé revient à sa charge. Provision garantie : "+eur(num(st.provGarantie))+" par voiture.\n- Marge nette visée : "+eur(num(st.margeVisee))+" par voiture.\n- Frais de préparation habituels : contrôle technique ≈ 60 €, Car-Pass ≈ 10 €, nettoyage ≈ 80 €. Il ne fait pas la mécanique lui-même : compte les tarifs d'un garage indépendant belge (main-d'œuvre ≈ 60 à 80 € HTVA de l'heure).\n\n"+
-  "Réponds en français, de façon COURTE (environ 150 à 220 mots au total), lisible sur téléphone : pas de tableaux, phrases brèves, puces de quelques mots, aucune introduction ni conclusion. Garde les chiffres précis. Dans cet ordre :\n"+
-  "1. **Verdict** : une ligne qui commence par ✅ Bonne affaire, 🟡 Jouable en négociant, 🟠 Risquée ou 🔴 À éviter, puis une phrase d'explication.\n"+
-  "2. **Ce que cache probablement le problème** : 2 ou 3 causes probables sur ce moteur précis, de la plus probable à la plus grave, une ligne chacune.\n"+
-  "3. **Coût des réparations** : une fourchette par cause (pièces + main-d'œuvre en Belgique).\n"+
-  "4. **Prix de revente** : fourchette réaliste en Belgique une fois la voiture réparée et préparée. Si l'outil de recherche web est disponible, vérifie sur des annonces comparables (AutoScout24.be, 2ememain.be) et dis-le.\n"+
-  "5. **Marge nette** : scénario favorable et scénario pire, une ligne chacun (achat + réparations + préparation + TVA sur la marge).\n"+
-  "6. **Prix d'achat maximum** pour garder la marge visée, et **première offre conseillée**.\n"+
-  "7. **À vérifier avant d'acheter** : 3 contrôles concrets maximum.\n\n"+
-  "Sois honnête : ce sont des estimations, ne promets rien. S'il manque une information importante pour juger (code défaut, entretien, origine du voyant), dis ce qu'il faut demander au vendeur. Pour une question de suivi, réponds directement en quelques lignes, sans refaire toute la structure.";
+  "Réponds en français. Pour l'analyse d'une voiture, respecte EXACTEMENT ce modèle (mêmes titres, même ordre, rien avant, rien après). Lignes « Libellé : valeur » courtes, chiffres précis, pas de tableaux, pas de phrases longues :\n\nVERDICT: 🟢 Bonne affaire | 🟡 Jouable en négociant | 🟠 Risquée | 🔴 À éviter (garde un seul choix)\nUne phrase de 20 mots maximum qui résume pourquoi.\n\n## La voiture\nModèle : …\nAnnée : …\nKilométrage : …\nPrix demandé : …\n(ajoute Moteur, Boîte ou Défauts annoncés seulement si connus)\n\n## Risques\n- 2 ou 3 puces de 12 mots maximum, du plus probable au plus grave (pannes connues de ce moteur).\n\n## Réparations\nUne ligne « Poste : fourchette » par réparation (pièces + main-d'œuvre en Belgique), puis :\nPréparation : … (CT, Car-Pass, nettoyage)\nTotal : … à …\n\n## Revente\nPrix de revente : … à …\nDemande : forte, correcte ou lente\n\n## Ta marge\nScénario favorable : …\nPire scénario : …\n(marge nette après TVA sur la marge, au prix d'achat visé par l'utilisateur ou à défaut au prix demandé)\n\n## Ton offre\nPrix d'achat maximum : …\nPremière offre : …\n\n## À vérifier\n- 3 puces maximum, 10 mots maximum chacune.\n\nÉcris les montants comme « 1 200 € » et les fourchettes comme « 1 200 à 1 800 € ». Si une information manque, écris « inconnu » et ajoute la question à poser au vendeur dans « À vérifier ». Sois honnête : ce sont des estimations, ne promets rien. S'il manque une information importante pour juger (code défaut, entretien, origine du voyant), dis ce qu'il faut demander au vendeur. Pour une question de suivi (pas une nouvelle voiture), réponds en 2 à 6 lignes courtes, sans le modèle, avec des puces si utile.";
   if(a.withSim){const t=aiSimTexte();if(t)p+="\n\n"+t}
   return p}
 function aiApiMsgs(){return aiState().msgs.filter(m=>m.text||m.pics).map(m=>{
