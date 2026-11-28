@@ -580,6 +580,19 @@ nav.tabs{display:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .doc.dossv{border:1.5px solid var(--acc,#2f7bff);background:linear-gradient(180deg,rgba(47,123,255,.08),transparent)}.doc.dossv .dico{background:var(--acc,#2f7bff);color:#fff}
 .dosvb{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.dosvb .fico.s{font-size:9px}
+.simtabs{display:flex;gap:6px;background:var(--surface-2);padding:4px;border-radius:12px;margin:0 0 14px}.simtabs button{flex:1;border:0;background:none;padding:10px 8px;border-radius:9px;font-weight:600;cursor:pointer;color:var(--muted)}.simtabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.aihd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.aihd h2{margin:0}
+.ailog{display:flex;flex-direction:column;gap:10px}.aimsg{max-width:92%;padding:10px 13px;border-radius:14px;line-height:1.5;overflow-wrap:anywhere}.aimsg p{margin:0 0 6px}.aimsg p:last-child{margin-bottom:0}
+.aimsg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}.aimsg.me .note{color:inherit;opacity:.8}
+.aimsg.bot{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:4px}.aimsg.bot ul{margin:2px 0 8px;padding-left:20px}.aimsg.bot li{margin:2px 0}.aih{font-weight:700;margin-top:6px!important}.aisp{height:4px}.aiweb{margin-top:6px;font-size:12px}
+.aipics{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.aipics img{width:72px;height:72px;object-fit:cover;border-radius:8px}
+.aiempty{background:var(--surface-2);border-radius:12px;padding:14px}.aiempty p{margin:0 0 10px;color:var(--muted)}
+.aidots span{animation:aib 1.2s infinite both}.aidots span:nth-child(2){animation-delay:.2s}.aidots span:nth-child(3){animation-delay:.4s}@keyframes aib{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.aierr{color:var(--bad,#dc2626);margin:10px 0 0;font-size:14px}
+.aipend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.aipend:empty{display:none}.aipic{position:relative}.aipic img{width:64px;height:64px;object-fit:cover;border-radius:8px;display:block}.aipic button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:var(--surface);cursor:pointer;line-height:1}
+.aiin{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)}.aiin textarea{width:100%;border:0;background:none;resize:vertical;min-height:70px;outline:none;padding:4px}
+.aibar{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}.aibar .btn.primary{min-width:96px;justify-content:center}.aichk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex:1;min-width:0}
+.aikey summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.aikey summary::-webkit-details-marker{display:none}.aisteps{margin:12px 0;padding-left:20px}.aisteps li{margin:4px 0}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -608,7 +621,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="28.3";
+const APP_VERSION="28.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3513,17 +3526,18 @@ function ddSummary(kind){
   const n=Object.keys(s.frais).length;return n?n+" élément"+(n>1?"s":"")+" · "+eur(fraisSim(s)-num(s.reparations)):"Aucun frais coché"}
 function vSim(){
   if(!S.sim||S.sim.anneeMin===undefined)S.sim=simDefaults();
+  if(S.simTab==="ia"){if(!S.sim.frais||typeof S.sim.frais!=="object")S.sim.frais={};if(!S.sim.options)S.sim.options=[];return simTop()+vConseil()}
   if(S.sim.kmMin===undefined){S.sim.kmMin=S.sim.kmMax=S.sim.km||100000}
   if(S.sim.anneeMin!==S.sim.anneeMax){S.sim.anneeMin=S.sim.anneeMax=Math.round((S.sim.anneeMin+S.sim.anneeMax)/2)}
   if(S.sim.kmMin!==S.sim.kmMax){S.sim.kmMin=S.sim.kmMax=Math.round((S.sim.kmMin+S.sim.kmMax)/2/1000)*1000}
   if(!S.sim.frais||typeof S.sim.frais!=="object")S.sim.frais={};
   const s=S.sim;if(!s.open)s.open={};
   const yNow=new Date().getFullYear();
-  if(s.result&&!s.editing)return'<div class="top"><h1>Simulation de prix de revente</h1></div><div class="simdone"><div class="card" id="simres">'+simResult()+'</div>'+
+  if(s.result&&!s.editing)return simTop()+'<div class="simdone"><div class="card" id="simres">'+simResult()+'</div>'+
     '<div class="simacts"><button class="btn primary big" data-act="simreset">Nouvelle simulation</button><button class="btn big" data-act="simedit">Modifier les critères</button></div></div>';
   const step=(n,t)=>'<div class="sstep"><span class="sn">'+n+'</span><h2>'+t+'</h2></div>';
   const sel=(k,label,opts,ph)=>'<label class="f">'+label+'<select data-simsel="'+k+'">'+(ph?'<option value="">'+ph+'</option>':"")+opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(v)+'"'+(String(s[k])===String(v)?" selected":"")+'>'+esc(l)+'</option>'}).join("")+'</select></label>';
-  let h='<div class="top"><h1>Simulation de prix de revente</h1></div>';
+  let h=simTop()+'';
   h+='<div class="stack simfull">';
   // 1 véhicule
   const mot=s.brand&&s.brand!=="Autre"&&s.model?moteursDe(s.brand,s.model):null;
@@ -3585,6 +3599,132 @@ function simResult(){
 }
 function updateSim(){const box=$("#simres");if(box)box.innerHTML=simResult()}
 
+/* ---------- conseiller IA (Claude) ---------- */
+const AI_KEY_LS="pa-ai-key",AI_MODEL_LS="pa-ai-model",AI_CHAT_LS="pa-ai-chat";
+const AI_MODELS=[["claude-sonnet-5-5","Sonnet 5.5 (recommandé)"],["claude-opus-5-5","Opus 5.5 (plus poussé, plus cher)"]];
+const AI_EXEMPLE="J'ai ici une Renault Laguna 1.5 dCi diesel de 2015, 116 000 km, 110 ch. Carrosserie en bon état, enjoliveurs de jante à prévoir. Par contre voyant moteur rouge avec le message « risque casse moteur ». Combien ça va me coûter en réparation ? Il l'affiche 3 450 €, je la négocie 2 900 €.";
+function aiKey(){try{return localStorage.getItem(AI_KEY_LS)||""}catch(e){return""}}
+function aiModel(){try{return localStorage.getItem(AI_MODEL_LS)||AI_MODELS[0][0]}catch(e){return AI_MODELS[0][0]}}
+function aiState(){if(!S.ai){let msgs=[];try{msgs=JSON.parse(localStorage.getItem(AI_CHAT_LS)||"[]")}catch(e){}S.ai={msgs:Array.isArray(msgs)?msgs:[],draft:"",pics:[],busy:false,err:"",withSim:true}}return S.ai}
+function aiSave(){const a=aiState();try{localStorage.setItem(AI_CHAT_LS,JSON.stringify(a.msgs.slice(-40).map(m=>({role:m.role,text:m.text,nPics:m.nPics||0}))))}catch(e){}}
+function aiMd(t){
+  const inl=s=>esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<i>$2</i>");
+  let h="",inUl=false;
+  String(t||"").split("\n").forEach(l=>{const L=l.trim();
+    const li=L.match(/^(?:[-•*]|\d+[.)])\s+(.*)$/);
+    if(li&&!/^\d+[.)]\s/.test(L)){if(!inUl){h+="<ul>";inUl=true}h+="<li>"+inl(li[1])+"</li>";return}
+    if(inUl){h+="</ul>";inUl=false}
+    if(!L){h+='<div class="aisp"></div>';return}
+    const hd=L.match(/^#{1,4}\s+(.*)$/);if(hd){h+='<p class="aih">'+inl(hd[1])+"</p>";return}
+    if(/^-{3,}$/.test(L))return;
+    h+="<p>"+inl(L)+"</p>"});
+  if(inUl)h+="</ul>";return h}
+function aiSimTexte(){const s=S.sim;if(!s||!simReady(s))return"";
+  const nom=s.brand==="Autre"?(s.libre||"Véhicule"):s.brand+" "+s.model;
+  let t="Simulation remplie dans l'app : "+nom+(s.moteur?" "+s.moteur:"")+", "+s.anneeMin+", "+kmLab(s)+", "+s.boite+", "+s.carburant+(s.options&&s.options.length?", équipements : "+s.options.join(", "):"")+".";
+  const ks=Object.keys(s.frais||{}).filter(k=>PB_INDEX[k]);
+  if(ks.length||num(s.reparations))t+=" Frais prévus : "+ks.map(k=>PB_INDEX[k].l+" "+eur(num(s.frais[k]))).join(", ")+(num(s.reparations)?", autres "+eur(num(s.reparations)):"")+" (total "+eur(fraisSim(s))+").";
+  const r=s.result||estimerSim(s);
+  if(r)t+=" Estimation de revente de l'app : minimum "+eur(r.bas)+", médian "+eur(r.median)+", maximum "+eur(r.haut)+" ; prix d'achat maximum calculé "+eur(prixAchatMax(r.median,fraisSim(s),num(S.settings.margeVisee),S.settings.tva))+".";
+  return t}
+function aiSystem(){const st=S.settings,a=aiState();
+  const today=new Date().toLocaleDateString("fr-BE",{day:"numeric",month:"long",year:"numeric"});
+  let p="Tu es le conseiller achat de "+(st.entNom||"PrimeAuto")+", un petit négociant indépendant en voitures d'occasion en Belgique. Nous sommes le "+today+".\n"+
+  "L'utilisateur te décrit une voiture qu'il envisage d'acheter pour la revendre (souvent avec des défauts). Ton rôle : estimer les réparations et dire franchement si l'opération est bonne ou risquée.\n\n"+
+  "Paramètres de l'activité :\n- Vendeur professionnel au régime de la marge : TVA "+st.tva+" % sur la marge = (prix de vente − prix d'achat) × "+st.tva+"/"+(100+num(st.tva))+".\n- Garantie légale de 12 mois minimum à la revente : un défaut mal réparé revient à sa charge. Provision garantie : "+eur(num(st.provGarantie))+" par voiture.\n- Marge nette visée : "+eur(num(st.margeVisee))+" par voiture.\n- Frais de préparation habituels : contrôle technique ≈ 60 €, Car-Pass ≈ 10 €, nettoyage ≈ 80 €. Il ne fait pas la mécanique lui-même : compte les tarifs d'un garage indépendant belge (main-d'œuvre ≈ 60 à 80 € HTVA de l'heure).\n\n"+
+  "Réponds en français, de façon courte et concrète, lisible sur téléphone (pas de tableaux), dans cet ordre :\n"+
+  "1. **Verdict** : une ligne qui commence par ✅ Bonne affaire, 🟡 Jouable en négociant, 🟠 Risquée ou 🔴 À éviter, puis une phrase d'explication.\n"+
+  "2. **Ce que cache probablement le problème** : causes probables sur ce moteur précis (pannes connues du modèle), de la plus probable à la plus grave.\n"+
+  "3. **Coût des réparations** : une fourchette par poste (pièces + main-d'œuvre en Belgique), avec un scénario favorable et un scénario pire.\n"+
+  "4. **Prix de revente** : fourchette réaliste en Belgique une fois la voiture réparée et préparée. Si l'outil de recherche web est disponible, vérifie sur des annonces comparables (AutoScout24.be, 2ememain.be) et dis-le.\n"+
+  "5. **Le calcul** : achat + réparations + préparation + TVA sur la marge → marge nette dans le scénario favorable et dans le pire.\n"+
+  "6. **Prix d'achat maximum** pour garder la marge visée, et **première offre conseillée**.\n"+
+  "7. **À vérifier avant d'acheter** : 3 à 5 contrôles concrets (lecture des codes défaut à la valise, démarrage à froid, fumée, niveau et état de l'huile, historique d'entretien, etc.).\n\n"+
+  "Sois honnête : ce sont des estimations, ne promets rien. S'il manque une information importante pour juger (code défaut, entretien, origine du voyant), dis ce qu'il faut demander au vendeur. Pour une question de suivi, réponds directement sans refaire toute la structure.";
+  if(a.withSim){const t=aiSimTexte();if(t)p+="\n\n"+t}
+  return p}
+function aiApiMsgs(){return aiState().msgs.filter(m=>m.text||m.pics).map(m=>{
+  if(m.role==="user"&&m.pics&&m.pics.length)return{role:"user",content:[...m.pics.map(p=>({type:"image",source:{type:"base64",media_type:"image/jpeg",data:p}})),{type:"text",text:m.text||"Voici des photos de la voiture."}]};
+  return{role:m.role,content:(m.text||"")+(m.nPics&&!m.pics?"\n[photo(s) jointe(s) précédemment]":"")}})}
+async function aiCall(msgs,web){
+  const body={model:aiModel(),max_tokens:2500,system:aiSystem(),messages:msgs};
+  if(web)body.tools=[{type:"web_search_20250305",name:"web_search",max_uses:3,user_location:{type:"approximate",country:"BE",timezone:"Europe/Brussels"}}];
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":aiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const m=(j.error&&j.error.message)||("Erreur "+r.status);const e=new Error(m);e.status=r.status;throw e}
+  return j}
+function aiErrTxt(e){const m=String(e&&e.message||e),s=e&&e.status;
+  if(s===401||/api.key|x-api-key|authentication/i.test(m))return"Ta clé API n'est pas acceptée. Vérifie-la dans l'encadré « Clé API » ci-dessous.";
+  if(/credit balance|billing|credits?/i.test(m))return"Ton compte Anthropic n'a plus de crédit. Recharge-le sur console.anthropic.com (Billing), puis réessaie.";
+  if(s===429)return"Trop de demandes d'un coup. Attends une minute et réessaie.";
+  if(s===529||s===503)return"Le service est surchargé pour le moment. Réessaie dans quelques instants.";
+  if(/Failed to fetch|NetworkError|Load failed/i.test(m))return"Pas de connexion internet, ou la demande a été bloquée. Vérifie ton réseau et réessaie.";
+  return"Erreur : "+m}
+async function aiSend(){const a=aiState();if(a.busy)return;
+  const txt=(a.draft||"").trim();if(!txt&&!a.pics.length)return;
+  if(!aiKey()){a.err="Colle d'abord ta clé API dans l'encadré ci-dessous.";aiRefresh();return}
+  a.msgs.push({role:"user",text:txt,pics:a.pics.slice(),nPics:a.pics.length});a.draft="";a.pics=[];a.err="";a.busy=true;aiSave();aiRefresh(true);
+  try{let msgs=aiApiMsgs(),web=true,j;
+    try{j=await aiCall(msgs,web)}catch(e){if(e.status===400&&/web_search|tool/i.test(e.message)){web=false;j=await aiCall(msgs,false)}else throw e}
+    let out=[];for(let n=0;n<3;n++){out=out.concat(j.content||[]);if(j.stop_reason!=="pause_turn")break;msgs=msgs.concat([{role:"assistant",content:j.content}]);j=await aiCall(msgs,web)}
+    const text=out.filter(b=>b.type==="text").map(b=>b.text).join("").trim()||"(Pas de réponse, réessaie.)";
+    const searched=out.some(b=>b.type==="server_tool_use");
+    a.msgs.push({role:"assistant",text,web:searched})}
+  catch(e){a.err=aiErrTxt(e);const last=a.msgs[a.msgs.length-1];if(last&&last.role==="user"){a.msgs.pop();a.draft=last.text;a.pics=last.pics||[]}}
+  a.busy=false;aiSave();aiRefresh(true)}
+function aiLogHtml(){const a=aiState();
+  if(!a.msgs.length&&!a.busy)return'<div class="aiempty"><p>Décris-moi la voiture comme tu le ferais à un collègue : modèle, moteur, année, kilométrage, défauts constatés, prix affiché et prix que tu vises. Tu peux joindre des photos (tableau de bord, voyant, carrosserie).</p><button class="btn small" data-ai="exemple">Essayer avec un exemple</button></div>';
+  return a.msgs.map(m=>'<div class="aimsg '+(m.role==="user"?"me":"bot")+'">'+(m.role==="user"?(m.pics&&m.pics.length?'<div class="aipics">'+m.pics.map(p=>'<img src="data:image/jpeg;base64,'+p+'" alt="">').join("")+'</div>':(m.nPics?'<div class="note">📷 '+m.nPics+' photo'+(m.nPics>1?"s":"")+'</div>':""))+'<p>'+esc(m.text).replace(/\n/g,"<br>")+'</p>':aiMd(m.text)+(m.web?'<div class="note aiweb">Annonces vérifiées sur le web</div>':""))+'</div>').join("")+
+    (a.busy?'<div class="aimsg bot"><p class="aidots">Je regarde ça<span>.</span><span>.</span><span>.</span></p></div>':"")}
+function aiPicsHtml(){const a=aiState();return a.pics.map((p,i)=>'<span class="aipic"><img src="data:image/jpeg;base64,'+p+'" alt=""><button type="button" data-aipicdel="'+i+'" aria-label="Retirer la photo">×</button></span>').join("")}
+function aiRefresh(scroll){const a=aiState(),log=$("#ai-log");if(!log)return;
+  log.innerHTML=aiLogHtml();const pr=$("#ai-pics");if(pr)pr.innerHTML=aiPicsHtml();
+  const er=$("#ai-err");if(er){er.textContent=a.err||"";er.style.display=a.err?"":"none"}
+  const inp=$("#ai-in");if(inp&&inp.value!==a.draft)inp.value=a.draft;
+  const b=$('[data-ai="send"]');if(b){b.disabled=a.busy;b.textContent=a.busy?"…":"Envoyer"}
+  const nw=$('[data-ai="new"]');if(nw)nw.style.display=a.msgs.length?"":"none";
+  if(scroll){const last=log.lastElementChild;if(last&&a.msgs.length){const top=last.getBoundingClientRect().top+scrollY-80;if(a.busy||last.classList.contains("me"))window.scrollTo({top:Math.max(0,log.getBoundingClientRect().bottom+scrollY-innerHeight+160),behavior:"smooth"});else window.scrollTo({top:Math.max(0,top),behavior:"smooth"})}}}
+function simTop(){const t=S.simTab==="ia"?"ia":"calc";
+  return'<div class="top"><h1>'+(t==="ia"?"Conseiller achat":"Simulation de prix de revente")+'</h1></div><div class="simtabs"><button type="button" class="'+(t==="calc"?"on":"")+'" data-simtab="calc">Simulateur</button><button type="button" class="'+(t==="ia"?"on":"")+'" data-simtab="ia">Conseiller IA</button></div>'}
+function aiKeyCard(open){const k=aiKey();
+  return'<details class="card aikey"'+(open?" open":"")+'><summary><b>Clé API</b><span class="note">'+(k?"Enregistrée sur cet appareil · "+esc(k.slice(0,10))+"…":"À configurer une fois")+'</span></summary>'+
+  '<ol class="aisteps"><li>Crée un compte sur <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>.</li><li>Dans <b>Billing</b>, ajoute un peu de crédit (5 € suffisent pour commencer : une question coûte en général quelques centimes).</li><li>Dans <b>API keys</b>, crée une clé et colle-la ici.</li></ol>'+
+  '<div class="form"><label class="f full">Clé API<input id="ai-keyin" type="password" autocomplete="off" placeholder="sk-ant-…" value="'+esc(k)+'"></label>'+
+  '<label class="f full">Modèle<select id="ai-model">'+AI_MODELS.map(([v,l])=>'<option value="'+v+'"'+(aiModel()===v?" selected":"")+'>'+esc(l)+'</option>').join("")+'</select></label></div>'+
+  '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary small" data-ai="savekey">Enregistrer</button>'+(k?'<button class="btn small danger" data-ai="delkey">Supprimer la clé</button>':"")+'</div>'+
+  '<p class="note" style="margin-top:8px">La clé reste uniquement sur cet appareil (elle n\'est ni synchronisée ni incluse dans tes sauvegardes) : colle-la aussi sur ton PC ou ton téléphone. Ne la partage avec personne.</p></details>'}
+function vConseil(){const a=aiState(),k=aiKey(),hasSim=!!(S.sim&&simReady(S.sim));
+  let h='<div class="stack">';
+  if(!k)h+='<div class="card"><h2>Pose tes questions sur une voiture</h2><p class="note">Le conseiller estime les réparations, le prix de revente et ta marge, puis te dit si l\'achat est bon ou risqué. Pour l\'activer, configure ta clé API juste en dessous (une seule fois par appareil).</p></div>';
+  h+='<div class="card aichat"><div class="aihd"><h2>Conversation</h2><button class="btn small" data-ai="new" style="'+(a.msgs.length?"":"display:none")+'">Nouvelle conversation</button></div><div id="ai-log" class="ailog">'+aiLogHtml()+'</div>'+
+     '<p class="aierr" id="ai-err" style="'+(a.err?"":"display:none")+'">'+esc(a.err)+'</p>'+
+     '<div id="ai-pics" class="aipend">'+aiPicsHtml()+'</div>'+
+     '<div class="aiin"><textarea id="ai-in" rows="3" placeholder="Ex. Golf 7 1.6 TDI 2016, 180 000 km, bruit d\'embrayage, affichée 6 500 €…">'+esc(a.draft)+'</textarea>'+
+     '<div class="aibar"><label class="btn small" title="Joindre des photos">📷 Photo<input type="file" accept="image/*" multiple hidden data-aipic></label>'+
+     (hasSim?'<label class="aichk"><input type="checkbox" data-aisim'+(a.withSim?" checked":"")+'> Tenir compte de ma simulation</label>':'<span></span>')+
+     '<button class="btn primary" data-ai="send"'+(a.busy?" disabled":"")+'>'+(a.busy?"…":"Envoyer")+'</button></div></div>'+
+     '<p class="note" style="margin-top:8px">Les chiffres sont des estimations : fais toujours lire les codes défaut et compare avec 3 ou 4 annonces avant d\'acheter.</p></div>';
+  h+=aiKeyCard(!k);
+  return h+'</div>'}
+function aiResize(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const M=1568,sc=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",0.85).split(",")[1])};im.src=fr.result};fr.readAsDataURL(file)})}
+document.addEventListener("click",e=>{
+  const tb=e.target.closest("[data-simtab]");if(tb){e.preventDefault();S.simTab=tb.dataset.simtab;render();window.scrollTo(0,0);return}
+  const pd=e.target.closest("[data-aipicdel]");if(pd){e.preventDefault();aiState().pics.splice(+pd.dataset.aipicdel,1);aiRefresh();return}
+  const b=e.target.closest("[data-ai]");if(!b)return;e.preventDefault();const a=aiState(),act=b.dataset.ai;
+  if(act==="send")aiSend();
+  else if(act==="exemple"){a.draft=AI_EXEMPLE;aiRefresh();const i=$("#ai-in");if(i){i.focus();i.scrollIntoView({block:"center",behavior:"smooth"})}}
+  else if(act==="new"){if(a.busy)return;a.msgs=[];a.err="";a.pics=[];aiSave();aiRefresh();window.scrollTo(0,0)}
+  else if(act==="savekey"){const v=($("#ai-keyin")||{}).value||"",m=($("#ai-model")||{}).value||AI_MODELS[0][0];try{if(v.trim())localStorage.setItem(AI_KEY_LS,v.trim());else localStorage.removeItem(AI_KEY_LS);localStorage.setItem(AI_MODEL_LS,m)}catch(_){}a.err="";toast(v.trim()?"✓ Clé enregistrée sur cet appareil":"✓ Clé retirée");render()}
+  else if(act==="delkey"){try{localStorage.removeItem(AI_KEY_LS)}catch(_){}toast("✓ Clé supprimée de cet appareil");render()}
+});
+document.addEventListener("input",e=>{if(e.target.id==="ai-in")aiState().draft=e.target.value});
+document.addEventListener("keydown",e=>{if(e.target.id==="ai-in"&&e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();aiSend()}});
+document.addEventListener("change",async e=>{const t=e.target;
+  if(t.dataset&&t.dataset.aisim!==undefined){aiState().withSim=t.checked;return}
+  if(t.dataset&&t.dataset.aipic!==undefined&&t.files&&t.files.length){const a=aiState(),fs=[...t.files].slice(0,Math.max(0,4-a.pics.length));t.value="";
+    for(const f of fs){try{a.pics.push(await aiResize(f))}catch(_){toast("Photo illisible")}}if([...fs].length===0)toast("4 photos maximum par message");aiRefresh()}});
+
+
 /* ---------- ventes ---------- */
 function vVentes(){
   const L=list(),vendus=L.filter(v=>v.statut==="vendu").sort((a,b)=>(b.dateVente||"").localeCompare(a.dateVente||""));
@@ -3609,6 +3749,7 @@ function vReglages(){
   {const st=S.settings,on=st.mailSvc&&st.mailTpl&&st.mailKey;h+='<div class="card"><h2>E-mails des rendez-vous</h2><p class="note">Quand tu acceptes ou refuses une demande du site, le client reçoit un e-mail de confirmation ou de refus. '+(on?'<b style="color:var(--good)">Envoi automatique activé.</b>':'Pour l\'instant, l\'e-mail s\'ouvre déjà rédigé dans ta messagerie : tu n\'as qu\'à l\'envoyer. Pour un envoi automatique, crée un compte gratuit sur <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> et colle ici tes 3 codes.')+'</p><div class="form" style="margin-top:10px"><label class="f">Service ID<input data-sett="mailSvc" value="'+esc(st.mailSvc||"")+'" placeholder="service_xxxxxxx" autocomplete="off"></label><label class="f">Template ID<input data-sett="mailTpl" value="'+esc(st.mailTpl||"")+'" placeholder="template_xxxxxxx" autocomplete="off"></label><label class="f full">Public Key<input data-sett="mailKey" value="'+esc(st.mailKey||"")+'" placeholder="xxxxxxxxxxxxxxx" autocomplete="off"></label></div></div>'}
   h+='<div class="card"><h2>Site internet</h2><p class="note">Les voitures « En vente » apparaissent toutes seules sur ton site avec leurs photos et leur prix affiché. Une voiture vendue ou retirée de la vente disparaît du site.</p><p style="margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="site/" target="_blank" rel="noopener">Voir mon site</a><button class="btn" data-act="vitsync">Mettre à jour le site maintenant</button></p><p class="note" id="vitstate" style="margin-top:8px">'+esc(S.vitState||"")+'</p></div>';
   h+='<div class="card"><h2>Bon de commande</h2><label class="f full">Conditions de garantie (description)<textarea data-sett="bdcConditions" rows="4">'+esc(s.bdcConditions||BDC_CONDITIONS_DEF)+'</textarea></label><label class="f full" style="margin-top:10px">Conditions générales de vente (une par ligne)<textarea data-sett="cgv" rows="10">'+esc(s.cgv||CGV_DEF)+'</textarea></label><p class="note" style="margin-top:8px">Le numéro de bon suit le format AA-0001. Prochain numéro : '+esc(String(new Date().getFullYear()).slice(2)+"-"+String((num(s.bdcSeq)||0)+1).padStart(4,"0"))+'. Fais relire tes conditions générales par un juriste ou ta fédération professionnelle.</p></div>';
+  h+='<div class="card"><h2>Conseiller IA</h2><p class="note">'+(aiKey()?'Activé sur cet appareil.':'Pas encore configuré sur cet appareil.')+' Le conseiller se trouve dans Simulateur, onglet « Conseiller IA ».</p></div>'+aiKeyCard(false);
   h+='<div class="card"><h2>Calculs</h2><div class="form">'+i("tva","Taux de TVA (%)","21 % en Belgique, appliqué au régime de la marge")+i("margeVisee","Marge nette visée par voiture (€)","Utilisée pour le prix d'achat maximum")+i("provGarantie","Provision garantie par voiture (€)","Mise de côté pendant la garantie")+i("cotisTrim","Cotisations sociales par trimestre (€)","Mets le montant demandé par ta caisse. Par défaut : minimum 2026 à titre principal (926,48 €)")+i("tauxImpot","Impôt à réserver (% du bénéfice)","Estimation, 30 % par défaut. À ajuster avec ton comptable")+i("dureeGarantie","Durée de garantie (mois)","12 mois minimum pour un pro en occasion")+i("seuilJours","Alerte stock après (jours)")+'</div></div>';
   h+='<div class="card"><h2>Liquidités</h2><div class="form">'+i("capitalDepart","Capital de départ (€)","L\'argent que tu as mis dans l\'activité au départ")+i("ajustTreso","Apports / retraits (€)","Positif si tu remets de l\'argent, négatif si tu en retires pour toi")+'</div></div>';
   h+='<div class="card"><h2>Sauvegarde</h2><p class="note">Copie tes données pour les garder ailleurs, ou colle une sauvegarde pour la restaurer.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn small" data-act="export">Copier mes données</button><button class="btn small" data-act="import">Restaurer depuis une sauvegarde</button></div><label class="f full"><span>Zone de sauvegarde</span><textarea id="backup" placeholder="La sauvegarde apparaît ici, ou colle-la ici pour restaurer."></textarea></label></div>';
