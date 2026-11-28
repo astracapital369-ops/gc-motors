@@ -598,6 +598,7 @@ body{height:auto;min-height:100%}
 @media(max-width:980px){.simtabs{top:calc(var(--mbarh,0px) + 8px)}}
 .aiin{position:sticky;bottom:12px;z-index:20;box-shadow:0 0 0 8px var(--surface),0 4px 14px rgba(0,0,0,.08)}
 @media(max-width:980px){.aiin{bottom:calc(66px + env(safe-area-inset-bottom));box-shadow:0 0 0 10px var(--surface),0 4px 14px rgba(0,0,0,.08)}}
+@media(max-width:980px){body.kbd nav.tabs{display:none!important}body.kbd .aiin{bottom:calc(8px + env(safe-area-inset-bottom))}body.kbd .aiin textarea{max-height:110px}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -626,7 +627,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="29.1";
+const APP_VERSION="29.2";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3749,7 +3750,10 @@ document.addEventListener("click",e=>{
 });
 function mbarH(){const m=document.querySelector(".mbar"),h=m&&getComputedStyle(m).display!=="none"?m.offsetHeight:0;if(mbarH._h!==h){mbarH._h=h;document.documentElement.style.setProperty("--mbarh",h+"px")}}
 addEventListener("resize",mbarH);addEventListener("load",mbarH);setTimeout(mbarH,500);document.addEventListener("click",e=>{if(e.target.closest("[data-simtab],#tabs a"))setTimeout(mbarH,50)});
-function aiGrow(t){t.style.height="auto";t.style.height=Math.min(t.scrollHeight,160)+"px"}
+const kbdIn=t=>t&&(t.tagName==="TEXTAREA"||t.tagName==="INPUT"&&!/^(checkbox|radio|file|button|submit|range|color)$/i.test(t.type)||t.isContentEditable);
+document.addEventListener("focusin",e=>{if(kbdIn(e.target)&&matchMedia("(max-width:980px)").matches)document.body.classList.add("kbd")});
+document.addEventListener("focusout",()=>{setTimeout(()=>{if(!kbdIn(document.activeElement))document.body.classList.remove("kbd")},100)});
+function aiGrow(t){t.style.height="auto";t.style.height=Math.min(t.scrollHeight,document.body.classList.contains("kbd")?110:160)+"px"}
 document.addEventListener("input",e=>{if(e.target.id==="ai-in"){aiState().draft=e.target.value;aiGrow(e.target)}});
 document.addEventListener("keydown",e=>{if(e.target.id==="ai-in"&&e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();aiSend()}});
 document.addEventListener("change",async e=>{const t=e.target;
