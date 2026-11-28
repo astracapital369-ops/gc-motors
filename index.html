@@ -593,7 +593,8 @@ nav.tabs{display:none}
 .aiin{margin-top:12px;display:flex;align-items:flex-end;gap:6px;border:1px solid var(--line);border-radius:24px;padding:5px;background:var(--surface)}.aiin textarea{flex:1;min-width:0;border:0;background:none;resize:none;outline:none;padding:8px 4px;min-height:38px;max-height:160px;line-height:1.4}
 .aiib{flex:none;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:0;background:none;color:var(--muted);cursor:pointer}.aiib:hover{color:var(--ink)}.aisend{background:var(--accent);color:var(--accent-ink)}.aisend:hover{color:var(--accent-ink)}.aisend:disabled{opacity:.4;cursor:default}.aichk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-top:12px}
 .aikey summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.aikey summary::-webkit-details-marker{display:none}.aisteps{margin:12px 0;padding-left:20px}.aisteps li{margin:4px 0}
-.simtabs{position:sticky;top:0;z-index:30;box-shadow:0 0 0 8px var(--bg)}
+.simtabs{position:sticky;top:8px;z-index:29;box-shadow:0 0 0 8px var(--bg)}
+@media(max-width:980px){.simtabs{top:calc(var(--mbarh,0px) + 8px)}}
 .aiin{position:sticky;bottom:12px;z-index:20;box-shadow:0 0 0 8px var(--surface),0 4px 14px rgba(0,0,0,.08)}
 @media(max-width:980px){.aiin{bottom:calc(66px + env(safe-area-inset-bottom));box-shadow:0 0 0 10px var(--surface),0 4px 14px rgba(0,0,0,.08)}}
 </style>
@@ -624,7 +625,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="28.8";
+const APP_VERSION="28.9";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3745,6 +3746,9 @@ document.addEventListener("click",e=>{
   else if(act==="savekey"){const v=($("#ai-keyin")||{}).value||"",m=($("#ai-model")||{}).value||aiModel(),K=aiProv()==="claude"?AI_KEY_LS:AI_GKEY_LS;try{if(v.trim())localStorage.setItem(K,v.trim());else localStorage.removeItem(K);localStorage.setItem(AI_MODEL_LS,m)}catch(_){}a.err="";toast(v.trim()?"✓ Clé enregistrée sur cet appareil":"✓ Clé retirée");render()}
   else if(act==="delkey"){try{localStorage.removeItem(aiProv()==="claude"?AI_KEY_LS:AI_GKEY_LS)}catch(_){}toast("✓ Clé supprimée de cet appareil");render()}
 });
+function mbarH(){const m=document.querySelector(".mbar"),h=m&&m.offsetHeight?Math.max(0,Math.round(m.getBoundingClientRect().bottom)):0;if(mbarH._h!==h){mbarH._h=h;document.documentElement.style.setProperty("--mbarh",h+"px")}}
+addEventListener("scroll",mbarH,{passive:true});
+addEventListener("resize",mbarH);addEventListener("load",mbarH);setTimeout(mbarH,500);document.addEventListener("click",e=>{if(e.target.closest("[data-simtab],#tabs a"))setTimeout(mbarH,50)});
 function aiGrow(t){t.style.height="auto";t.style.height=Math.min(t.scrollHeight,160)+"px"}
 document.addEventListener("input",e=>{if(e.target.id==="ai-in"){aiState().draft=e.target.value;aiGrow(e.target)}});
 document.addEventListener("keydown",e=>{if(e.target.id==="ai-in"&&e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();aiSend()}});
