@@ -621,7 +621,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="28.5";
+const APP_VERSION="28.6";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3655,20 +3655,26 @@ async function aiCall(msgs,web){
   const j=await r.json().catch(()=>({}));
   if(!r.ok){const m=(j.error&&j.error.message)||("Erreur "+r.status);const e=new Error(m);e.status=r.status;throw e}
   return j}
-async function aiGemini(web){const a=aiState();
+async function aiGemini(){const a=aiState();
   const contents=a.msgs.filter(m=>m.text||m.pics).map(m=>({role:m.role==="user"?"user":"model",parts:[...((m.role==="user"&&m.pics)||[]).map(p=>({inline_data:{mime_type:"image/jpeg",data:p}})),{text:(m.text||(m.pics?"Voici des photos de la voiture.":""))+(m.nPics&&!m.pics?"\n[photo(s) jointe(s) précédemment]":"")}]}));
-  const body={systemInstruction:{parts:[{text:aiSystem()}]},contents};if(web)body.tools=[{google_search:{}}];
-  let lastErr;
-  for(const model of ["gemini-flash-latest","gemini-2.5-flash"]){
-    const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":aiKey("gemini")},body:JSON.stringify(body)});
-    const j=await r.json().catch(()=>({}));
-    if(r.ok){const c=(j.candidates||[])[0]||{};const text=((c.content||{}).parts||[]).filter(x=>x.text&&!x.thought).map(x=>x.text).join("").trim();
+  const base={systemInstruction:{parts:[{text:aiSystem()}]},contents};
+  const models=["gemini-2.5-flash","gemini-flash-latest","gemini-2.5-flash-lite","gemini-flash-lite-latest","gemini-2.0-flash"];
+  const tries=[];if(S.aiOk)tries.push(S.aiOk);models.forEach(m=>{tries.push([m,true]);tries.push([m,false])});
+  let lastErr,firstQuota;
+  for(const [model,web] of tries){
+    const body=web?{...base,tools:[{google_search:{}}]}:base;
+    let r,j;try{r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":aiKey("gemini")},body:JSON.stringify(body)});j=await r.json().catch(()=>({}))}catch(e){throw e}
+    if(r.ok){S.aiOk=[model,web];const c=(j.candidates||[])[0]||{};const text=((c.content||{}).parts||[]).filter(x=>x.text&&!x.thought).map(x=>x.text).join("").trim();
       return{text:text||(c.finishReason==="SAFETY"?"(Réponse bloquée par Google, reformule ta question.)":"(Pas de réponse, réessaie.)"),web:!!(c.groundingMetadata&&(c.groundingMetadata.webSearchQueries||[]).length)}}
     lastErr=new Error((j.error&&j.error.message)||("Erreur "+r.status));lastErr.status=r.status;lastErr.g=1;
-    if(r.status!==404)break}
-  throw lastErr}
+    if(r.status===429&&!firstQuota&&!/limit:\s*0\b/.test(lastErr.message))firstQuota=lastErr;
+    if(r.status===401||r.status===403&&/key|API_KEY|permission/i.test(lastErr.message)||r.status===400&&/API_KEY|api key/i.test(lastErr.message))break;
+    if(S.aiOk&&S.aiOk[0]===model&&S.aiOk[1]===web)S.aiOk=null}
+  throw firstQuota||lastErr}
 function aiErrTxt(e){const m=String(e&&e.message||e),s=e&&e.status;
-  if(e&&e.g){if(s===429||/quota|exhausted/i.test(m))return"Limite gratuite de Google atteinte pour le moment. Attends une minute (ou demain si c'est la limite du jour) et réessaie.";
+  if(e&&e.g){const det=" (Message de Google : "+m.slice(0,300)+")";
+    if(/limit:\s*0\b/.test(m))return"Google n'accorde aucune question gratuite à ce compte ou à cette région. Ouvre aistudio.google.com : si un bouton « Set up billing » apparaît, la version gratuite n'est pas disponible pour toi."+det;
+    if(s===429||/quota|exhausted/i.test(m))return"Limite gratuite de Google atteinte pour le moment. Attends une minute (ou demain si c'est la limite du jour) et réessaie."+det;
     if(s===400&&/api.key|API_KEY/i.test(m)||s===403&&/key|permission/i.test(m))return"Ta clé Google n'est pas acceptée. Vérifie-la dans l'encadré « Clé API » ci-dessous.";
     if(/location|region|country/i.test(m))return"Google refuse la demande depuis ta région : "+m}
   if(s===401||/api.key|x-api-key|authentication/i.test(m))return"Ta clé API n'est pas acceptée. Vérifie-la dans l'encadré « Clé API » ci-dessous.";
@@ -3681,7 +3687,7 @@ async function aiSend(){const a=aiState();if(a.busy)return;
   const txt=(a.draft||"").trim();if(!txt&&!a.pics.length)return;
   if(!aiKey()){a.err="Colle d'abord ta clé API dans l'encadré ci-dessous.";aiRefresh();return}
   a.msgs.push({role:"user",text:txt,pics:a.pics.slice(),nPics:a.pics.length});a.draft="";a.pics=[];a.err="";a.busy=true;aiSave();aiRefresh(true);
-  try{if(aiProv()==="gemini"){let res;try{res=await aiGemini(true)}catch(e){if(e.status===400||e.status===403||e.status===429&&/search|grounding/i.test(e.message))res=await aiGemini(false);else throw e}a.msgs.push({role:"assistant",text:res.text,web:res.web})}else{
+  try{if(aiProv()==="gemini"){const res=await aiGemini();a.msgs.push({role:"assistant",text:res.text,web:res.web})}else{
     let msgs=aiApiMsgs(),web=true,j;
     try{j=await aiCall(msgs,web)}catch(e){if(e.status===400&&/web_search|tool/i.test(e.message)){web=false;j=await aiCall(msgs,false)}else throw e}
     let out=[];for(let n=0;n<3;n++){out=out.concat(j.content||[]);if(j.stop_reason!=="pause_turn")break;msgs=msgs.concat([{role:"assistant",content:j.content}]);j=await aiCall(msgs,web)}
