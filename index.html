@@ -590,8 +590,8 @@ nav.tabs{display:none}
 .aidots span{animation:aib 1.2s infinite both}.aidots span:nth-child(2){animation-delay:.2s}.aidots span:nth-child(3){animation-delay:.4s}@keyframes aib{0%,80%,100%{opacity:.2}40%{opacity:1}}
 .aierr{color:var(--bad,#dc2626);margin:10px 0 0;font-size:14px}
 .aipend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.aipend:empty{display:none}.aipic{position:relative}.aipic img{width:64px;height:64px;object-fit:cover;border-radius:8px;display:block}.aipic button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:var(--surface);cursor:pointer;line-height:1}
-.aiin{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)}.aiin textarea{width:100%;border:0;background:none;resize:vertical;min-height:70px;outline:none;padding:4px}
-.aibar{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}.aibar .btn.primary{min-width:96px;justify-content:center}.aichk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex:1;min-width:0}
+.aiin{margin-top:12px;display:flex;align-items:flex-end;gap:6px;border:1px solid var(--line);border-radius:24px;padding:5px;background:var(--surface)}.aiin textarea{flex:1;min-width:0;border:0;background:none;resize:none;outline:none;padding:8px 4px;min-height:38px;max-height:160px;line-height:1.4}
+.aiib{flex:none;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:0;background:none;color:var(--muted);cursor:pointer}.aiib:hover{color:var(--ink)}.aisend{background:var(--accent);color:var(--accent-ink)}.aisend:hover{color:var(--accent-ink)}.aisend:disabled{opacity:.4;cursor:default}.aichk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-top:12px}
 .aikey summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.aikey summary::-webkit-details-marker{display:none}.aisteps{margin:12px 0;padding-left:20px}.aisteps li{margin:4px 0}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -621,7 +621,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="28.6";
+const APP_VERSION="28.7";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3634,15 +3634,15 @@ function aiSystem(){const st=S.settings,a=aiState();
   let p="Tu es le conseiller achat de "+(st.entNom||"PrimeAuto")+", un petit négociant indépendant en voitures d'occasion en Belgique. Nous sommes le "+today+".\n"+
   "L'utilisateur te décrit une voiture qu'il envisage d'acheter pour la revendre (souvent avec des défauts). Ton rôle : estimer les réparations et dire franchement si l'opération est bonne ou risquée.\n\n"+
   "Paramètres de l'activité :\n- Vendeur professionnel au régime de la marge : TVA "+st.tva+" % sur la marge = (prix de vente − prix d'achat) × "+st.tva+"/"+(100+num(st.tva))+".\n- Garantie légale de 12 mois minimum à la revente : un défaut mal réparé revient à sa charge. Provision garantie : "+eur(num(st.provGarantie))+" par voiture.\n- Marge nette visée : "+eur(num(st.margeVisee))+" par voiture.\n- Frais de préparation habituels : contrôle technique ≈ 60 €, Car-Pass ≈ 10 €, nettoyage ≈ 80 €. Il ne fait pas la mécanique lui-même : compte les tarifs d'un garage indépendant belge (main-d'œuvre ≈ 60 à 80 € HTVA de l'heure).\n\n"+
-  "Réponds en français, de façon courte et concrète, lisible sur téléphone (pas de tableaux), dans cet ordre :\n"+
+  "Réponds en français, de façon COURTE (environ 150 à 220 mots au total), lisible sur téléphone : pas de tableaux, phrases brèves, puces de quelques mots, aucune introduction ni conclusion. Garde les chiffres précis. Dans cet ordre :\n"+
   "1. **Verdict** : une ligne qui commence par ✅ Bonne affaire, 🟡 Jouable en négociant, 🟠 Risquée ou 🔴 À éviter, puis une phrase d'explication.\n"+
-  "2. **Ce que cache probablement le problème** : causes probables sur ce moteur précis (pannes connues du modèle), de la plus probable à la plus grave.\n"+
-  "3. **Coût des réparations** : une fourchette par poste (pièces + main-d'œuvre en Belgique), avec un scénario favorable et un scénario pire.\n"+
+  "2. **Ce que cache probablement le problème** : 2 ou 3 causes probables sur ce moteur précis, de la plus probable à la plus grave, une ligne chacune.\n"+
+  "3. **Coût des réparations** : une fourchette par cause (pièces + main-d'œuvre en Belgique).\n"+
   "4. **Prix de revente** : fourchette réaliste en Belgique une fois la voiture réparée et préparée. Si l'outil de recherche web est disponible, vérifie sur des annonces comparables (AutoScout24.be, 2ememain.be) et dis-le.\n"+
-  "5. **Le calcul** : achat + réparations + préparation + TVA sur la marge → marge nette dans le scénario favorable et dans le pire.\n"+
+  "5. **Marge nette** : scénario favorable et scénario pire, une ligne chacun (achat + réparations + préparation + TVA sur la marge).\n"+
   "6. **Prix d'achat maximum** pour garder la marge visée, et **première offre conseillée**.\n"+
-  "7. **À vérifier avant d'acheter** : 3 à 5 contrôles concrets (lecture des codes défaut à la valise, démarrage à froid, fumée, niveau et état de l'huile, historique d'entretien, etc.).\n\n"+
-  "Sois honnête : ce sont des estimations, ne promets rien. S'il manque une information importante pour juger (code défaut, entretien, origine du voyant), dis ce qu'il faut demander au vendeur. Pour une question de suivi, réponds directement sans refaire toute la structure.";
+  "7. **À vérifier avant d'acheter** : 3 contrôles concrets maximum.\n\n"+
+  "Sois honnête : ce sont des estimations, ne promets rien. S'il manque une information importante pour juger (code défaut, entretien, origine du voyant), dis ce qu'il faut demander au vendeur. Pour une question de suivi, réponds directement en quelques lignes, sans refaire toute la structure.";
   if(a.withSim){const t=aiSimTexte();if(t)p+="\n\n"+t}
   return p}
 function aiApiMsgs(){return aiState().msgs.filter(m=>m.text||m.pics).map(m=>{
@@ -3705,7 +3705,7 @@ function aiRefresh(scroll){const a=aiState(),log=$("#ai-log");if(!log)return;
   log.innerHTML=aiLogHtml();const pr=$("#ai-pics");if(pr)pr.innerHTML=aiPicsHtml();
   const er=$("#ai-err");if(er){er.textContent=a.err||"";er.style.display=a.err?"":"none"}
   const inp=$("#ai-in");if(inp&&inp.value!==a.draft)inp.value=a.draft;
-  const b=$('[data-ai="send"]');if(b){b.disabled=a.busy;b.textContent=a.busy?"…":"Envoyer"}
+  const b=$('[data-ai="send"]');if(b)b.disabled=a.busy;if(inp)aiGrow(inp);
   const nw=$('[data-ai="new"]');if(nw)nw.style.display=a.msgs.length?"":"none";
   if(scroll){const last=log.lastElementChild;if(last&&a.msgs.length){const top=last.getBoundingClientRect().top+scrollY-80;if(a.busy||last.classList.contains("me"))window.scrollTo({top:Math.max(0,log.getBoundingClientRect().bottom+scrollY-innerHeight+160),behavior:"smooth"});else window.scrollTo({top:Math.max(0,top),behavior:"smooth"})}}}
 function simTop(){const t=S.simTab==="ia"?"ia":"calc";
@@ -3725,11 +3725,10 @@ function vConseil(){const a=aiState(),k=aiKey(),hasSim=!!(S.sim&&simReady(S.sim)
   h+='<div class="card aichat"><div class="aihd"><h2>Conversation</h2><button class="btn small" data-ai="new" style="'+(a.msgs.length?"":"display:none")+'">Nouvelle conversation</button></div><div id="ai-log" class="ailog">'+aiLogHtml()+'</div>'+
      '<p class="aierr" id="ai-err" style="'+(a.err?"":"display:none")+'">'+esc(a.err)+'</p>'+
      '<div id="ai-pics" class="aipend">'+aiPicsHtml()+'</div>'+
-     '<div class="aiin"><textarea id="ai-in" rows="3" placeholder="Ex. Golf 7 1.6 TDI 2016, 180 000 km, bruit d\'embrayage, affichée 6 500 €…">'+esc(a.draft)+'</textarea>'+
-     '<div class="aibar"><label class="btn small" title="Joindre des photos">📷 Photo<input type="file" accept="image/*" multiple hidden data-aipic></label>'+
-     (hasSim?'<label class="aichk"><input type="checkbox" data-aisim'+(a.withSim?" checked":"")+'> Tenir compte de ma simulation</label>':'<span></span>')+
-     '<button class="btn primary" data-ai="send"'+(a.busy?" disabled":"")+'>'+(a.busy?"…":"Envoyer")+'</button></div></div>'+
-     '<p class="note" style="margin-top:8px">Les chiffres sont des estimations : fais toujours lire les codes défaut et compare avec 3 ou 4 annonces avant d\'acheter.</p></div>';
+     (hasSim?'<label class="aichk"><input type="checkbox" data-aisim'+(a.withSim?" checked":"")+'> Tenir compte de ma simulation</label>':'')+
+     '<div class="aiin"><label class="aiib" title="Ajouter des photos" aria-label="Ajouter des photos"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><input type="file" accept="image/*" multiple hidden data-aipic></label>'+
+     '<textarea id="ai-in" rows="1" placeholder="Écris ton message…">'+esc(a.draft)+'</textarea>'+
+     '<button class="aiib aisend" data-ai="send" aria-label="Envoyer"'+(a.busy?" disabled":"")+'><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>';
   h+=aiKeyCard(!k);
   return h+'</div>'}
 function aiResize(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const M=1568,sc=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",0.85).split(",")[1])};im.src=fr.result};fr.readAsDataURL(file)})}
@@ -3743,7 +3742,8 @@ document.addEventListener("click",e=>{
   else if(act==="savekey"){const v=($("#ai-keyin")||{}).value||"",m=($("#ai-model")||{}).value||aiModel(),K=aiProv()==="claude"?AI_KEY_LS:AI_GKEY_LS;try{if(v.trim())localStorage.setItem(K,v.trim());else localStorage.removeItem(K);localStorage.setItem(AI_MODEL_LS,m)}catch(_){}a.err="";toast(v.trim()?"✓ Clé enregistrée sur cet appareil":"✓ Clé retirée");render()}
   else if(act==="delkey"){try{localStorage.removeItem(aiProv()==="claude"?AI_KEY_LS:AI_GKEY_LS)}catch(_){}toast("✓ Clé supprimée de cet appareil");render()}
 });
-document.addEventListener("input",e=>{if(e.target.id==="ai-in")aiState().draft=e.target.value});
+function aiGrow(t){t.style.height="auto";t.style.height=Math.min(t.scrollHeight,160)+"px"}
+document.addEventListener("input",e=>{if(e.target.id==="ai-in"){aiState().draft=e.target.value;aiGrow(e.target)}});
 document.addEventListener("keydown",e=>{if(e.target.id==="ai-in"&&e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();aiSend()}});
 document.addEventListener("change",async e=>{const t=e.target;
   if(t.dataset&&t.dataset.aisim!==undefined){aiState().withSim=t.checked;return}
