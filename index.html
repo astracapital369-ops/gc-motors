@@ -628,7 +628,7 @@ const CHECK=[
   {g:"Achat",items:[["carpassAchat","Car-Pass vérifié"],["obd","Diagnostic OBD fait"],["essai","Essai routier fait"],["bordereau","Bordereau d'achat signé"],["docsAchat","Certificats + clés récupérés"],["registre","Inscrit au registre des achats"]]},
   {g:"Préparation",items:[["repar","Réparations faites"],["nettoyage","Nettoyage / detailing"],["ct","CT vente OK"],["carpassVente","Car-Pass de vente"],["garantie","Garantie externe souscrite"],["photos","Photos faites"],["annonce","Annonce publiée"]]},
   {g:"Vente",items:[["bon","Bon de commande / PV signé"],["paiement","Paiement reçu sur le compte"],["facture","Facture régime de la marge"],["docsVente","Documents remis à l'acheteur"],["compta","Facture transmise au comptable"]]}];
-const APP_VERSION="29.3";
+const APP_VERSION="29.4";
 const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const JTYPES=["Réparation","Entretien","Passage au garage","Contrôle technique","Pneus","Car-Pass","Transport / plateau","Garantie externe","Nettoyage / préparation","Pièces commandées","Photos","Annonce publiée","Baisse de prix","Visite / essai client","Offre reçue","Rendez-vous","Document reçu","Problème constaté","Autre"];
 const CHECKLIST=[["A. Données d'identification",["Plaquette du constructeur","Frappe à froid sur le châssis","Compteur kilométrique","Certificat d'immatriculation","C.O.C. ou certificat de conformité","Certificat de contrôle technique","Carnet d'entretien"]],
@@ -3664,19 +3664,28 @@ async function aiCall(msgs,web){
   return j}
 async function aiGemini(){const a=aiState();
   const contents=a.msgs.filter(m=>m.text||m.pics).map(m=>({role:m.role==="user"?"user":"model",parts:[...((m.role==="user"&&m.pics)||[]).map(p=>({inline_data:{mime_type:"image/jpeg",data:p}})),{text:(m.text||(m.pics?"Voici des photos de la voiture.":""))+(m.nPics&&!m.pics?"\n[photo(s) jointe(s) précédemment]":"")}]}));
-  const base={systemInstruction:{parts:[{text:aiSystem()}]},contents};
+  const last=a.msgs[a.msgs.length-1]||{},hasUrl=/https?:\/\/\S+/i.test(last.text||"");
+  let sys=aiSystem();if(hasUrl)sys+="\n\nLe dernier message contient un lien d'annonce : lis directement la page du lien (outil de lecture d'URL) pour y prendre prix, kilométrage, année, motorisation, équipements et défauts annoncés. Ne fais une recherche web que si la page est illisible, et dans ce cas dis-le en une ligne et base-toi sur ce que l'utilisateur a écrit.";
+  const base={systemInstruction:{parts:[{text:sys}]},contents};
+  let saved=null;try{saved=JSON.parse(localStorage.getItem("pa-ai-ok")||"null")}catch(e){}
   const models=["gemini-2.5-flash","gemini-flash-latest","gemini-2.5-flash-lite","gemini-flash-lite-latest","gemini-2.0-flash"];
-  const tries=[];if(S.aiOk)tries.push(S.aiOk);models.forEach(m=>{tries.push([m,true]);tries.push([m,false])});
-  let lastErr,firstQuota;
-  for(const [model,web] of tries){
-    const body=web?{...base,tools:[{google_search:{}}]}:base;
-    let r,j;try{r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":aiKey("gemini")},body:JSON.stringify(body)});j=await r.json().catch(()=>({}))}catch(e){throw e}
-    if(r.ok){S.aiOk=[model,web];const c=(j.candidates||[])[0]||{};const text=((c.content||{}).parts||[]).filter(x=>x.text&&!x.thought).map(x=>x.text).join("").trim();
-      return{text:text||(c.finishReason==="SAFETY"?"(Réponse bloquée par Google, reformule ta question.)":"(Pas de réponse, réessaie.)"),web:!!(c.groundingMetadata&&(c.groundingMetadata.webSearchQueries||[]).length)}}
+  const combos=[];const add=(m,search)=>{if(hasUrl)combos.push([m,search,true]);combos.push([m,search,false])};
+  if(saved&&saved.m)add(saved.m,!!saved.s);models.forEach(m=>{add(m,true);add(m,false)});
+  const seen=new Set();let lastErr,firstQuota;
+  for(const [model,search,url] of combos){const key=model+search+url;if(seen.has(key))continue;seen.add(key);
+    const tools=[];if(url)tools.push({url_context:{}});if(search)tools.push({google_search:{}});
+    const body={...base};if(tools.length)body.tools=tools;
+    if(/^gemini-2\.5/.test(model))body.generationConfig={thinkingConfig:{thinkingBudget:/lite/.test(model)?0:1024}};
+    const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":aiKey("gemini")},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok){try{localStorage.setItem("pa-ai-ok",JSON.stringify({m:model,s:search}))}catch(e){}
+      const c=(j.candidates||[])[0]||{};const text=((c.content||{}).parts||[]).filter(x=>x.text&&!x.thought).map(x=>x.text).join("").trim();
+      const gm=c.groundingMetadata||{};
+      return{text:text||(c.finishReason==="SAFETY"?"(Réponse bloquée par Google, reformule ta question.)":"(Pas de réponse, réessaie.)"),web:!!((gm.webSearchQueries||[]).length||(c.urlContextMetadata&&(c.urlContextMetadata.urlMetadata||[]).length))}}
     lastErr=new Error((j.error&&j.error.message)||("Erreur "+r.status));lastErr.status=r.status;lastErr.g=1;
     if(r.status===429&&!firstQuota&&!/limit:\s*0\b/.test(lastErr.message))firstQuota=lastErr;
     if(r.status===401||r.status===403&&/key|API_KEY|permission/i.test(lastErr.message)||r.status===400&&/API_KEY|api key/i.test(lastErr.message))break;
-    if(S.aiOk&&S.aiOk[0]===model&&S.aiOk[1]===web)S.aiOk=null}
+    if(saved&&saved.m===model&&!!saved.s===search){try{localStorage.removeItem("pa-ai-ok")}catch(e){}saved=null}}
   throw firstQuota||lastErr}
 function aiErrTxt(e){const m=String(e&&e.message||e),s=e&&e.status;
   if(e&&e.g){const det=" (Message de Google : "+m.slice(0,300)+")";
@@ -3705,8 +3714,8 @@ async function aiSend(){const a=aiState();if(a.busy)return;
   a.busy=false;aiSave();aiRefresh(true)}
 function aiLogHtml(){const a=aiState();
   if(!a.msgs.length&&!a.busy)return'<div class="aiempty"><p>Décris-moi la voiture comme tu le ferais à un collègue : modèle, moteur, année, kilométrage, défauts constatés, prix affiché et prix que tu vises. Tu peux joindre des photos (tableau de bord, voyant, carrosserie).</p></div>';
-  return a.msgs.map(m=>'<div class="aimsg '+(m.role==="user"?"me":"bot")+'">'+(m.role==="user"?(m.pics&&m.pics.length?'<div class="aipics">'+m.pics.map(p=>'<img src="data:image/jpeg;base64,'+p+'" alt="">').join("")+'</div>':(m.nPics?'<div class="note">📷 '+m.nPics+' photo'+(m.nPics>1?"s":"")+'</div>':""))+'<p>'+esc(m.text).replace(/\n/g,"<br>")+'</p>':aiMd(m.text)+(m.web?'<div class="note aiweb">Annonces vérifiées sur le web</div>':""))+'</div>').join("")+
-    (a.busy?'<div class="aimsg bot"><p class="aidots">Je regarde ça<span>.</span><span>.</span><span>.</span></p></div>':"")}
+  return a.msgs.map(m=>'<div class="aimsg '+(m.role==="user"?"me":"bot")+'">'+(m.role==="user"?(m.pics&&m.pics.length?'<div class="aipics">'+m.pics.map(p=>'<img src="data:image/jpeg;base64,'+p+'" alt="">').join("")+'</div>':(m.nPics?'<div class="note">📷 '+m.nPics+' photo'+(m.nPics>1?"s":"")+'</div>':""))+'<p>'+esc(m.text).replace(/\n/g,"<br>")+'</p>':aiMd(m.text)+(m.web?'<div class="note aiweb">Vérifié sur le web</div>':""))+'</div>').join("")+
+    (a.busy?'<div class="aimsg bot"><p class="aidots">'+(/https?:\/\//i.test((a.msgs[a.msgs.length-1]||{}).text||"")?"Je lis l\'annonce":"Je regarde ça")+'<span>.</span><span>.</span><span>.</span></p></div>':"")}
 function aiPicsHtml(){const a=aiState();return a.pics.map((p,i)=>'<span class="aipic"><img src="data:image/jpeg;base64,'+p+'" alt=""><button type="button" data-aipicdel="'+i+'" aria-label="Retirer la photo">×</button></span>').join("")}
 function aiRefresh(scroll){const a=aiState(),log=$("#ai-log");if(!log)return;
   log.innerHTML=aiLogHtml();const pr=$("#ai-pics");if(pr)pr.innerHTML=aiPicsHtml();
